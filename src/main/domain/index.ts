@@ -4,12 +4,14 @@
  * (hexagonal main process, see src/README.md).
  *
  * T2 replaced the RPC/dialog placeholders with the real protocol types
- * (src/main/domain/rpc). SessionPlaceholder stays a placeholder for T3
+ * (src/main/domain/rpc) and the PiSession adapter-of-ports
+ * (src/main/domain/session). SessionPlaceholder stays a placeholder for T3
  * (SessionManager.listAll()).
  */
 export * from "./rpc/types";
 export * from "./rpc/codec";
 export * from "./rpc/chatReducer";
+export * from "./session/PiSession";
 
 export interface SessionPlaceholder {
   readonly id: string;
