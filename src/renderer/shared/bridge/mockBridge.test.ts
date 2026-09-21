@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CHAT_STATE, type ChatState } from "@shared/bridge-types";
-import { mockBridge } from "./mockBridge";
+import { mockBridge, resetMockBridge } from "./mockBridge";
 
 function collectStates(): { states: ChatState[]; errors: string[] } {
   const states: ChatState[] = [];
@@ -11,8 +11,22 @@ function collectStates(): { states: ChatState[]; errors: string[] } {
 }
 
 describe("mockBridge", () => {
-  beforeEach(async () => {
-    await mockBridge.newChat();
+  // resetMockBridge (not just newChat()) so homeChoice, listener sets and
+  // id counters never leak between tests — see its doc comment.
+  beforeEach(() => {
+    resetMockBridge();
+  });
+
+  // Ordered deliberately before the "needsChoice: true" test below: with
+  // module state reset between tests (resetMockBridge in beforeEach), the
+  // two must not depend on running in file order — a rerun with only this
+  // test, or the suite in reverse, must see the same fresh homeChoice.
+  it("chooseHome persists the choice: a later setupStatus() reports needsChoice: false", async () => {
+    await mockBridge.chooseHome("link");
+
+    const status = await mockBridge.setupStatus();
+
+    expect(status.needsChoice).toBe(false);
   });
 
   it("setupStatus() starts with needsChoice: true and a fake pi detection, so the first-run screen is reachable in the browser preview", async () => {
@@ -20,14 +34,6 @@ describe("mockBridge", () => {
 
     expect(status.needsChoice).toBe(true);
     expect(status.detection).toMatchObject({ found: true, hasAuth: true, hasModels: true });
-  });
-
-  it("chooseHome persists the choice: a later setupStatus() reports needsChoice: false", async () => {
-    await mockBridge.chooseHome("link");
-
-    const status = await mockBridge.setupStatus();
-
-    expect(status.needsChoice).toBe(false);
   });
 
   it("lists two example chats plus one already-working chat", async () => {

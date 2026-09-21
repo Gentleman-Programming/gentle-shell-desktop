@@ -10,8 +10,7 @@ import {
   createSetupService,
 } from "./adapters";
 import { boundedStop } from "./domain/lifecycle/boundedStop";
-import { homeDirFor } from "./domain/home/home";
-import { HOME_MODE } from "@shared/bridge-types";
+import { homeDirFor, resolveHomeMode } from "./domain/home/home";
 import { ChatHost } from "./domain/session/ChatHost";
 import { registerHandlers } from "./ipc/registerHandlers";
 
@@ -29,8 +28,9 @@ function logPiLine(line: string): void {
 // Persisted first-run/home choice (T5), under Electron's own per-user data
 // directory. configStore.read() has no choice yet before first-run
 // resolves it (see setupService's needsChoice) — homeSettings/the dynamic
-// SessionStore below both default an absent choice to isolated, matching
-// resolveHomeArgs/homeDirFor's own default.
+// SessionStore below both default an absent choice to isolated through
+// resolveHomeMode (T6 follow-up), the single source of truth
+// resolveHomeArgs/homeDirFor also defer to.
 const configStore = createAppConfigStore(path.join(app.getPath("userData"), "config.json"));
 const homeSettings = createHomeSettings(configStore);
 const setupService = createSetupService(configStore);
@@ -42,7 +42,7 @@ const setupService = createSetupService(configStore);
 const chatHost = new ChatHost({
   spawner: createNodeProcessSpawner(),
   locator: createLauncherLocator(),
-  sessionStore: createDynamicPiSessionStore(() => homeDirFor(configStore.read().home ?? HOME_MODE.ISOLATED, process.env)),
+  sessionStore: createDynamicPiSessionStore(() => homeDirFor(resolveHomeMode(configStore.read()), process.env)),
   env: process.env,
   homeSettings,
   log: logPiLine,

@@ -23,6 +23,12 @@ const EMPTY_DETECTION: PiDetection = { found: false, dir: "", hasAuth: false, ha
 export function FirstRunContainer({ onDone }: FirstRunContainerProps) {
   const bridge = useBridge();
   const [detection, setDetection] = useState<PiDetection>(EMPTY_DETECTION);
+  // chooseHome can reject (setupService wraps a real fs failure — disk
+  // full, permissions — into a clear Error, T6 follow-up); without this,
+  // the screen just sits there with no feedback after a failed click.
+  // `lastMode` remembers what to re-attempt on Retry.
+  const [error, setError] = useState<string | undefined>(undefined);
+  const [lastMode, setLastMode] = useState<HomeMode | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,8 +41,20 @@ export function FirstRunContainer({ onDone }: FirstRunContainerProps) {
   }, [bridge]);
 
   const handleChoose = (mode: HomeMode): void => {
-    void bridge.chooseHome(mode).then(onDone);
+    setError(undefined);
+    setLastMode(mode);
+    bridge.chooseHome(mode).then(onDone, (reason: unknown) => {
+      setError(`Could not save your choice: ${errorMessage(reason)}`);
+    });
   };
 
-  return <FirstRun detection={detection} onChoose={handleChoose} />;
+  const handleRetry = (): void => {
+    if (lastMode) handleChoose(lastMode);
+  };
+
+  return <FirstRun detection={detection} onChoose={handleChoose} error={error} onRetry={handleRetry} />;
+}
+
+function errorMessage(reason: unknown): string {
+  return reason instanceof Error ? reason.message : String(reason);
 }

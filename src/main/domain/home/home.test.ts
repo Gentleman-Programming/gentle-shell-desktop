@@ -1,6 +1,27 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { detectPi, homeDirFor, resolveHomeArgs } from "./home";
+import { detectPi, homeDirFor, piAgentDir, resolveHomeArgs, resolveHomeMode } from "./home";
+
+describe("resolveHomeMode", () => {
+  it("returns the persisted mode when a choice was made", () => {
+    expect(resolveHomeMode({ home: "link" })).toBe("link");
+    expect(resolveHomeMode({ home: "isolated" })).toBe("isolated");
+  });
+
+  it("defaults to isolated when no choice is persisted yet — the single source of truth resolveHomeArgs and main/index.ts's SessionStore both defer to", () => {
+    expect(resolveHomeMode({})).toBe("isolated");
+  });
+});
+
+describe("piAgentDir", () => {
+  it("resolves to PI_CODING_AGENT_DIR when set", () => {
+    expect(piAgentDir({ PI_CODING_AGENT_DIR: "/custom/pi-dir" }, () => "/Users/dev")).toBe("/custom/pi-dir");
+  });
+
+  it("resolves to <homedir>/.pi/agent by default — the single source of truth homeDirFor and detectPi both defer to", () => {
+    expect(piAgentDir({}, () => "/Users/dev")).toBe(path.join("/Users/dev", ".pi", "agent"));
+  });
+});
 
 describe("resolveHomeArgs", () => {
   it('resolves ["--link"] for link mode', () => {

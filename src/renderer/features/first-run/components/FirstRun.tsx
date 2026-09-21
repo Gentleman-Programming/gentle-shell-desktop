@@ -5,6 +5,12 @@ import "./FirstRun.css";
 export interface FirstRunProps {
   readonly detection: PiDetection;
   readonly onChoose: (mode: HomeMode) => void;
+  /** Set by FirstRunContainer when the last chooseHome() call rejected
+   * (T6 follow-up); undefined otherwise. */
+  readonly error?: string;
+  /** Re-attempts the same mode that just failed. Only ever rendered
+   * alongside `error`, so FirstRunContainer always provides both together. */
+  readonly onRetry?: () => void;
 }
 
 /**
@@ -16,12 +22,21 @@ export interface FirstRunProps {
  * `detection.found` defensively (a stale/mocked status could report
  * needsChoice without a real detection).
  */
-export function FirstRun({ detection, onChoose }: FirstRunProps) {
+export function FirstRun({ detection, onChoose, error, onRetry }: FirstRunProps) {
   return (
     <div className="gc-first-run">
       <div className="gc-first-run__card">
         <h1 className="gc-first-run__title">Welcome to gentle shell</h1>
         <p className="gc-first-run__lead">Everything you need is already inside this app. One question before you start.</p>
+
+        {error && (
+          <div className="gc-first-run__error" role="alert">
+            <p className="gc-first-run__error-message">{error}</p>
+            <Button type="button" variant="ghost" onClick={onRetry}>
+              Retry
+            </Button>
+          </div>
+        )}
 
         {detection.found && (
           <div className="gc-first-run__detection">

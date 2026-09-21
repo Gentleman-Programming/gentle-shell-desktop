@@ -86,6 +86,25 @@ describe("registerHandlers", () => {
     void chooseHomeHandler({} as never, "link");
     expect(setup.chooseHome).toHaveBeenCalledWith("link");
   });
+
+  // registerRequestHandler is a thin pass-through (ipc.handle(channel,
+  // listener) with no try/catch of its own) so a rejected SetupService
+  // call reaches the renderer as a rejected invoke() unchanged — this is
+  // Electron's own ipcMain.handle()/ipcRenderer.invoke() contract, not
+  // something this file has to implement; this test pins that the
+  // pass-through never starts swallowing or rewrapping it (T6 follow-up).
+  it("setup.chooseHome's handler rejects with the SetupService's own error instead of swallowing it", async () => {
+    const ipc = fakeIpcMain();
+    const setup: SetupService = {
+      status: vi.fn(),
+      chooseHome: vi.fn().mockRejectedValue(new Error("Could not save the home choice: EACCES")),
+    };
+
+    registerHandlers(fakeHost(), setup, fakeWebContents(), ipc);
+    const chooseHomeHandler = registeredHandler(ipc, "setup.chooseHome");
+
+    await expect(chooseHomeHandler({} as never, "link")).rejects.toThrow("Could not save the home choice: EACCES");
+  });
 });
 
 function registeredHandler(ipc: IpcMain, channel: string): (...args: unknown[]) => unknown {

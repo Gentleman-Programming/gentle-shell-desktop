@@ -103,6 +103,25 @@ let nextDialogId = 0;
 const stateListeners = new Set<(state: ChatState) => void>();
 const errorListeners = new Set<(message: string) => void>();
 
+/**
+ * Resets every module-level mutable field mockBridge keeps (T6 follow-up).
+ * mockBridge.test.ts calls this in `beforeEach` instead of just
+ * `newChat()`: `newChat()` alone only resets `currentState`, leaving
+ * `homeChoice` (and the accumulating listener sets/id counters) persisted
+ * across tests — a test asserting `setupStatus().needsChoice` would then
+ * silently depend on whether an earlier test already called chooseHome().
+ * Exported (not automatic) because only tests need it: the browser preview
+ * this module backs never wants its own state wiped mid-session.
+ */
+export function resetMockBridge(): void {
+  homeChoice = undefined;
+  currentState = emptyState();
+  nextMessageId = 0;
+  nextDialogId = 0;
+  stateListeners.clear();
+  errorListeners.clear();
+}
+
 function setState(state: ChatState): void {
   currentState = state;
   for (const listener of stateListeners) listener(state);
