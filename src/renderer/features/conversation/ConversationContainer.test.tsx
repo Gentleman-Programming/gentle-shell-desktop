@@ -1,8 +1,19 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { MESSAGE_ROLE, type ChatState, type GentleBridge } from "@shared/bridge-types";
-import { ConversationContainer } from "./ConversationContainer";
+import { CHAT_STATE, MESSAGE_ROLE, type ChatState, type ChatSummary, type GentleBridge } from "@shared/bridge-types";
+import { ConversationContainer, type ActiveChat } from "./ConversationContainer";
+
+const NEW_CHAT: ActiveChat = { kind: "new" };
+
+const EXISTING_CHAT: ChatSummary = {
+  id: "chat-1",
+  title: "Refactor the store",
+  cwd: "/tmp/project",
+  updatedAt: "2026-09-21T09:00:00.000Z",
+  messageCount: 3,
+  state: CHAT_STATE.IDLE,
+};
 
 function emptyState(): ChatState {
   return { messages: [], working: false, pendingDialogs: [], activity: 0 };
@@ -23,7 +34,40 @@ function makeBridge(overrides: Partial<GentleBridge> = {}): GentleBridge {
 }
 
 describe("ConversationContainer", () => {
-  it("opens a fresh chat on mount and renders only the pushed ChatState", async () => {
+  it('calls bridge.newChat() for activeChat { kind: "new" } and shows "New chat" as the title', async () => {
+    const bridge = makeBridge();
+    window.gentle = bridge;
+
+    render(<ConversationContainer activeChat={NEW_CHAT} />);
+
+    await vi.waitFor(() => expect(bridge.newChat).toHaveBeenCalled());
+    expect(bridge.openChat).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "New chat" })).toBeInTheDocument();
+  });
+
+  it("calls bridge.openChat(id) for an existing activeChat and shows its title", async () => {
+    const bridge = makeBridge();
+    window.gentle = bridge;
+
+    render(<ConversationContainer activeChat={{ kind: "existing", chat: EXISTING_CHAT }} />);
+
+    await vi.waitFor(() => expect(bridge.openChat).toHaveBeenCalledWith("chat-1"));
+    expect(bridge.newChat).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "Refactor the store" })).toBeInTheDocument();
+  });
+
+  it("re-opens when activeChat changes", async () => {
+    const bridge = makeBridge();
+    window.gentle = bridge;
+
+    const { rerender } = render(<ConversationContainer activeChat={NEW_CHAT} />);
+    await vi.waitFor(() => expect(bridge.newChat).toHaveBeenCalledTimes(1));
+
+    rerender(<ConversationContainer activeChat={{ kind: "existing", chat: EXISTING_CHAT }} />);
+    await vi.waitFor(() => expect(bridge.openChat).toHaveBeenCalledWith("chat-1"));
+  });
+
+  it("renders only the pushed ChatState", async () => {
     let pushState: (state: ChatState) => void = () => {};
     const bridge = makeBridge({
       onState: vi.fn((callback: (state: ChatState) => void) => {
@@ -33,8 +77,7 @@ describe("ConversationContainer", () => {
     });
     window.gentle = bridge;
 
-    render(<ConversationContainer />);
-
+    render(<ConversationContainer activeChat={NEW_CHAT} />);
     await vi.waitFor(() => expect(bridge.newChat).toHaveBeenCalled());
 
     pushState({
@@ -51,10 +94,10 @@ describe("ConversationContainer", () => {
     const bridge = makeBridge();
     window.gentle = bridge;
 
-    render(<ConversationContainer />);
+    render(<ConversationContainer activeChat={NEW_CHAT} />);
     await vi.waitFor(() => expect(bridge.newChat).toHaveBeenCalled());
 
-    fireEvent.change(screen.getByPlaceholderText("Message Gentle…"), { target: { value: "  hi Gentle  " } });
+    fireEvent.change(screen.getByPlaceholderText("Tell Gentle what you need…"), { target: { value: "  hi Gentle  " } });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     expect(bridge.sendMessage).toHaveBeenCalledWith("hi Gentle");
@@ -70,7 +113,7 @@ describe("ConversationContainer", () => {
     });
     window.gentle = bridge;
 
-    render(<ConversationContainer />);
+    render(<ConversationContainer activeChat={NEW_CHAT} />);
     await vi.waitFor(() => expect(bridge.newChat).toHaveBeenCalled());
 
     pushError("Gentle is still working");
@@ -89,28 +132,69 @@ describe("ConversationContainer", () => {
     });
     window.gentle = bridge;
 
-    render(<ConversationContainer />);
+    render(<ConversationContainer activeChat={NEW_CHAT} />);
+    await vi.waitFor(() => expect(bridge.newChat).toHaveBeenCalled());
+
+    pushState({ messages: [], working: false, pendingDialogs: [], activity: 0, lastError: "pi exited unexpectedly" });
+
+    expect(await screen.findByRole("status")).toHaveTextContent("pi exited unexpectedly");
+  });
+
+  it("forwards a dialog answer to bridge.answerDialog with the dialog id", async () => {
+    let pushState: (state: ChatState) => void = () => {};
+    const bridge = makeBridge({
+      onState: vi.fn((callback: (state: ChatState) => void) => {
+        pushState = callback;
+        return () => {};
+      }),
+    });
+    window.gentle = bridge;
+
+    render(<ConversationContainer activeChat={NEW_CHAT} />);
     await vi.waitFor(() => expect(bridge.newChat).toHaveBeenCalled());
 
     pushState({
       messages: [],
       working: false,
-      pendingDialogs: [],
+      pendingDialogs: [{ id: "dlg-1", method: "confirm", title: "Delete the file?" }],
       activity: 0,
-      lastError: "pi exited unexpectedly",
     });
 
-    expect(await screen.findByRole("status")).toHaveTextContent("pi exited unexpectedly");
+    fireEvent.click(await screen.findByRole("button", { name: "Yes" }));
+
+    expect(bridge.answerDialog).toHaveBeenCalledWith("dlg-1", { confirmed: true });
+  });
+
+  it("calls bridge.abort() on Escape while working", async () => {
+    let pushState: (state: ChatState) => void = () => {};
+    const bridge = makeBridge({
+      onState: vi.fn((callback: (state: ChatState) => void) => {
+        pushState = callback;
+        return () => {};
+      }),
+    });
+    window.gentle = bridge;
+
+    render(<ConversationContainer activeChat={NEW_CHAT} />);
+    await vi.waitFor(() => expect(bridge.newChat).toHaveBeenCalled());
+
+    pushState({ messages: [], working: true, pendingDialogs: [], activity: 0 });
+
+    const textarea = screen.getByPlaceholderText("Tell Gentle what you need…");
+    await vi.waitFor(() => expect(textarea).toHaveAttribute("readonly"));
+    fireEvent.keyDown(textarea, { key: "Escape" });
+
+    expect(bridge.abort).toHaveBeenCalled();
   });
 
   it("does not call sendMessage when the draft is only whitespace", async () => {
     const bridge = makeBridge();
     window.gentle = bridge;
 
-    render(<ConversationContainer />);
+    render(<ConversationContainer activeChat={NEW_CHAT} />);
     await vi.waitFor(() => expect(bridge.newChat).toHaveBeenCalled());
 
-    fireEvent.change(screen.getByPlaceholderText("Message Gentle…"), { target: { value: "   " } });
+    fireEvent.change(screen.getByPlaceholderText("Tell Gentle what you need…"), { target: { value: "   " } });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     expect(bridge.sendMessage).not.toHaveBeenCalled();

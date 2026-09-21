@@ -16,15 +16,28 @@ const STATE_LABEL: Record<ChatSummary["state"], string> = {
 
 export interface ChatListItemProps {
   readonly chat: ChatSummary;
+  readonly selected?: boolean;
+  readonly onSelect: (chat: ChatSummary) => void;
 }
 
 // Presentational only — receives props, talks to nothing. ChatsContainer
-// owns the bridge call and passes ChatSummary values down.
-export function ChatListItem({ chat }: ChatListItemProps) {
+// (through ChatList) owns the bridge call and passes ChatSummary values
+// down. A <button> (not a clickable <div>) so the list is keyboard- and
+// screen-reader-navigable without extra ARIA plumbing.
+export function ChatListItem({ chat, selected = false, onSelect }: ChatListItemProps) {
+  const classes = ["gc-chat-list-item", selected && "gc-chat-list-item--selected"].filter(Boolean).join(" ");
+
   return (
-    <li className="gc-chat-list-item">
-      <span className="gc-chat-list-item__title">{chat.title}</span>
-      <Pill tone={STATE_PILL_TONE[chat.state]}>{STATE_LABEL[chat.state]}</Pill>
+    <li>
+      <button
+        type="button"
+        className={classes}
+        aria-current={selected || undefined}
+        onClick={() => onSelect(chat)}
+      >
+        <span className="gc-chat-list-item__title">{chat.title}</span>
+        <Pill tone={STATE_PILL_TONE[chat.state]}>{STATE_LABEL[chat.state]}</Pill>
+      </button>
     </li>
   );
 }

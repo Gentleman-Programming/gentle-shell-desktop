@@ -1,0 +1,61 @@
+.gc-dialog-card {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+}
+
+.gc-dialog-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.gc-dialog-card__title {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.gc-dialog-card__cancel {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.15rem;
+}
+
+.gc-dialog-card__cancel:hover {
+  color: var(--text);
+}
+
+.gc-dialog-card__message {
+  color: var(--text-2);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.gc-dialog-card__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.gc-dialog-card__text-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.gc-dialog-card__text-form .gc-text-field {
+  flex: 1;
+}

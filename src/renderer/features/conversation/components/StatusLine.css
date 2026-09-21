@@ -1,0 +1,9 @@
+.gc-status-line {
+  color: var(--red);
+  font-size: 0.85rem;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  margin: 0 1rem;
+}

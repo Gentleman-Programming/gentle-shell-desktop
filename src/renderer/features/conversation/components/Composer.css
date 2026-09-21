@@ -1,12 +1,24 @@
 .gc-composer {
   display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.35rem;
   padding: 0.75rem;
   border-top: 1px solid var(--line);
   background: var(--panel);
 }
 
+.gc-composer__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
 .gc-composer .gc-text-field {
   flex: 1;
+}
+
+.gc-composer__hints {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
 }

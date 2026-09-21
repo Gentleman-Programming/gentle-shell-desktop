@@ -3,30 +3,6 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
   background: var(--bg);
-}
-
-.gc-conversation__thread {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding: 1rem;
-  overflow-y: auto;
-}
-
-.gc-conversation__empty {
-  color: var(--muted);
-  font-size: 0.9rem;
-  margin: auto;
-}
-
-.gc-conversation__status {
-  color: var(--red);
-  font-size: 0.85rem;
-  background: var(--raised);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0.5rem 0.75rem;
-  margin: 0;
 }
