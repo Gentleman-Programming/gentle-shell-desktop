@@ -1,17 +1,21 @@
 import type { ChatState, ChatSummary, DialogAnswer, PromptResult } from "@shared/bridge-types";
-import type { LauncherLocator, ProcessSpawner, SessionStore } from "../../ports";
+import type { HomeSettings, LauncherLocator, ProcessSpawner, SessionStore } from "../../ports";
 import { PiSession } from "./PiSession";
 import { toChatSummaries } from "./sessionList";
+
+const NO_HOME_SETTINGS: HomeSettings = { homeArgs: () => [] };
 
 export interface ChatHostDeps {
   readonly spawner: ProcessSpawner;
   readonly locator: LauncherLocator;
   readonly sessionStore: SessionStore;
   readonly env: NodeJS.ProcessEnv;
-  /** e.g. `["--home", home]`; forwarded to every spawned PiSession so the
-   * child pi process and this process's own SessionStore agree on the
-   * same home. */
-  readonly homeArgs?: readonly string[];
+  /** Resolves the launcher home flags (e.g. `["--link"]`) fresh on every
+   * spawned session, from the persisted home choice (T5) instead of a
+   * fixed constant, so a choice made mid-session takes effect on the very
+   * next open/new. Defaults to no flags when omitted (e.g. plain unit
+   * tests that don't care about home). */
+  readonly homeSettings?: HomeSettings;
   /** Receives raw child stderr lines from every spawned PiSession, forwarded
    * unchanged from PiSessionOptions.onLog (T5 host follow-up). Defaults to
    * a no-op. */
@@ -117,7 +121,7 @@ export class ChatHost {
     const session = new PiSession({
       spawner: this.deps.spawner,
       locator: this.deps.locator,
-      homeArgs: this.deps.homeArgs,
+      homeArgs: (this.deps.homeSettings ?? NO_HOME_SETTINGS).homeArgs(),
       sessionPath,
       env: this.deps.env,
       onLog: this.deps.log,

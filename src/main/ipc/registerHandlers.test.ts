@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { IpcMain, WebContents } from "electron";
 import type { ChatHost } from "../domain/session/ChatHost";
+import type { SetupService } from "../ports";
 import { registerHandlers } from "./registerHandlers";
 
 function fakeHost(overrides: Partial<ChatHost> = {}): ChatHost {
@@ -15,6 +16,13 @@ function fakeHost(overrides: Partial<ChatHost> = {}): ChatHost {
     onError: vi.fn().mockReturnValue(() => {}),
     ...overrides,
   } as unknown as ChatHost;
+}
+
+function fakeSetup(): SetupService {
+  return {
+    status: vi.fn().mockResolvedValue({ needsChoice: false, detection: { found: false, dir: "", hasAuth: false, hasModels: false } }),
+    chooseHome: vi.fn().mockResolvedValue(undefined),
+  };
 }
 
 /** Mirrors Electron's real behaviour: handle() throws for a channel that
@@ -41,9 +49,9 @@ describe("registerHandlers", () => {
     const ipc = fakeIpcMain();
     const host = fakeHost();
 
-    registerHandlers(host, fakeWebContents(), ipc);
+    registerHandlers(host, fakeSetup(), fakeWebContents(), ipc);
 
-    expect(() => registerHandlers(host, fakeWebContents(), ipc)).not.toThrow();
+    expect(() => registerHandlers(host, fakeSetup(), fakeWebContents(), ipc)).not.toThrow();
   });
 
   it("returns an unsubscribe that stops forwarding state/error pushes for that call's webContents", () => {
@@ -55,10 +63,33 @@ describe("registerHandlers", () => {
       onError: vi.fn().mockReturnValue(unsubscribeError),
     });
 
-    const unregister = registerHandlers(host, fakeWebContents(), ipc);
+    const unregister = registerHandlers(host, fakeSetup(), fakeWebContents(), ipc);
     unregister();
 
     expect(unsubscribeState).toHaveBeenCalledTimes(1);
     expect(unsubscribeError).toHaveBeenCalledTimes(1);
   });
+
+  it("registers setup.status and setup.chooseHome, wired to the SetupService", () => {
+    const ipc = fakeIpcMain();
+    const host = fakeHost();
+    const setup = fakeSetup();
+
+    registerHandlers(host, setup, fakeWebContents(), ipc);
+
+    const statusHandler = registeredHandler(ipc, "setup.status");
+    const chooseHomeHandler = registeredHandler(ipc, "setup.chooseHome");
+
+    void statusHandler({} as never);
+    expect(setup.status).toHaveBeenCalledTimes(1);
+
+    void chooseHomeHandler({} as never, "link");
+    expect(setup.chooseHome).toHaveBeenCalledWith("link");
+  });
 });
+
+function registeredHandler(ipc: IpcMain, channel: string): (...args: unknown[]) => unknown {
+  const call = vi.mocked(ipc.handle).mock.calls.find(([registeredChannel]) => registeredChannel === channel);
+  if (!call) throw new Error(`no handler registered for channel "${channel}"`);
+  return call[1] as (...args: unknown[]) => unknown;
+}

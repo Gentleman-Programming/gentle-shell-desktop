@@ -1,3 +1,5 @@
+import type { HomeMode, SetupStatus } from "@shared/bridge-types";
+
 /**
  * Ports the domain depends on; concrete adapters (src/main/adapters)
  * implement them, so the domain never imports Electron/Node APIs directly.
@@ -5,7 +7,8 @@
  * ProcessSpawner and LauncherLocator are T2's ports for running
  * `gentle-shell --mode rpc` as a child process. SessionStore is T3's port
  * for listing pi chats (adapters/piSessionStore.ts implements it over
- * SessionManager.listAll()).
+ * SessionManager.listAll()). HomeSettings and SetupService are T5's ports
+ * for the first-run home choice.
  */
 
 /** One line-oriented handle to a spawned child process. */
@@ -69,4 +72,26 @@ export interface SessionInfoLike {
 
 export interface SessionStore {
   listAll(): Promise<SessionInfoLike[]>;
+}
+
+/**
+ * Provides the launcher home flags ChatHost forwards to every spawned
+ * PiSession (T5), sourced from the persisted home choice
+ * (resolveHomeArgs(configStore.read())) instead of a fixed constant —
+ * re-read on every call, so a home choice made mid-session (first-run)
+ * takes effect on the next open/new without an app restart. See
+ * adapters/homeSettings.ts.
+ */
+export interface HomeSettings {
+  homeArgs(): readonly string[];
+}
+
+/**
+ * Answers the desktop app's own first-run/home-choice concerns (T5):
+ * whether to show the home-choice screen, and persisting the user's
+ * choice. See adapters/setupService.ts.
+ */
+export interface SetupService {
+  status(): Promise<SetupStatus>;
+  chooseHome(mode: HomeMode): Promise<void>;
 }

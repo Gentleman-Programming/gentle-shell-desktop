@@ -1,7 +1,8 @@
 import type { IpcMain, WebContents } from "electron";
-import type { DialogAnswer } from "@shared/bridge-types";
+import type { DialogAnswer, HomeMode } from "@shared/bridge-types";
 import { IPC_CHANNELS } from "@shared/ipc-channels";
 import type { ChatHost } from "../domain/session/ChatHost";
+import type { SetupService } from "../ports";
 
 /**
  * Registers `ipcMain.handle` for every GentleBridge request channel
@@ -18,9 +19,12 @@ import type { ChatHost } from "../domain/session/ChatHost";
  * channel that already has one): M1 has exactly one window at a time, but
  * that window can still close and a new one open later (macOS `activate`,
  * T5 host follow-up), so this must tolerate being called again rather
- * than assuming it only ever runs once for the app's lifetime.
+ * than assuming it only ever runs once for the app's lifetime. `setup`
+ * (T5) answers the first-run/home-choice channels; it has no per-window
+ * state, so it is exposed the same way for every window instead of also
+ * needing an unsubscribe.
  */
-export function registerHandlers(host: ChatHost, webContents: WebContents, ipc: IpcMain): () => void {
+export function registerHandlers(host: ChatHost, setup: SetupService, webContents: WebContents, ipc: IpcMain): () => void {
   registerRequestHandler(ipc, IPC_CHANNELS.LIST_CHATS, () => host.listChats());
   registerRequestHandler(ipc, IPC_CHANNELS.OPEN_CHAT, (_event, id: string) => host.openChat(id));
   registerRequestHandler(ipc, IPC_CHANNELS.NEW_CHAT, () => host.newChat());
@@ -29,6 +33,8 @@ export function registerHandlers(host: ChatHost, webContents: WebContents, ipc: 
   registerRequestHandler(ipc, IPC_CHANNELS.ANSWER_DIALOG, (_event, id: string, answer: DialogAnswer) =>
     host.answerDialog(id, answer),
   );
+  registerRequestHandler(ipc, IPC_CHANNELS.SETUP_STATUS, () => setup.status());
+  registerRequestHandler(ipc, IPC_CHANNELS.CHOOSE_HOME, (_event, mode: HomeMode) => setup.chooseHome(mode));
 
   const unsubscribeState = host.onState((state) => webContents.send(IPC_CHANNELS.STATE_PUSH, state));
   const unsubscribeError = host.onError((message) => webContents.send(IPC_CHANNELS.ERROR_PUSH, message));

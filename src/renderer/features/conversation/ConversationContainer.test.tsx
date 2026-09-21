@@ -24,11 +24,13 @@ function makeBridge(overrides: Partial<GentleBridge> = {}): GentleBridge {
     listChats: vi.fn().mockResolvedValue([]),
     openChat: vi.fn().mockResolvedValue(emptyState()),
     newChat: vi.fn().mockResolvedValue(emptyState()),
-    sendMessage: vi.fn().mockResolvedValue(undefined),
+    sendMessage: vi.fn().mockResolvedValue({ queued: true }),
     abort: vi.fn().mockResolvedValue(undefined),
     answerDialog: vi.fn().mockResolvedValue(undefined),
     onState: vi.fn().mockReturnValue(() => {}),
     onError: vi.fn().mockReturnValue(() => {}),
+    setupStatus: vi.fn().mockResolvedValue({ needsChoice: false, detection: { found: false, dir: "", hasAuth: false, hasModels: false } }),
+    chooseHome: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }

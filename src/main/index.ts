@@ -1,9 +1,17 @@
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { app, BrowserWindow, ipcMain } from "electron";
-import { createLauncherLocator, createNodeProcessSpawner, createPiSessionStore } from "./adapters";
+import {
+  createAppConfigStore,
+  createDynamicPiSessionStore,
+  createHomeSettings,
+  createLauncherLocator,
+  createNodeProcessSpawner,
+  createSetupService,
+} from "./adapters";
 import { boundedStop } from "./domain/lifecycle/boundedStop";
-import { resolveHome } from "./domain/home/home";
+import { homeDirFor } from "./domain/home/home";
+import { HOME_MODE } from "@shared/bridge-types";
 import { ChatHost } from "./domain/session/ChatHost";
 import { registerHandlers } from "./ipc/registerHandlers";
 
@@ -18,24 +26,33 @@ function logPiLine(line: string): void {
   process.stderr.write(`[pi] ${line}\n`);
 }
 
-// The resolved home is shared by the ChatHost's SessionStore (lists
-// sessions from <home>/sessions) and every PiSession it spawns (--home
-// <home>, T5 replaces this with --link/--isolated once first-run exists),
-// so the session list always matches the chat the user can actually open.
-const home = resolveHome();
+// Persisted first-run/home choice (T5), under Electron's own per-user data
+// directory. configStore.read() has no choice yet before first-run
+// resolves it (see setupService's needsChoice) — homeSettings/the dynamic
+// SessionStore below both default an absent choice to isolated, matching
+// resolveHomeArgs/homeDirFor's own default.
+const configStore = createAppConfigStore(path.join(app.getPath("userData"), "config.json"));
+const homeSettings = createHomeSettings(configStore);
+const setupService = createSetupService(configStore);
+
+// The SessionStore re-resolves the current home on every call (instead of
+// once at startup) so it reflects a home choice made mid-session, exactly
+// like homeSettings.homeArgs() above — see createDynamicPiSessionStore's
+// doc comment.
 const chatHost = new ChatHost({
   spawner: createNodeProcessSpawner(),
   locator: createLauncherLocator(),
-  sessionStore: createPiSessionStore(home),
+  sessionStore: createDynamicPiSessionStore(() => homeDirFor(configStore.read().home ?? HOME_MODE.ISOLATED, process.env)),
   env: process.env,
-  homeArgs: ["--home", home],
+  homeSettings,
   log: logPiLine,
 });
 
 // M1 T1 was just the window shell; T2 added the PiSession child process;
 // T3 wires IPC handlers so the renderer can list/open/send for real; T5
 // keeps registerHandlers' unsubscribe and calls it when this window
-// closes, so a later window (macOS activate) can re-register cleanly.
+// closes, so a later window (macOS activate) can re-register cleanly, and
+// adds the setup.status/chooseHome handlers for first-run.
 function createWindow(): void {
   const window = new BrowserWindow({
     width: 1280,
@@ -51,7 +68,7 @@ function createWindow(): void {
     },
   });
 
-  const unregisterHandlers = registerHandlers(chatHost, window.webContents, ipcMain);
+  const unregisterHandlers = registerHandlers(chatHost, setupService, window.webContents, ipcMain);
   window.on("closed", unregisterHandlers);
 
   window.once("ready-to-show", () => window.show());

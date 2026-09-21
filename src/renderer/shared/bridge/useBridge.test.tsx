@@ -26,6 +26,8 @@ describe("useBridge", () => {
       answerDialog: vi.fn(),
       onState: vi.fn(),
       onError: vi.fn(),
+      setupStatus: vi.fn(),
+      chooseHome: vi.fn(),
     };
     window.gentle = realBridge;
 

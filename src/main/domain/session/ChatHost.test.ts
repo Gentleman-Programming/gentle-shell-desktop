@@ -13,6 +13,7 @@ import { ChatHost } from "./ChatHost";
  * stopped before the next one spawns (not just that both eventually run).
  */
 interface FakeProcessHandle {
+  readonly args: readonly string[];
   readonly writes: string[];
   emitStdout(line: string): void;
   emitStderr(line: string): void;
@@ -24,7 +25,7 @@ function createFakeSpawner(): { spawner: ProcessSpawner; handles: FakeProcessHan
   const events: string[] = [];
 
   const spawner: ProcessSpawner = {
-    spawn(): SpawnedProcess {
+    spawn(_command, args): SpawnedProcess {
       const index = handles.length;
       events.push(`spawn:${index}`);
 
@@ -37,6 +38,7 @@ function createFakeSpawner(): { spawner: ProcessSpawner; handles: FakeProcessHan
       });
 
       const handle: FakeProcessHandle = {
+        args: [...args],
         writes,
         emitStdout(line) {
           for (const handler of stdoutHandlers) handler(line);
@@ -235,5 +237,21 @@ describe("ChatHost", () => {
 
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatch(/exited unexpectedly/);
+  });
+
+  it("reads homeArgs from deps.homeSettings on every spawn instead of a fixed constant", async () => {
+    const { spawner, handles } = createFakeSpawner();
+    let mode: "link" | "isolated" = "isolated";
+    const homeSettings = { homeArgs: () => (mode === "link" ? ["--link"] : ["--isolated"]) };
+    const host = new ChatHost({ spawner, locator: fakeLocator, sessionStore: fakeSessionStore([]), env: {}, homeSettings });
+
+    await host.newChat();
+    expect(handles[0]?.args).toContain("--isolated");
+
+    mode = "link";
+    const second = host.newChat();
+    handles[0]?.resolveExited({ code: 0, signal: null });
+    await second;
+    expect(handles[1]?.args).toContain("--link");
   });
 });

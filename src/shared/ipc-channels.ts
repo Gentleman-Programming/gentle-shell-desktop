@@ -16,6 +16,10 @@ export const IPC_CHANNELS = {
   STATE_PUSH: "chat.state",
   /** webContents.send push: an error was surfaced for the current chat. */
   ERROR_PUSH: "chat.error",
+  /** First-run status (T5): whether to show the home-choice screen. */
+  SETUP_STATUS: "setup.status",
+  /** Persists the chosen home mode (T5). */
+  CHOOSE_HOME: "setup.chooseHome",
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

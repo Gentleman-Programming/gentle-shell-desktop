@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { createPiSessionStore } from "./piSessionStore";
+import { createDynamicPiSessionStore, createPiSessionStore } from "./piSessionStore";
 
 /**
  * Writes one session in pi's on-disk jsonl format: a `session` header line
@@ -99,5 +99,46 @@ describe("createPiSessionStore", () => {
   it("returns an empty list when the sessions directory does not exist yet", async () => {
     home = mkdtempSync(path.join(tmpdir(), "gentle-shell-home-"));
     await expect(createPiSessionStore(home).listAll()).resolves.toEqual([]);
+  });
+});
+
+describe("createDynamicPiSessionStore", () => {
+  let homeA: string | undefined;
+  let homeB: string | undefined;
+
+  afterEach(() => {
+    if (homeA) rmSync(homeA, { recursive: true, force: true });
+    if (homeB) rmSync(homeB, { recursive: true, force: true });
+    homeA = undefined;
+    homeB = undefined;
+  });
+
+  it("re-resolves the current home on every call instead of a fixed one (T5: reflects a home choice made mid-session)", async () => {
+    homeA = mkdtempSync(path.join(tmpdir(), "gentle-shell-home-a-"));
+    homeB = mkdtempSync(path.join(tmpdir(), "gentle-shell-home-b-"));
+    writeSessionFixture(
+      homeA,
+      "--proj-a--",
+      "sess-a.jsonl",
+      { type: "session", id: "sess-a", timestamp: "2026-09-20T10:00:00.000Z", cwd: "/tmp/project-a" },
+      [],
+    );
+    writeSessionFixture(
+      homeB,
+      "--proj-b--",
+      "sess-b.jsonl",
+      { type: "session", id: "sess-b", timestamp: "2026-09-20T10:00:00.000Z", cwd: "/tmp/project-b" },
+      [],
+    );
+
+    let currentHome = homeA;
+    const store = createDynamicPiSessionStore(() => currentHome!);
+
+    const before = await store.listAll();
+    expect(before.map((session) => session.id)).toEqual(["sess-a"]);
+
+    currentHome = homeB;
+    const after = await store.listAll();
+    expect(after.map((session) => session.id)).toEqual(["sess-b"]);
   });
 });

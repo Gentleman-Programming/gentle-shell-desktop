@@ -15,6 +15,21 @@ describe("mockBridge", () => {
     await mockBridge.newChat();
   });
 
+  it("setupStatus() starts with needsChoice: true and a fake pi detection, so the first-run screen is reachable in the browser preview", async () => {
+    const status = await mockBridge.setupStatus();
+
+    expect(status.needsChoice).toBe(true);
+    expect(status.detection).toMatchObject({ found: true, hasAuth: true, hasModels: true });
+  });
+
+  it("chooseHome persists the choice: a later setupStatus() reports needsChoice: false", async () => {
+    await mockBridge.chooseHome("link");
+
+    const status = await mockBridge.setupStatus();
+
+    expect(status.needsChoice).toBe(false);
+  });
+
   it("lists two example chats plus one already-working chat", async () => {
     const chats = await mockBridge.listChats();
 

@@ -7,7 +7,10 @@ import {
   type Dialog,
   type DialogAnswer,
   type GentleBridge,
+  type HomeMode,
+  type PiDetection,
   type PromptResult,
+  type SetupStatus,
 } from "@shared/bridge-types";
 
 /**
@@ -57,6 +60,37 @@ const EXAMPLE_CHATS: ChatSummary[] = [
 ];
 
 const STREAM_DELAY_MS = 40;
+
+/** Fake "we found pi on this machine" detection (T5), so the first-run
+ * screen's detection card is reachable in the browser preview without a
+ * real pi install. */
+const FAKE_DETECTION: PiDetection = {
+  found: true,
+  dir: "/Users/dev/.pi/agent",
+  hasAuth: true,
+  hasModels: true,
+};
+
+/** The persisted home choice, mirroring appConfigStore/setupService (T5):
+ * undefined means "no choice yet", so setupStatus() reports needsChoice
+ * until chooseHome() is called. */
+let homeChoice: HomeMode | undefined;
+
+/**
+ * `?firstRun=0`/`?firstRun=1` in the preview URL force-skips or
+ * force-shows the first-run screen regardless of the persisted choice
+ * above, so it can be exercised (or gotten out of the way) on demand
+ * under `pnpm dev:web`. Guarded for `typeof window === "undefined"`:
+ * this module's own unit tests run under vitest's Node environment,
+ * which has no `window`.
+ */
+function firstRunOverride(): boolean | undefined {
+  if (typeof window === "undefined") return undefined;
+  const flag = new URLSearchParams(window.location.search).get("firstRun");
+  if (flag === "0") return false;
+  if (flag === "1") return true;
+  return undefined;
+}
 
 function emptyState(): ChatState {
   return { messages: [], working: false, pendingDialogs: [], activity: 0 };
@@ -215,5 +249,15 @@ export const mockBridge: GentleBridge = {
   onError(callback: (message: string) => void): () => void {
     errorListeners.add(callback);
     return () => errorListeners.delete(callback);
+  },
+
+  async setupStatus(): Promise<SetupStatus> {
+    const override = firstRunOverride();
+    const needsChoice = override ?? homeChoice === undefined;
+    return { needsChoice, detection: FAKE_DETECTION };
+  },
+
+  async chooseHome(mode: HomeMode): Promise<void> {
+    homeChoice = mode;
   },
 };

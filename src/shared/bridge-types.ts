@@ -127,10 +127,50 @@ export interface ChatState {
 }
 
 /**
+ * Whether the desktop app links to an existing plain pi CLI install
+ * (`--link`, reusing `~/.pi/agent` or `PI_CODING_AGENT_DIR`) or keeps its
+ * own isolated home (`--isolated`, `~/.gentle-shell/agent`) — the choice
+ * T5's first-run screen offers. Lives here (not
+ * src/main/domain/home/home.ts, where it is resolved and persisted)
+ * because the renderer's first-run screen sends this same value back
+ * through GentleBridge.chooseHome — the Scope Rule promotes it out of
+ * src/main once a second process needs the shape.
+ */
+export const HOME_MODE = {
+  LINK: "link",
+  ISOLATED: "isolated",
+} as const;
+
+export type HomeMode = (typeof HOME_MODE)[keyof typeof HOME_MODE];
+
+/**
+ * Whether `~/.pi/agent` (or `PI_CODING_AGENT_DIR`) exists, and what a
+ * plain pi CLI install left there — what the first-run screen's
+ * "We found pi on this machine" detection card renders.
+ */
+export interface PiDetection {
+  readonly found: boolean;
+  readonly dir: string;
+  readonly hasAuth: boolean;
+  readonly hasModels: boolean;
+}
+
+/** GentleBridge.setupStatus()'s result: whether first-run should be shown
+ * (no home choice persisted yet AND pi was detected) and what detectPi
+ * found either way, so the screen can render its detection card even when
+ * a choice already exists (defensive; App.tsx only renders the screen
+ * when `needsChoice` is true). */
+export interface SetupStatus {
+  readonly needsChoice: boolean;
+  readonly detection: PiDetection;
+}
+
+/**
  * Surface exposed on `window.gentle` by the preload script. T1 typed the
  * listChats/sendMessage skeleton; T3 finalizes the full shape and wires it
  * to the real IPC bridge (src/preload/bridge.ts) and main-process ChatHost
- * (src/main/domain/session/ChatHost.ts, src/main/ipc/registerHandlers.ts).
+ * (src/main/domain/session/ChatHost.ts, src/main/ipc/registerHandlers.ts);
+ * T5 adds first-run/home.
  */
 export interface GentleBridge {
   listChats(): Promise<ChatSummary[]>;
@@ -148,6 +188,12 @@ export interface GentleBridge {
   onState(callback: (state: ChatState) => void): () => void;
   /** Subscribes to error messages surfaced by the currently open chat. Returns an unsubscribe function. */
   onError(callback: (message: string) => void): () => void;
+  /** Whether to show the first-run home-choice screen, and what pi
+   * detection found. */
+  setupStatus(): Promise<SetupStatus>;
+  /** Persists the chosen home mode; the next spawned session and the
+   * session list use it. */
+  chooseHome(mode: HomeMode): Promise<void>;
 }
 
 declare global {
