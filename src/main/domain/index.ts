@@ -1,18 +1,16 @@
 /**
- * Placeholder domain types for M1 T2 (RPC protocol) and T3 (sessions).
- * Pure types only — no Electron or Node imports allowed here, so the
- * domain stays testable and framework-agnostic (hexagonal main process).
- * Kept local to src/main because only the main process needs them today;
- * the Scope Rule promotes to src/shared/ only once a second process does.
+ * Domain barrel. Pure types and logic only — no Electron or Node imports
+ * allowed here, so the domain stays testable and framework-agnostic
+ * (hexagonal main process, see src/README.md).
+ *
+ * T2 replaced the RPC/dialog placeholders with the real protocol types
+ * (src/main/domain/rpc). SessionPlaceholder stays a placeholder for T3
+ * (SessionManager.listAll()).
  */
-export interface ChatEventPlaceholder {
-  readonly kind: "placeholder";
-}
+export * from "./rpc/types";
+export * from "./rpc/codec";
+export * from "./rpc/chatReducer";
 
 export interface SessionPlaceholder {
   readonly id: string;
-}
-
-export interface DialogPlaceholder {
-  readonly kind: "placeholder";
 }

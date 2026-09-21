@@ -1,0 +1,3 @@
+{"type":"agent_start"}
+{"type":"extension_error","extensionPath":"/home/user/.pi/agent/extensions/broken.ts","event":"tool_call","error":"Cannot read properties of undefined (reading 'foo')"}
+{"type":"agent_settled"}
