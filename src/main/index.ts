@@ -1,4 +1,3 @@
-import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { app, BrowserWindow, ipcMain } from "electron";
 import {
@@ -14,9 +13,28 @@ import { homeDirFor, resolveHomeMode } from "./domain/home/home";
 import { ChatHost } from "./domain/session/ChatHost";
 import { registerHandlers } from "./ipc/registerHandlers";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// `import.meta.dirname` directly (not a manually computed
+// `path.dirname(fileURLToPath(import.meta.url))` `__dirname`), and under
+// its own name instead of shadowing `__dirname`: electron-vite's built
+// ESM output auto-injects its own top-level `const __dirname =
+// import.meta.dirname;` "CommonJS shim" (for whatever dependency still
+// expects `require`/`__dirname`), so a second same-named top-level
+// declaration in this file collided with it — "Identifier '__dirname'
+// has already been declared" — and crashed the packaged app on load
+// (T6's Electron smoke check caught this; electron-vite dev never hits
+// the built bundle, only `pnpm build`/`pnpm package` do).
+const moduleDir = import.meta.dirname;
 
 const STOP_ON_QUIT_TIMEOUT_MS = 4000;
+
+// scripts/smoke-electron.mjs (T6) sets this to a throwaway temp dir before
+// launching the real built app through Playwright, so the smoke run never
+// reads or writes this developer's actual config.json under the real
+// userData path. Must run before the first app.getPath("userData") call
+// below (configStore's own path) — Electron only honors setPath for a
+// given name before anything has already read it.
+const smokeUserData = process.env.GENTLE_SHELL_SMOKE_USERDATA;
+if (smokeUserData) app.setPath("userData", smokeUserData);
 
 // Electron's own console, prefixed so pi's stderr output (diagnostics,
 // warnings — not by itself evidence of a failure, see PiSession's
@@ -61,7 +79,7 @@ function createWindow(): void {
     backgroundColor: "#060407",
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, "../preload/index.mjs"),
+      preload: path.join(moduleDir, "../preload/index.mjs"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
@@ -79,7 +97,7 @@ function createWindow(): void {
   if (rendererUrl) {
     void window.loadURL(rendererUrl);
   } else {
-    void window.loadFile(path.join(__dirname, "../renderer/index.html"));
+    void window.loadFile(path.join(moduleDir, "../renderer/index.html"));
   }
 }
 

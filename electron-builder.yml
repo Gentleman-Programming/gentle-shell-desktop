@@ -1,0 +1,38 @@
+# electron-builder config for unsigned dev/preview builds (M1 T6): no
+# code signing identity and no notarization on macOS — see the mac
+# section below — since this app is not distributed publicly yet. Kept
+# as its own YAML file (rather than a `build` key in package.json) so
+# electron-builder's own schema/comments apply without fighting
+# package.json's JSON syntax.
+appId: dev.gentleman.gentle-shell
+productName: gentle shell
+directories:
+  output: release
+# electron-vite's own build (`pnpm build`) already produces `out/`;
+# electron-builder packages that output plus the package.json main
+# process needs to resolve dependencies (electron-vite's
+# externalizeDepsPlugin keeps @earendil-works/pi-coding-agent and other
+# dependencies as real node_modules imports instead of bundling them, so
+# package.json + node_modules must ship too — electron-builder infers
+# node_modules from package.json's own dependencies automatically).
+files:
+  - out/**
+  - package.json
+# @earendil-works/pi-coding-agent's dist has no native binaries (checked:
+# only .js/.d.ts/.map/.json plus a template.css/template.html and one
+# .png asset) so nothing needs asarUnpack.
+asar: true
+mac:
+  target:
+    - dmg
+    - zip
+  icon: build/icon.png
+  identity: null
+win:
+  target:
+    - nsis
+  icon: build/icon.png
+linux:
+  target:
+    - AppImage
+  icon: build/icon.png
