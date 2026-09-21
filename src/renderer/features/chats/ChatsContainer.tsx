@@ -14,13 +14,19 @@ import "./ChatsContainer.css";
 export function ChatsContainer() {
   const bridge = useBridge();
   const [chats, setChats] = useState<ChatSummary[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    bridge.listChats().then((loaded) => {
-      if (!cancelled) setChats(loaded);
-    });
+    bridge
+      .listChats()
+      .then((loaded) => {
+        if (!cancelled) setChats(loaded);
+      })
+      .catch((cause: unknown) => {
+        if (!cancelled) setError(cause instanceof Error ? cause.message : String(cause));
+      });
 
     return () => {
       cancelled = true;
@@ -35,6 +41,9 @@ export function ChatsContainer() {
           New chat
         </Button>
       </div>
+      {error && (
+        <p style={{ color: "var(--muted)" }}>Chats are not available yet: {error}</p>
+      )}
       <ul className="gc-chats__list">
         {chats.map((chat) => (
           <ChatListItem key={chat.id} chat={chat} />

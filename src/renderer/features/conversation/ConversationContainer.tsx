@@ -57,6 +57,14 @@ export function ConversationContainer() {
           ),
         );
       })
+      .catch((cause: unknown) => {
+        const failure = cause instanceof Error ? cause.message : String(cause);
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === assistantId ? { ...message, text: `Message could not be sent: ${failure}` } : message,
+          ),
+        );
+      })
       .finally(() => setSending(false));
   };
 
