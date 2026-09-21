@@ -3,8 +3,9 @@
  * implement them, so the domain never imports Electron/Node APIs directly.
  *
  * ProcessSpawner and LauncherLocator are T2's ports for running
- * `gentle-shell --mode rpc` as a child process. SessionStorePlaceholder
- * stays a placeholder for T3 (SessionManager.listAll()).
+ * `gentle-shell --mode rpc` as a child process. SessionStore is T3's port
+ * for listing pi chats (adapters/piSessionStore.ts implements it over
+ * SessionManager.listAll()).
  */
 
 /** One line-oriented handle to a spawned child process. */
@@ -47,6 +48,22 @@ export interface LauncherLocator {
   locate(): ResolvedLauncher;
 }
 
-export interface SessionStorePlaceholder {
-  readonly kind: "placeholder";
+/**
+ * The subset of pi's `SessionInfo` (from @earendil-works/pi-coding-agent)
+ * that sessionList.ts maps into a ChatSummary. Declared locally (not
+ * imported from the pi package) so the domain mapping in
+ * src/main/domain/session/sessionList.ts stays pure and dependency-free —
+ * only the adapter (piSessionStore.ts) touches the real package.
+ */
+export interface SessionInfoLike {
+  readonly id: string;
+  readonly cwd: string;
+  readonly name?: string;
+  readonly modified: Date;
+  readonly messageCount: number;
+  readonly firstMessage: string;
+}
+
+export interface SessionStore {
+  listAll(): Promise<SessionInfoLike[]>;
 }

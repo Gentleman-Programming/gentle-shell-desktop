@@ -18,13 +18,17 @@ const EXAMPLE_CHATS: ChatSummary[] = [
   {
     id: "chat-readme",
     title: "Write the README intro",
+    cwd: "/Users/dev/gentle-shell-desktop",
     updatedAt: "2026-09-21T09:15:00.000Z",
+    messageCount: 4,
     state: CHAT_STATE.IDLE,
   },
   {
     id: "chat-refactor",
     title: "Refactor the session store",
+    cwd: "/Users/dev/pi",
     updatedAt: "2026-09-21T10:40:00.000Z",
+    messageCount: 12,
     state: CHAT_STATE.NEEDS_YOU,
   },
 ];

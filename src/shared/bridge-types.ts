@@ -16,7 +16,10 @@ export type ChatState = (typeof CHAT_STATE)[keyof typeof CHAT_STATE];
 export interface ChatSummary {
   readonly id: string;
   readonly title: string;
+  /** Working directory the session was started in (pi SessionInfo.cwd). */
+  readonly cwd: string;
   readonly updatedAt: string;
+  readonly messageCount: number;
   readonly state: ChatState;
 }
 
