@@ -60,6 +60,10 @@ function handleLine(line) {
     return;
   }
 
+  if (cmd.type === "prompt" && cmd.message === "crash") {
+    process.exit(1);
+  }
+
   if (cmd.type === "prompt") {
     write({ type: "agent_start" });
     streamReply("hello world");
@@ -197,5 +201,57 @@ describe("PiSession", () => {
     expect(errors).toHaveLength(1);
     expect(errors[0]?.message).toMatch(/GENTLE_SHELL_BIN/);
     expect(session.getState().lastError).toMatch(/GENTLE_SHELL_BIN/);
+  });
+
+  it("a spawn failure (missing executable) surfaces an error event and stop() still resolves", async () => {
+    const missingBin = path.join(tmpdir(), `gentle-shell-desktop-missing-${Date.now()}`);
+    const session = createSession({ GENTLE_SHELL_BIN: missingBin });
+    const errors: Error[] = [];
+    session.on("error", (error) => errors.push(error));
+
+    session.start();
+
+    await waitFor(session, (state) => state.lastError !== undefined);
+    expect(errors.length).toBeGreaterThan(0);
+
+    await session.stop();
+  }, 6000);
+
+  it("prompt() after the child exits unexpectedly does not throw or crash the process", async () => {
+    const scriptPath = writeFakeScript();
+    const session = createSession({ GENTLE_SHELL_BIN: scriptPath });
+    const unhandled: unknown[] = [];
+    const onUnhandledRejection = (reason: unknown) => unhandled.push(reason);
+    const onUncaughtException = (error: unknown) => unhandled.push(error);
+    process.on("unhandledRejection", onUnhandledRejection);
+    process.on("uncaughtException", onUncaughtException);
+
+    try {
+      session.start();
+      session.prompt("crash");
+      await waitFor(session, (state) => state.lastError !== undefined);
+
+      expect(() => session.prompt("hi")).not.toThrow();
+      expect(session.getState().lastError).toBeDefined();
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(unhandled).toEqual([]);
+    } finally {
+      process.off("unhandledRejection", onUnhandledRejection);
+      process.off("uncaughtException", onUncaughtException);
+    }
+  });
+
+  it("prompt() called right after stop() begins does not throw (write-after-end guard)", async () => {
+    const scriptPath = writeFakeScript();
+    const session = createSession({ GENTLE_SHELL_BIN: scriptPath });
+
+    session.start();
+    const stopPromise = session.stop();
+
+    expect(() => session.prompt("hi")).not.toThrow();
+    expect(session.getState().lastError).toMatch(/no active process/);
+
+    await stopPromise;
   });
 });

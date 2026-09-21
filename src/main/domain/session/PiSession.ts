@@ -104,7 +104,7 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
       proc.onStdoutLine((line) => this.handleLine(line));
       proc.onStderrLine((line) => this.handleStderrLine(line));
       proc.onError((error) => this.surfaceError(error));
-      proc.exited.then(({ code, signal }) => this.handleExit(code, signal)).catch(() => undefined);
+      proc.exited.then(({ code, signal, error }) => this.handleExit(code, signal, error)).catch(() => undefined);
     } catch (error) {
       this.surfaceError(toError(error));
     }
@@ -167,8 +167,8 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
   }
 
   private send(command: RpcCommand): void {
-    if (!this.process) {
-      this.surfaceError(new Error("PiSession: cannot send a command before start()"));
+    if (!this.process || this.stopping) {
+      this.surfaceError(new Error("PiSession: cannot send a command (no active process)"));
       return;
     }
     this.process.writeStdin(encodeCommand(command));
@@ -192,8 +192,15 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
     this.surfaceError(new Error(line));
   }
 
-  private handleExit(code: number | null, signal: NodeJS.Signals | null): void {
-    if (this.stopping || code === 0) return;
+  /**
+   * Clears `this.process` unconditionally so the next `send()` never
+   * writes to a dead child's stdin (R4-001), whether the exit was clean,
+   * a crash, or a spawn failure. A spawn failure already surfaced its
+   * real error via `onError`, so it is not re-reported here.
+   */
+  private handleExit(code: number | null, signal: NodeJS.Signals | null, spawnError?: Error): void {
+    this.process = undefined;
+    if (this.stopping || code === 0 || spawnError) return;
     this.surfaceError(new Error(`gentle-shell exited unexpectedly (code ${code ?? "null"}${signal ? `, signal ${signal}` : ""})`));
   }
 

@@ -9,8 +9,12 @@
 
 /** One line-oriented handle to a spawned child process. */
 export interface SpawnedProcess {
-  /** Resolves once the child exits, however it exits (clean, killed, crashed). */
-  readonly exited: Promise<{ readonly code: number | null; readonly signal: NodeJS.Signals | null }>;
+  /**
+   * Resolves once the child exits or fails to spawn (clean, killed,
+   * crashed, or never started). `error` is set when the child never
+   * started (e.g. ENOENT) — `code`/`signal` are then meaningless (`null`).
+   */
+  readonly exited: Promise<{ readonly code: number | null; readonly signal: NodeJS.Signals | null; readonly error?: Error }>;
   writeStdin(text: string): void;
   endStdin(): void;
   onStdoutLine(handler: (line: string) => void): void;

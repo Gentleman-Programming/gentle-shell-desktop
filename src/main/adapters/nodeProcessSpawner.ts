@@ -19,18 +19,40 @@ export function createNodeProcessSpawner(): ProcessSpawner {
       child.on("error", (error: Error) => {
         for (const handler of errorHandlers) handler(error);
       });
-
-      const exited = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve) => {
-        child.on("exit", (code, signal) => resolve({ code, signal }));
+      // No 'error' listener on stdin would otherwise crash the Electron
+      // main process on a write after the stream ends (e.g. EPIPE after
+      // the child died, or a write during stop()'s grace window).
+      child.stdin?.on("error", (error: Error) => {
+        for (const handler of errorHandlers) handler(error);
       });
+
+      // 'close' fires after both a normal exit AND a spawn failure (Node
+      // always emits 'close' after 'exit' or 'error'); 'exit' alone never
+      // fires when the child never started, which left `exited` unsettled
+      // forever. Also resolve on 'error' as a belt-and-suspenders guard.
+      let settled = false;
+      const exited = new Promise<{ code: number | null; signal: NodeJS.Signals | null; error?: Error }>((resolve) => {
+        const settle = (result: { code: number | null; signal: NodeJS.Signals | null; error?: Error }) => {
+          if (settled) return;
+          settled = true;
+          resolve(result);
+        };
+        child.on("close", (code, signal) => settle({ code, signal }));
+        child.on("error", (error: Error) => settle({ code: null, signal: null, error }));
+      });
+
+      let stdinEnded = false;
 
       return {
         exited,
         writeStdin(text: string) {
-          child.stdin?.write(text);
+          if (stdinEnded || !child.stdin || child.stdin.destroyed) return;
+          child.stdin.write(text);
         },
         endStdin() {
-          child.stdin?.end();
+          if (stdinEnded || !child.stdin) return;
+          stdinEnded = true;
+          child.stdin.end();
         },
         onStdoutLine(handler) {
           stdoutLineHandlers.push(handler);
