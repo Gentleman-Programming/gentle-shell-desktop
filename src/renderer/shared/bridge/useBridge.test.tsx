@@ -19,7 +19,13 @@ describe("useBridge", () => {
   it("returns window.gentle when the preload bridge is defined", () => {
     const realBridge: GentleBridge = {
       listChats: vi.fn(),
+      openChat: vi.fn(),
+      newChat: vi.fn(),
       sendMessage: vi.fn(),
+      abort: vi.fn(),
+      answerDialog: vi.fn(),
+      onState: vi.fn(),
+      onError: vi.fn(),
     };
     window.gentle = realBridge;
 

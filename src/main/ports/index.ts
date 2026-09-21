@@ -57,6 +57,9 @@ export interface LauncherLocator {
  */
 export interface SessionInfoLike {
   readonly id: string;
+  /** The session's jsonl file path; ChatHost.openChat passes this to
+   * PiSession as `sessionPath` (`--session <path>`) to reopen it. */
+  readonly path: string;
   readonly cwd: string;
   readonly name?: string;
   readonly modified: Date;

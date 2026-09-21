@@ -7,7 +7,13 @@ import { ChatsContainer } from "./ChatsContainer";
 it("shows a message when listChats rejects", async () => {
   const bridge: GentleBridge = {
     listChats: vi.fn().mockRejectedValue(new Error("bridge not ready")),
+    openChat: vi.fn(),
+    newChat: vi.fn(),
     sendMessage: vi.fn(),
+    abort: vi.fn(),
+    answerDialog: vi.fn(),
+    onState: vi.fn(),
+    onError: vi.fn(),
   };
   window.gentle = bridge;
   render(<ChatsContainer />);

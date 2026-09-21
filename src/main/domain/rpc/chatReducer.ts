@@ -1,19 +1,12 @@
-import { MESSAGE_ROLE, type ChatMessage, type Dialog } from "@shared/bridge-types";
+import { MESSAGE_ROLE, type ChatMessage, type ChatState, type Dialog } from "@shared/bridge-types";
 import type { AssistantMessageEvent, RpcEvent, RpcExtensionUIRequest, RpcMessage } from "./types";
 
-export interface ChatState {
-  readonly messages: readonly ChatMessage[];
-  readonly working: boolean;
-  readonly pendingDialogs: readonly Dialog[];
-  readonly lastError?: string;
-  /**
-   * Bumped on every thinking/toolcall/tool_execution event. Messages never
-   * change for these (no thinking or tool output is shown, per the M1
-   * objective); the counter exists only so a later UI can show "something
-   * is happening" without re-deriving it from the raw event stream.
-   */
-  readonly activity: number;
-}
+// ChatState itself now lives in @shared/bridge-types (T3: the renderer
+// receives it directly through GentleBridge.onState/openChat/newChat).
+// Re-exported here so existing call sites in this main-process domain
+// (PiSession.ts, PiSession.test.ts) can keep importing it from the
+// reducer without churn.
+export type { ChatState };
 
 export const INITIAL_CHAT_STATE: ChatState = {
   messages: [],

@@ -1,5 +1,5 @@
-import { MESSAGE_ROLE, type ChatMessage } from "@shared/bridge-types";
-import { INITIAL_CHAT_STATE, reduceChat, type ChatState } from "../rpc/chatReducer";
+import { MESSAGE_ROLE, type ChatMessage, type ChatState, type DialogAnswer } from "@shared/bridge-types";
+import { INITIAL_CHAT_STATE, reduceChat } from "../rpc/chatReducer";
 import { decodeLine, encodeCommand } from "../rpc/codec";
 import type { RpcCommand, RpcEvent } from "../rpc/types";
 import type { LauncherLocator, ProcessSpawner, SpawnedProcess } from "../../ports";
@@ -27,12 +27,9 @@ export interface PromptResult {
   readonly reason?: string;
 }
 
-/**
- * Mirrors rpc-types.ts `RpcExtensionUIResponse`: `confirm` answers with
- * `confirmed`, `select`/`input`/`editor` answer with `value`, any dialog
- * can be dismissed with `cancelled: true`.
- */
-export type DialogAnswer = { readonly value: string } | { readonly confirmed: boolean } | { readonly cancelled: true };
+// DialogAnswer now lives in @shared/bridge-types (T3: the renderer
+// constructs these too, answering a Dialog card through
+// GentleBridge.answerDialog).
 
 interface PiSessionEventMap {
   readonly state: ChatState;

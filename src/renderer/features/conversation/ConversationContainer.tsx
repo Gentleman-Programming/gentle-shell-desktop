@@ -1,92 +1,71 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MESSAGE_ROLE, type ChatMessage } from "@shared/bridge-types";
 import { useBridge } from "@renderer/shared/bridge/useBridge";
 import { Composer } from "./components/Composer";
 import { MessageBubble } from "./components/MessageBubble";
 import "./ConversationContainer.css";
 
-// T3 has not wired real session selection yet, so T1 previews against a
-// single fixed conversation id; T3 replaces this with the selected chat.
-const PREVIEW_CHAT_ID = "chat-preview";
+let nextErrorId = 0;
 
-let nextMessageId = 0;
-
-function makeId(prefix: string): string {
-  nextMessageId += 1;
-  return `${prefix}-${nextMessageId}`;
+function errorMessage(text: string): ChatMessage {
+  nextErrorId += 1;
+  return { id: `error-${nextErrorId}`, role: MESSAGE_ROLE.ASSISTANT, text: `Message could not be sent: ${text}` };
 }
 
 /**
- * Conversation container: owns the message list, the draft text, and the
- * bridge call. Streaming render mid-reply, dialog cards and keyboard
- * shortcuts (Enter to send, Shift+Enter newline, Esc to abort) are T4
- * scope — this is the composer + thread skeleton.
+ * Conversation container: owns the message list and the draft text. T3
+ * wires it to the finalized bridge shape — onState pushes replace T1's
+ * streamed-callback shape (sendMessage no longer takes a chatId or an
+ * onTextDelta callback; ChatHost pushes ChatState for whichever chat is
+ * currently open, and openChat/newChat return the initial state). Real
+ * chat selection from the sidebar is T4 scope; this opens a fresh chat on
+ * mount so `pnpm dev:web` keeps behaving the same way it did in T1.
  */
 export function ConversationContainer() {
   const bridge = useBridge();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [working, setWorking] = useState(false);
   const [draft, setDraft] = useState("");
-  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    const unsubscribeState = bridge.onState((state) => {
+      setMessages([...state.messages]);
+      setWorking(state.working);
+    });
+    const unsubscribeError = bridge.onError((message) => {
+      setMessages((current) => [...current, errorMessage(message)]);
+    });
+
+    bridge.newChat().catch((cause: unknown) => {
+      setMessages((current) => [...current, errorMessage(cause instanceof Error ? cause.message : String(cause))]);
+    });
+
+    return () => {
+      unsubscribeState();
+      unsubscribeError();
+    };
+  }, [bridge]);
 
   const handleSubmit = (): void => {
     const text = draft.trim();
-    if (text.length === 0 || sending) return;
+    if (text.length === 0 || working) return;
 
-    const userMessage: ChatMessage = {
-      id: makeId("user"),
-      role: MESSAGE_ROLE.USER,
-      text,
-    };
-    const assistantId = makeId("assistant");
-
-    setMessages((current) => [
-      ...current,
-      userMessage,
-      { id: assistantId, role: MESSAGE_ROLE.ASSISTANT, text: "" },
-    ]);
     setDraft("");
-    setSending(true);
-
-    bridge
-      .sendMessage(PREVIEW_CHAT_ID, text, (delta) => {
-        setMessages((current) =>
-          current.map((message) =>
-            message.id === assistantId
-              ? { ...message, text: message.text + delta }
-              : message,
-          ),
-        );
-      })
-      .catch((cause: unknown) => {
-        const failure = cause instanceof Error ? cause.message : String(cause);
-        setMessages((current) =>
-          current.map((message) =>
-            message.id === assistantId ? { ...message, text: `Message could not be sent: ${failure}` } : message,
-          ),
-        );
-      })
-      .finally(() => setSending(false));
+    bridge.sendMessage(text).catch((cause: unknown) => {
+      setMessages((current) => [...current, errorMessage(cause instanceof Error ? cause.message : String(cause))]);
+    });
   };
 
   return (
     <section className="gc-conversation">
       <div className="gc-conversation__thread">
         {messages.length === 0 ? (
-          <p className="gc-conversation__empty">
-            Start a conversation with Gentle.
-          </p>
+          <p className="gc-conversation__empty">Start a conversation with Gentle.</p>
         ) : (
-          messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))
+          messages.map((message) => <MessageBubble key={message.id} message={message} />)
         )}
       </div>
-      <Composer
-        value={draft}
-        disabled={sending}
-        onChange={setDraft}
-        onSubmit={handleSubmit}
-      />
+      <Composer value={draft} disabled={working} onChange={setDraft} onSubmit={handleSubmit} />
     </section>
   );
 }

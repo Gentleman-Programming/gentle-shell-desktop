@@ -6,6 +6,7 @@ import type { SessionInfoLike } from "../../ports";
 function makeSession(overrides: Partial<SessionInfoLike> = {}): SessionInfoLike {
   return {
     id: "sess-1",
+    path: "/tmp/sessions/proj/sess-1.jsonl",
     cwd: "/tmp/project",
     modified: new Date("2026-09-21T10:00:00.000Z"),
     messageCount: 3,

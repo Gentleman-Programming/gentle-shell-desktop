@@ -1,4 +1,4 @@
-// Placeholder for IPC channel names and handler registration.
-// T3 wires sessions.list, chat.open, chat.new, chat.send, chat.abort and
-// dialog.answer here, exposed to the renderer through the preload bridge.
-export {};
+// Channel names live in src/shared/ipc-channels.ts (the Scope Rule: both
+// this process and src/preload/bridge.ts need them). This barrel only
+// re-exports the handler registration entry point.
+export * from "./registerHandlers";
