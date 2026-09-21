@@ -31,6 +31,15 @@ export interface ProcessSpawner {
 export interface ResolvedLauncher {
   readonly command: string;
   readonly args: readonly string[];
+  /**
+   * Extra environment variables to merge on top of PiSession's own env
+   * before spawning. Used for `ELECTRON_RUN_AS_NODE=1` when `command` is
+   * `process.execPath` running a JS entry: under Electron, `process.execPath`
+   * is the Electron binary, not a plain Node binary, so without this flag
+   * the child launches Electron itself instead of running the script as
+   * Node. Harmless (and unread) when this app runs under plain Node.
+   */
+  readonly env?: Readonly<Record<string, string>>;
 }
 
 /** Resolves how to invoke the gentle-shell launcher (see adapters/launcherLocator.ts). */

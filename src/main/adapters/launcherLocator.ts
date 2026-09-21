@@ -34,7 +34,12 @@ export function createLauncherLocator(env: NodeJS.ProcessEnv = process.env): Lau
 
 function resolveBinPath(binPath: string): ResolvedLauncher {
   const isJsEntry = JS_ENTRY_EXTENSIONS.includes(path.extname(binPath));
-  return isJsEntry ? { command: process.execPath, args: [binPath] } : { command: binPath, args: [] };
+  if (!isJsEntry) return { command: binPath, args: [] };
+
+  // process.execPath under Electron is the Electron binary; ELECTRON_RUN_AS_NODE
+  // makes it run this JS entry as plain Node instead of launching another
+  // Electron instance. No effect (and not consulted) under plain Node.
+  return { command: process.execPath, args: [binPath], env: { ELECTRON_RUN_AS_NODE: "1" } };
 }
 
 function findOnPath(binName: string, env: NodeJS.ProcessEnv): string | undefined {
