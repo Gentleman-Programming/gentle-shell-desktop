@@ -1,4 +1,4 @@
-import { MESSAGE_ROLE, type ChatMessage, type ChatState, type DialogAnswer } from "@shared/bridge-types";
+import { MESSAGE_ROLE, type ChatMessage, type ChatState, type DialogAnswer, type PromptResult } from "@shared/bridge-types";
 import { INITIAL_CHAT_STATE, reduceChat } from "../rpc/chatReducer";
 import { decodeLine, encodeCommand } from "../rpc/codec";
 import type { RpcCommand, RpcEvent } from "../rpc/types";
@@ -20,14 +20,7 @@ export interface PiSessionOptions {
   readonly onLog?: (line: string) => void;
 }
 
-/** Result of `prompt()`: M1 has no queue, so a prompt sent while the
- * assistant is already working is rejected outright rather than buffered. */
-export interface PromptResult {
-  readonly queued: boolean;
-  readonly reason?: string;
-}
-
-// DialogAnswer now lives in @shared/bridge-types (T3: the renderer
+// PromptResult and DialogAnswer now live in @shared/bridge-types (T5, T3: the renderer
 // constructs these too, answering a Dialog card through
 // GentleBridge.answerDialog).
 
@@ -141,8 +134,15 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
    */
   prompt(text: string): PromptResult {
     if (this.state.working) {
+      // Declined, not a failure: report once via the return value (and the
+      // state push below, for anyone reading ChatState.lastError directly)
+      // rather than also emitting an "error" event — ChatHost.sendMessage
+      // (T5) resolves this PromptResult straight to the renderer instead
+      // of rejecting, so a second report through onError would duplicate
+      // the same message.
       const reason = "Gentle is still working";
-      this.surfaceError(new Error(reason));
+      this.state = { ...this.state, lastError: reason };
+      this.emit("state", this.state);
       return { queued: false, reason };
     }
 
@@ -236,18 +236,30 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
   /**
    * Clears `this.process` unconditionally so the next `send()` never
    * writes to a dead child's stdin (R4-001), whether the exit was clean,
-   * a crash, or a spawn failure. A spawn failure already surfaced its
-   * real error via `onError`, so it is not re-reported here. An
-   * unexpected exit (not requested via stop()) also resets `working` and
-   * drops any pending dialogs: the child that would have resolved them is
-   * gone, so a stale "working" pill or an unanswerable dialog card would
-   * otherwise strand the UI.
+   * a crash, or a spawn failure. ANY exit not requested via `stop()` —
+   * including a clean `code === 0` self-exit — resets `working` and drops
+   * any pending dialogs: the child that would have resolved them is gone
+   * either way, so a stale "working" pill or an unanswerable dialog card
+   * would otherwise strand the UI regardless of how the child exited. An
+   * error is only surfaced for a non-zero exit: a spawn failure already
+   * surfaced its real error via `onError` (not re-reported here), and a
+   * clean self-exit is not, by itself, evidence of a failure.
    */
   private handleExit(code: number | null, signal: NodeJS.Signals | null, spawnError?: Error): void {
     this.process = undefined;
-    if (this.stopping || code === 0 || spawnError) return;
+    if (this.stopping) return;
+
     this.state = { ...this.state, working: false, pendingDialogs: [] };
-    this.surfaceError(new Error(`gentle-shell exited unexpectedly (code ${code ?? "null"}${signal ? `, signal ${signal}` : ""})`));
+
+    if (spawnError) {
+      this.emit("state", this.state);
+      return;
+    }
+    if (code !== 0) {
+      this.surfaceError(new Error(`gentle-shell exited unexpectedly (code ${code ?? "null"}${signal ? `, signal ${signal}` : ""})`));
+      return;
+    }
+    this.emit("state", this.state);
   }
 
   private surfaceError(error: Error): void {

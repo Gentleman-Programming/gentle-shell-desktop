@@ -73,6 +73,16 @@ describe("mockBridge", () => {
     expect(final?.working).toBe(false);
   });
 
+  it('resolves { queued: false, reason } instead of notifying onError while already working (report once)', async () => {
+    const { errors } = collectStates();
+
+    await mockBridge.sendMessage("Which branch?"); // opens a dialog, leaves working: true
+    const result = await mockBridge.sendMessage("another message");
+
+    expect(result).toEqual({ queued: false, reason: "Gentle is still working" });
+    expect(errors).toHaveLength(0);
+  });
+
   it("streams a plain reply word by word for an ordinary message", async () => {
     const { states } = collectStates();
 

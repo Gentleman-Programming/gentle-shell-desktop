@@ -92,6 +92,23 @@ export interface Dialog {
 export type DialogAnswer = { readonly value: string } | { readonly confirmed: boolean } | { readonly cancelled: true };
 
 /**
+ * Result of `sendMessage`/`PiSession.prompt`: M1 has no queue, so a prompt
+ * sent while the assistant is already working is declined outright rather
+ * than buffered. Lives here (not src/main/domain/session/PiSession.ts,
+ * where T2 first defined it) because GentleBridge.sendMessage (T5) now
+ * resolves this value straight to the renderer instead of throwing — the
+ * Scope Rule promotes it out of src/main once a second process needs the
+ * shape. `reason` is set only when `queued` is false; the renderer shows
+ * it in the status line, and ChatState.lastError also carries it for
+ * anyone reading pushed state directly, but never both an event AND a
+ * rejection ("report once" — see PiSession.prompt).
+ */
+export interface PromptResult {
+  readonly queued: boolean;
+  readonly reason?: string;
+}
+
+/**
  * The full state of the currently open conversation: messages, whether the
  * assistant is working, pending dialogs awaiting an answer, the last
  * surfaced error, and an activity counter for thinking/tool events (no
@@ -121,8 +138,10 @@ export interface GentleBridge {
   openChat(id: string): Promise<ChatState>;
   /** Starts a fresh chat (no prior session file) and returns its initial ChatState. */
   newChat(): Promise<ChatState>;
-  /** Sends a message in whichever chat is currently open. */
-  sendMessage(text: string): Promise<void>;
+  /** Sends a message in whichever chat is currently open. Resolves with
+   * `{ queued: false, reason }` instead of rejecting when the assistant is
+   * already working, so the caller reports it exactly once. */
+  sendMessage(text: string): Promise<PromptResult>;
   abort(): Promise<void>;
   answerDialog(id: string, answer: DialogAnswer): Promise<void>;
   /** Subscribes to ChatState pushes for the currently open chat. Returns an unsubscribe function. */

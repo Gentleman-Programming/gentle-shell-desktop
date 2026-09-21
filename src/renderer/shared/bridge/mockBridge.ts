@@ -7,6 +7,7 @@ import {
   type Dialog,
   type DialogAnswer,
   type GentleBridge,
+  type PromptResult,
 } from "@shared/bridge-types";
 
 /**
@@ -160,10 +161,12 @@ export const mockBridge: GentleBridge = {
     return currentState;
   },
 
-  async sendMessage(text: string): Promise<void> {
+  async sendMessage(text: string): Promise<PromptResult> {
+    // Mirrors the real ChatHost/PiSession contract (T5): a declined prompt
+    // resolves { queued: false, reason } instead of notifying onError, so
+    // the caller reports it exactly once.
     if (currentState.working) {
-      for (const listener of errorListeners) listener("Gentle is still working");
-      return;
+      return { queued: false, reason: "Gentle is still working" };
     }
 
     const userMessage = makeMessage(MESSAGE_ROLE.USER, text);
@@ -178,13 +181,14 @@ export const mockBridge: GentleBridge = {
     const lower = text.toLowerCase();
     if (lower.includes("fail")) {
       await failReply();
-      return;
+      return { queued: true };
     }
     if (lower.includes("delete") || lower.includes("name") || lower.includes("?")) {
       await openDialog(text);
-      return;
+      return { queued: true };
     }
     void streamReply(text);
+    return { queued: true };
   },
 
   async abort(): Promise<void> {

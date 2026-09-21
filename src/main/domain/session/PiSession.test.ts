@@ -379,6 +379,29 @@ describe("PiSession: Electron host follow-ups", () => {
     expect(errors[0]?.message).toMatch(/exited unexpectedly/);
   });
 
+  it("resets working and clears pending dialogs on a clean self-exit too (code 0, not via stop()), without surfacing an error", async () => {
+    const { spawner, handles } = createFakeSpawner();
+    const session = new PiSession({ spawner, locator: fakeLocator, env: {} });
+    const errors: Error[] = [];
+    session.on("error", (error) => errors.push(error));
+
+    session.start();
+    handles[0]?.emitStdout(JSON.stringify({ type: "agent_start" }));
+    handles[0]?.emitStdout(
+      JSON.stringify({ type: "extension_ui_request", id: "dlg-1", method: "select", title: "Pick", options: ["A"] }),
+    );
+
+    expect(session.getState().working).toBe(true);
+    expect(session.getState().pendingDialogs).toHaveLength(1);
+
+    handles[0]?.resolveExited({ code: 0, signal: null });
+    await flushMicrotasks();
+
+    expect(session.getState().working).toBe(false);
+    expect(session.getState().pendingDialogs).toEqual([]);
+    expect(errors).toHaveLength(0);
+  });
+
   it("guards start() against a double start: the second call surfaces an error instead of spawning again", () => {
     const { spawner, handles } = createFakeSpawner();
     const session = new PiSession({ spawner, locator: fakeLocator, env: {} });
