@@ -40,6 +40,8 @@
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.85.1",
+    "dompurify": "^3.4.15",
+    "marked": "^15.0.12",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   }
