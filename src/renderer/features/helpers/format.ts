@@ -1,4 +1,4 @@
-import type { HelperStatus, HelperTask, HelperThreadItem, HelpersSummary } from "@shared/bridge-types";
+import { HELPER_STATUS, type HelperStatus, type HelperTask, type HelperThreadItem, type HelpersSummary } from "@shared/bridge-types";
 
 /**
  * Pure formatting helpers for the Helpers tab (D3). Kept separate from any
@@ -127,4 +127,59 @@ export function formatSummaryLine(summary: HelpersSummary): string {
   ].filter((part): part is string => Boolean(part));
 
   return parts.length > 0 ? parts.join(" · ") : "No helpers yet";
+}
+
+const TERMINAL_HELPER_STATUSES: ReadonlySet<HelperStatus> = new Set([HELPER_STATUS.DONE, HELPER_STATUS.FAILED, HELPER_STATUS.CANCELLED]);
+
+/** The timestamp a finished task is judged against: `endedAt`, falling back to `lastActivityAt`, then `createdAt`. */
+function helperFinishedAt(task: Pick<HelperTask, "endedAt" | "lastActivityAt" | "createdAt">): string {
+  return task.endedAt ?? task.lastActivityAt ?? task.createdAt;
+}
+
+export interface HelperPartition {
+  readonly current: readonly HelperTask[];
+  readonly earlier: readonly HelperTask[];
+}
+
+/**
+ * Splits this chat's helpers into `current` (still active, or finished
+ * during this app run) and `earlier` (already finished when the chat
+ * became active — `openedAt`). A real session can carry dozens of
+ * days-old finished helpers; folding those into a collapsed "Earlier"
+ * group keeps today's work from being buried in a flat list (maintainer
+ * decision, 2026-09-22). Order within each bucket is preserved.
+ */
+export function partitionHelpers(tasks: readonly HelperTask[], openedAt: string): HelperPartition {
+  const openedAtMs = Date.parse(openedAt);
+  const current: HelperTask[] = [];
+  const earlier: HelperTask[] = [];
+
+  for (const task of tasks) {
+    if (isEarlierHelper(task, openedAtMs)) {
+      earlier.push(task);
+    } else {
+      current.push(task);
+    }
+  }
+
+  return { current, earlier };
+}
+
+function isEarlierHelper(task: HelperTask, openedAtMs: number): boolean {
+  if (!TERMINAL_HELPER_STATUSES.has(task.status)) return false;
+  if (Number.isNaN(openedAtMs)) return false;
+
+  const finishedAtMs = Date.parse(helperFinishedAt(task));
+  return !Number.isNaN(finishedAtMs) && finishedAtMs < openedAtMs;
+}
+
+const EARLIER_DATE_FORMAT = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+
+/** The muted date hint under the "Earlier" group header: "until <latest endedAt in the group>". `undefined` for an empty group. */
+export function formatEarlierDateHint(earlierTasks: readonly HelperTask[]): string | undefined {
+  const finishedAtMsValues = earlierTasks.map((task) => Date.parse(helperFinishedAt(task))).filter((ms) => !Number.isNaN(ms));
+  if (finishedAtMsValues.length === 0) return undefined;
+
+  const latestMs = Math.max(...finishedAtMsValues);
+  return `until ${EARLIER_DATE_FORMAT.format(new Date(latestMs))}`;
 }

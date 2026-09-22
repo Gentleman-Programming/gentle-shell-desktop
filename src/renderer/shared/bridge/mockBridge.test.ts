@@ -114,15 +114,17 @@ describe("mockBridge", () => {
   });
 
   // D4: the "Migrate the config schema" working chat (chat-migration) seeds
-  // three helpers so the Helpers tab is reachable under `pnpm dev:web`
-  // without a real gentle-agents process.
+  // five helpers so the Helpers tab is reachable under `pnpm dev:web`
+  // without a real gentle-agents process — including two already finished
+  // days ago, so the "Earlier" group (format.ts's partitionHelpers) has
+  // something to show in the preview.
   describe("helpers scenario (chat-migration)", () => {
-    it("seeds three helper tasks (running, waiting, done) with a matching summary when opened", async () => {
+    it("seeds five helper tasks (running, waiting, done, and two earlier-finished) with a matching summary when opened", async () => {
       const state = await mockBridge.openChat("chat-migration");
 
-      expect(state.helpers.tasks).toHaveLength(3);
-      expect(state.helpers.tasks.map((task) => task.status).sort()).toEqual(["done", "running", "waiting"]);
-      expect(state.helpers.summary).toEqual({ running: 1, queued: 0, waiting: 1, finished: 1 });
+      expect(state.helpers.tasks).toHaveLength(5);
+      expect(state.helpers.tasks.map((task) => task.status).sort()).toEqual(["done", "done", "failed", "running", "waiting"]);
+      expect(state.helpers.summary).toEqual({ running: 1, queued: 0, waiting: 1, finished: 3 });
     });
 
     it("leaves helpers empty for any other chat", async () => {

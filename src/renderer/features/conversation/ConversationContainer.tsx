@@ -49,6 +49,11 @@ export function ConversationContainer({ activeChat }: ConversationContainerProps
   const [bridgeError, setBridgeError] = useState<string | undefined>(undefined);
   const [draft, setDraft] = useState("");
   const [pane, setPane] = useState<ConversationPane>(CONVERSATION_PANE.CHAT);
+  // The moment this chat became active — HelpersContainer's line between
+  // "current" helpers and the collapsed "Earlier" group (format.ts's
+  // partitionHelpers). Set once per activeChat change, not per pane
+  // switch, so opening the Helpers tab later doesn't move the line.
+  const [helpersOpenedAt, setHelpersOpenedAt] = useState<string>(() => new Date().toISOString());
 
   // Subscribes once: GentleBridge pushes state/error for whichever chat is
   // currently open, independent of which activeChat this render owns.
@@ -70,6 +75,7 @@ export function ConversationContainer({ activeChat }: ConversationContainerProps
   // tab left open on the previous chat must never bleed into the next one.
   useEffect(() => {
     setPane(CONVERSATION_PANE.CHAT);
+    setHelpersOpenedAt(new Date().toISOString());
   }, [activeChat]);
 
   useEffect(() => {
@@ -123,7 +129,11 @@ export function ConversationContainer({ activeChat }: ConversationContainerProps
       />
       <StatusLine error={error} />
       {pane === CONVERSATION_PANE.HELPERS ? (
-        <HelpersContainer activity={chatState.helpers} onBackToChat={() => setPane(CONVERSATION_PANE.CHAT)} />
+        <HelpersContainer
+          activity={chatState.helpers}
+          onBackToChat={() => setPane(CONVERSATION_PANE.CHAT)}
+          openedAt={helpersOpenedAt}
+        />
       ) : (
         <>
           <HelpersStrip helpers={chatState.helpers} onOpen={() => setPane(CONVERSATION_PANE.HELPERS)} />
