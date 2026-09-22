@@ -1,0 +1,46 @@
+/*
+ * Gentleman-Cute design tokens, hardcoded for M1 (reading the live pi theme
+ * is out of scope until M4 — see odd/tasks/desktop-m1-chat-core.md).
+ * Values are copied from gentle-pi/themes/Gentleman-Cute.json and mirrored
+ * in ./gentleman-cute.json + ./theme.ts so theme.test.ts can assert they
+ * never drift apart by accident.
+ */
+:root {
+  --bg: #060407;
+  --panel: #100a0f;
+  --raised: #180e15;
+  --line: #2a1720;
+  --line-strong: #563040;
+  --text: #f6eff3;
+  --text-2: #d2cbd0;
+  --muted: #a78e9b;
+  --accent: #f095c8;
+  --accent-active: #ffb1dd;
+  --blue: #a9c7ee;
+  --green: #b4e7c7;
+  --amber: #f2b86d;
+  --red: #ff718f;
+  --purple: #c96aa2;
+  --champagne: #e0c27a;
+
+  --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+}

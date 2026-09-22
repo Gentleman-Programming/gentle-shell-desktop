@@ -1,0 +1,20 @@
+.gc-chat-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  color: var(--text-2);
+}
+
+.gc-chat-list-item:hover {
+  background: var(--raised);
+}
+
+.gc-chat-list-item__title {
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

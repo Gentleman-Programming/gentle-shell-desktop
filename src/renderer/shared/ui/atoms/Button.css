@@ -1,0 +1,35 @@
+.gc-button {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.gc-button--primary {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.gc-button--primary:hover {
+  background: var(--accent-active);
+}
+
+.gc-button--ghost {
+  background: transparent;
+  color: var(--text-2);
+  border-color: var(--line);
+}
+
+.gc-button--ghost:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.gc-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
