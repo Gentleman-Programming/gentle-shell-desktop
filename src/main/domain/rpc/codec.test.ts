@@ -25,6 +25,10 @@ describe("encodeCommand", () => {
     expect(encodeCommand({ type: "get_messages" })).toBe('{"type":"get_messages"}\n');
   });
 
+  it("encodes get_messages with a correlation id (rpc.md: all commands support an optional id)", () => {
+    expect(encodeCommand({ type: "get_messages", id: "history-0" })).toBe('{"type":"get_messages","id":"history-0"}\n');
+  });
+
   it("encodes switch_session with sessionPath", () => {
     expect(encodeCommand({ type: "switch_session", sessionPath: "/tmp/session.jsonl" })).toBe(
       '{"type":"switch_session","sessionPath":"/tmp/session.jsonl"}\n',
@@ -178,6 +182,18 @@ describe("decodeLine", () => {
       command: "set_model",
       success: false,
       error: "Model not found",
+    });
+  });
+
+  it("decodes a get_messages response envelope, correlation id and data.messages included", () => {
+    const line =
+      '{"id":"history-0","type":"response","command":"get_messages","success":true,"data":{"messages":[{"role":"user","content":"hi","timestamp":0}]}}';
+    expect(decodeLine(line)).toEqual({
+      id: "history-0",
+      type: "response",
+      command: "get_messages",
+      success: true,
+      data: { messages: [{ role: "user", content: "hi", timestamp: 0 }] },
     });
   });
 

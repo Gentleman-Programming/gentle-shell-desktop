@@ -93,6 +93,26 @@ function session(overrides: Partial<SessionInfoLike> = {}): SessionInfoLike {
   };
 }
 
+/**
+ * Opening an existing chat (sessionPath set) now sends `get_messages` and
+ * bounds its wait to `HISTORY_LOAD_TIMEOUT_MS` (see ChatHost.ts). Tests
+ * that don't care about the seeded history content answer it immediately
+ * with an empty history through this helper, so `openChat` resolves right
+ * away instead of blocking on the real 2s bound; tests that do care about
+ * the content answer inline instead.
+ */
+async function respondToHistoryRequest(
+  handles: readonly FakeProcessHandle[],
+  index: number,
+  data: unknown = { messages: [] },
+): Promise<void> {
+  await vi.waitFor(() => expect(handles[index]?.writes.length ?? 0).toBeGreaterThan(0));
+  const sent = JSON.parse(handles[index]!.writes[handles[index]!.writes.length - 1]!);
+  handles[index]!.emitStdout(
+    JSON.stringify({ type: "response", id: sent.id, command: "get_messages", success: true, data }),
+  );
+}
+
 describe("ChatHost", () => {
   it("openChat resolves the session path from the store, starts it, and pushes state", async () => {
     const { spawner, handles } = createFakeSpawner();
@@ -101,11 +121,51 @@ describe("ChatHost", () => {
     const states: ChatState[] = [];
     host.onState((state) => states.push(state));
 
-    const initial = await host.openChat("sess-1");
+    const openPromise = host.openChat("sess-1");
+    await respondToHistoryRequest(handles, 0);
+    const initial = await openPromise;
 
     expect(initial.messages).toEqual([]);
     handles[0]?.emitStdout(JSON.stringify({ type: "agent_start" }));
     expect(states.some((state) => state.working)).toBe(true);
+  });
+
+  it("openChat resolves with the seeded history once pi answers get_messages", async () => {
+    const { spawner, handles } = createFakeSpawner();
+    const store = fakeSessionStore([session({ id: "sess-1", path: "/home/sessions/proj/sess-1.jsonl" })]);
+    const host = new ChatHost({ spawner, locator: fakeLocator, sessionStore: store, env: {} });
+
+    const openPromise = host.openChat("sess-1");
+    await respondToHistoryRequest(handles, 0, {
+      messages: [
+        { role: "user", content: "hi", timestamp: 0 },
+        { role: "assistant", content: [{ type: "text", text: "hello" }], timestamp: 0 },
+      ],
+    });
+    const state = await openPromise;
+
+    expect(state.messages).toEqual([
+      { id: "msg-0", role: "user", text: "hi" },
+      { id: "msg-1", role: "assistant", text: "hello", streaming: false },
+    ]);
+  });
+
+  it("openChat resolves after the 2s bound even if pi never answers get_messages", async () => {
+    vi.useFakeTimers();
+    try {
+      const { spawner, handles } = createFakeSpawner();
+      const store = fakeSessionStore([session({ id: "sess-1", path: "/home/sessions/proj/sess-1.jsonl" })]);
+      const host = new ChatHost({ spawner, locator: fakeLocator, sessionStore: store, env: {} });
+
+      const openPromise = host.openChat("sess-1");
+      await vi.advanceTimersByTimeAsync(2000);
+      const state = await openPromise;
+
+      expect(state.messages).toEqual([]);
+      expect(handles).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("openChat rejects for an id the session store does not have", async () => {
@@ -132,13 +192,16 @@ describe("ChatHost", () => {
     ]);
     const host = new ChatHost({ spawner, locator: fakeLocator, sessionStore: store, env: {} });
 
-    await host.openChat("sess-1");
+    const openFirstPromise = host.openChat("sess-1");
+    await respondToHistoryRequest(handles, 0);
+    await openFirstPromise;
     expect(handles).toHaveLength(1);
 
     const openSecond = host.openChat("sess-2");
     // stop() waits for the child to exit (or a 3s grace timeout); resolve
     // the first child's exit immediately so this test does not wait it out.
     handles[0]?.resolveExited({ code: 0, signal: null });
+    await respondToHistoryRequest(handles, 1);
     await openSecond;
 
     expect(handles).toHaveLength(2);
@@ -169,9 +232,21 @@ describe("ChatHost", () => {
     const openSecond = host.openChat("sess-2");
 
     await vi.waitFor(() => expect(handles).toHaveLength(1));
+    await respondToHistoryRequest(handles, 0);
+
+    // performStart(sess1) only resolves once the history response above
+    // unblocks its bounded wait, and only then does performStart(sess2)'s
+    // own `await this.current?.stop()` reach `endStdin()`. Wait for that
+    // before resolving session 1's exit below, so stop() still observes a
+    // live process instead of racing handleExit's own cleanup (which
+    // would otherwise clear `this.process` first and make stop() a no-op).
+    await vi.waitFor(() => expect(events).toContain("endStdin:0"));
     // stop() waits for the child to exit (or a 3s grace timeout); resolve
     // it so the serialized second call can proceed without waiting it out.
     handles[0]?.resolveExited({ code: 0, signal: null });
+
+    await vi.waitFor(() => expect(handles).toHaveLength(2));
+    await respondToHistoryRequest(handles, 1);
 
     await Promise.all([openFirst, openSecond]);
 
@@ -184,7 +259,9 @@ describe("ChatHost", () => {
 
     await host.abort();
     expect(handles[1]?.writes.some((write) => write.includes('"abort"'))).toBe(true);
-    expect(handles[0]?.writes).toEqual([]);
+    // Session 1 only ever received its own get_messages request (sent by
+    // its own start()); the abort reaches the current session (2) only.
+    expect(handles[0]?.writes.some((write) => write.includes('"abort"'))).toBe(false);
   });
 
   it("passes deps.log to every PiSession as its onLog callback", async () => {
@@ -261,7 +338,9 @@ describe("ChatHost", () => {
     const host = new ChatHost({ spawner, locator: fakeLocator, sessionStore: store, env: {} });
 
     // An already-open, live chat...
-    await host.openChat("sess-1");
+    const openFirstPromise = host.openChat("sess-1");
+    await respondToHistoryRequest(handles, 0);
+    await openFirstPromise;
     expect(handles).toHaveLength(1);
 
     // ...then newChat() is requested (queuing behind the still-live open
