@@ -224,7 +224,10 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
       const decoded = decodeLine(line);
       if ("kind" in decoded) return; // unknown/unmodeled line: nothing to fold or emit
 
-      this.state = reduceChat(this.state, decoded);
+      // `now` feeds reduceChat's setWidget helpers-retention fallback
+      // (endedAt for a task gentle-pi drops after it finishes); PiSession
+      // is the impure boundary, reduceChat itself stays pure.
+      this.state = reduceChat(this.state, decoded, new Date().toISOString());
       this.emit("event", decoded);
       this.emit("state", this.state);
     } catch (error) {

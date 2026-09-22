@@ -21,7 +21,9 @@ function readFixtureEvents(name: string): RpcEvent[] {
 }
 
 function replay(events: RpcEvent[]): ChatState {
-  return events.reduce(reduceChat, INITIAL_CHAT_STATE);
+  // Wrapped (not `events.reduce(reduceChat, ...)`) so Array.reduce's
+  // numeric currentIndex never lands in reduceChat's optional `now` param.
+  return events.reduce((state, event) => reduceChat(state, event), INITIAL_CHAT_STATE);
 }
 
 describe("reduceChat: working state", () => {
@@ -254,9 +256,23 @@ describe("reduceChat: fixture replays", () => {
   it("replays the helpers-activity fixture, skipping the malformed frame and ignoring the other extension's widget", () => {
     const state = replay(readFixtureEvents("helpers-activity.jsonl"));
 
+    // Order is running, waiting, queued, then finished (task-2 is still
+    // "waiting" so it ranks above the finished task-1, per the helpers
+    // retention/ordering rules in the setWidget branch).
     expect(state.helpers).toEqual({
       summary: { running: 0, queued: 0, waiting: 1, finished: 1 },
       tasks: [
+        {
+          id: "task-2",
+          agent: "writer",
+          label: "Draft the summary",
+          prompt: "Write it up",
+          status: "waiting",
+          createdAt: "2026-09-22T10:00:02.000Z",
+          turns: 1,
+          toolCalls: 0,
+          thread: { version: 1, dropped: 0, items: [{ kind: "note", text: "Needs your input." }] },
+        },
         {
           id: "task-1",
           agent: "researcher",
@@ -277,17 +293,6 @@ describe("reduceChat: fixture replays", () => {
               { kind: "text", text: "Done — the auth flow uses RPC extension UI requests." },
             ],
           },
-        },
-        {
-          id: "task-2",
-          agent: "writer",
-          label: "Draft the summary",
-          prompt: "Write it up",
-          status: "waiting",
-          createdAt: "2026-09-22T10:00:02.000Z",
-          turns: 1,
-          toolCalls: 0,
-          thread: { version: 1, dropped: 0, items: [{ kind: "note", text: "Needs your input." }] },
         },
       ],
     });
@@ -368,5 +373,222 @@ describe("reduceChat: helpers widget (gentle-agents)", () => {
     const afterMalformed = reduceChat(afterValid, malformedDecoded);
 
     expect(afterMalformed.helpers).toEqual(afterValid.helpers);
+  });
+});
+
+describe("reduceChat: helpers retention (gentle-pi drops finished tasks from its in-memory store)", () => {
+  function setWidgetEvent(id: string, payload: unknown) {
+    const decoded = decodeLine(
+      JSON.stringify({
+        type: "extension_ui_request",
+        id,
+        method: "setWidget",
+        widgetKey: "gentle-agents",
+        widgetLines: [JSON.stringify(payload)],
+      }),
+    );
+    if ("kind" in decoded) throw new Error("expected a decoded extension_ui_request");
+    return decoded;
+  }
+
+  function taskFrame(summary: ChatState["helpers"]["summary"], tasks: readonly unknown[]) {
+    return { schema: "gentle-agents.activity/v1", summary, tasks };
+  }
+
+  it("keeps a task gentle-pi drops after it finishes, marked done with endedAt set and its thread intact", () => {
+    const runningFrame = taskFrame({ running: 1, queued: 0, waiting: 0, finished: 0 }, [
+      {
+        summary: {
+          id: "task-1",
+          agent: "researcher",
+          label: "Research",
+          prompt: "Do it",
+          status: "running",
+          createdAt: "2026-09-22T10:00:00.000Z",
+          startedAt: "2026-09-22T10:00:01.000Z",
+          turns: 2,
+          toolCalls: 1,
+        },
+        thread: { version: 2, dropped: 0, items: [{ kind: "text", text: "Working on it." }] },
+      },
+    ]);
+    const runningState = reduceChat(INITIAL_CHAT_STATE, setWidgetEvent("ui-1", runningFrame));
+
+    const droppedFrame = taskFrame({ running: 0, queued: 0, waiting: 0, finished: 1 }, []);
+    const state = reduceChat(runningState, setWidgetEvent("ui-2", droppedFrame), "2026-09-22T11:00:00.000Z");
+
+    expect(state.helpers.summary).toEqual({ running: 0, queued: 0, waiting: 0, finished: 1 });
+    expect(state.helpers.tasks).toHaveLength(1);
+    expect(state.helpers.tasks[0]).toMatchObject({
+      id: "task-1",
+      status: "done",
+      endedAt: "2026-09-22T11:00:00.000Z",
+      thread: { version: 2, dropped: 0, items: [{ kind: "text", text: "Working on it." }] },
+    });
+  });
+
+  it("replaces a retained task's record once it reappears in a later frame instead of keeping the stale one", () => {
+    const runningFrame = taskFrame({ running: 1, queued: 0, waiting: 0, finished: 0 }, [
+      {
+        summary: {
+          id: "task-1",
+          agent: "researcher",
+          label: "Research",
+          prompt: "Do it",
+          status: "running",
+          createdAt: "2026-09-22T10:00:00.000Z",
+          turns: 0,
+          toolCalls: 0,
+        },
+        thread: { version: 0, dropped: 0, items: [] },
+      },
+    ]);
+    const runningState = reduceChat(INITIAL_CHAT_STATE, setWidgetEvent("ui-1", runningFrame));
+    const droppedState = reduceChat(
+      runningState,
+      setWidgetEvent("ui-2", taskFrame({ running: 0, queued: 0, waiting: 0, finished: 1 }, [])),
+      "2026-09-22T11:00:00.000Z",
+    );
+    expect(droppedState.helpers.tasks[0]?.status).toBe("done");
+
+    const reappearedFrame = taskFrame({ running: 1, queued: 0, waiting: 0, finished: 0 }, [
+      {
+        summary: {
+          id: "task-1",
+          agent: "researcher",
+          label: "Research",
+          prompt: "Do it",
+          status: "running",
+          createdAt: "2026-09-22T10:00:00.000Z",
+          turns: 3,
+          toolCalls: 2,
+        },
+        thread: { version: 3, dropped: 0, items: [{ kind: "text", text: "Resumed." }] },
+      },
+    ]);
+    const state = reduceChat(droppedState, setWidgetEvent("ui-3", reappearedFrame), "2026-09-22T12:00:00.000Z");
+
+    expect(state.helpers.tasks).toHaveLength(1);
+    expect(state.helpers.tasks[0]).toMatchObject({
+      id: "task-1",
+      status: "running",
+      endedAt: undefined,
+      turns: 3,
+      thread: { version: 3, dropped: 0, items: [{ kind: "text", text: "Resumed." }] },
+    });
+  });
+
+  it("keeps a failed task's status and endedAt as-is when a later frame drops it (never promotes a terminal status to done)", () => {
+    const failedFrame = taskFrame({ running: 0, queued: 0, waiting: 0, finished: 1 }, [
+      {
+        summary: {
+          id: "task-1",
+          agent: "researcher",
+          label: "Research",
+          prompt: "Do it",
+          status: "failed",
+          createdAt: "2026-09-22T10:00:00.000Z",
+          endedAt: "2026-09-22T10:05:00.000Z",
+          error: "boom",
+          turns: 1,
+          toolCalls: 0,
+        },
+        thread: { version: 1, dropped: 0, items: [] },
+      },
+    ]);
+    const failedState = reduceChat(INITIAL_CHAT_STATE, setWidgetEvent("ui-1", failedFrame));
+
+    const droppedFrame = taskFrame({ running: 0, queued: 0, waiting: 0, finished: 0 }, []);
+    const state = reduceChat(failedState, setWidgetEvent("ui-2", droppedFrame), "2026-09-22T11:00:00.000Z");
+
+    expect(state.helpers.tasks).toHaveLength(1);
+    expect(state.helpers.tasks[0]).toMatchObject({
+      id: "task-1",
+      status: "failed",
+      endedAt: "2026-09-22T10:05:00.000Z",
+      error: "boom",
+    });
+  });
+
+  it("does not retain tasks across independent chat states (a new/switched session starts from a clean helpers list)", () => {
+    const runningFrame = taskFrame({ running: 1, queued: 0, waiting: 0, finished: 0 }, [
+      {
+        summary: {
+          id: "old-chat-task",
+          agent: "researcher",
+          label: "Research",
+          prompt: "Do it",
+          status: "running",
+          createdAt: "2026-09-22T10:00:00.000Z",
+          turns: 0,
+          toolCalls: 0,
+        },
+        thread: { version: 0, dropped: 0, items: [] },
+      },
+    ]);
+    // A first chat's session drops its running task without it ever reappearing.
+    const oldChatState = reduceChat(INITIAL_CHAT_STATE, setWidgetEvent("ui-1", runningFrame));
+    reduceChat(oldChatState, setWidgetEvent("ui-2", taskFrame({ running: 0, queued: 0, waiting: 0, finished: 1 }, [])), "2026-09-22T11:00:00.000Z");
+
+    // A new/switched session starts PiSession's ChatState fresh at
+    // INITIAL_CHAT_STATE (see PiSession.ts), never from the previous chat's
+    // state object, so its first frame must not see "old-chat-task" at all.
+    const newSessionFrame = taskFrame({ running: 1, queued: 0, waiting: 0, finished: 0 }, [
+      {
+        summary: {
+          id: "new-chat-task",
+          agent: "writer",
+          label: "Write",
+          prompt: "Do it",
+          status: "running",
+          createdAt: "2026-09-22T12:00:00.000Z",
+          turns: 0,
+          toolCalls: 0,
+        },
+        thread: { version: 0, dropped: 0, items: [] },
+      },
+    ]);
+    const newSessionState = reduceChat(INITIAL_CHAT_STATE, setWidgetEvent("ui-3", newSessionFrame));
+
+    expect(newSessionState.helpers.tasks.map((task) => task.id)).toEqual(["new-chat-task"]);
+  });
+
+  it("orders tasks running, waiting, queued, then finished by endedAt desc", () => {
+    function task(id: string, status: string, endedAt?: string) {
+      return {
+        summary: {
+          id,
+          agent: "a",
+          label: "l",
+          prompt: "p",
+          status,
+          createdAt: "2026-09-22T09:00:00.000Z",
+          endedAt,
+          turns: 0,
+          toolCalls: 0,
+        },
+        thread: { version: 0, dropped: 0, items: [] },
+      };
+    }
+
+    const frame = taskFrame({ running: 1, queued: 1, waiting: 1, finished: 3 }, [
+      task("done-older", "done", "2026-09-22T10:00:00.000Z"),
+      task("queued-1", "queued"),
+      task("done-newer", "done", "2026-09-22T10:30:00.000Z"),
+      task("running-1", "running"),
+      task("failed-1", "failed", "2026-09-22T10:15:00.000Z"),
+      task("waiting-1", "waiting"),
+    ]);
+
+    const state = reduceChat(INITIAL_CHAT_STATE, setWidgetEvent("ui-1", frame));
+
+    expect(state.helpers.tasks.map((t) => t.id)).toEqual([
+      "running-1",
+      "waiting-1",
+      "queued-1",
+      "done-newer",
+      "failed-1",
+      "done-older",
+    ]);
   });
 });
