@@ -96,8 +96,14 @@ export class ChatHost {
     this.requireCurrent().answerDialog(id, answer);
   }
 
-  /** Stops the current session, if any. Called on app quit. */
+  /** Stops the current session, if any. Called on app quit. Joins
+   * `startChain` first (T6 follow-up): quitting right as a queued
+   * open/new is still in flight would otherwise act on whatever
+   * `current` happens to be at that exact synchronous instant — possibly
+   * still unset, or the previous session — leaving the queued session's
+   * eventual child unstopped and outliving the app. */
   async stop(): Promise<void> {
+    await this.startChain;
     await this.current?.stop();
   }
 

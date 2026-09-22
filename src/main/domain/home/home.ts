@@ -8,20 +8,42 @@ export interface HomeConfig {
 }
 
 /**
+ * Single source of truth for "no choice persisted yet -> isolated" (T6
+ * follow-up): resolveHomeArgs below and main/index.ts's SessionStore
+ * factory both call this instead of separately re-encoding the same
+ * default, so they can never drift out of agreement on what an absent
+ * choice means.
+ */
+export function resolveHomeMode(config: HomeConfig): HomeMode {
+  return config.home ?? HOME_MODE.ISOLATED;
+}
+
+/**
  * Resolves the launcher flags gentle-shell needs to pick the right pi
  * home (T5): `--link` reuses an existing plain pi CLI install
  * (`~/.pi/agent` or `PI_CODING_AGENT_DIR`), `--isolated` uses
  * `~/.gentle-shell/agent`. Defaults to isolated when no choice has been
  * persisted yet (pre-first-run, or first-run was skipped because no pi
- * was found — see detectPi below). `GENTLE_SHELL_HOME` overrides either
- * mode with an explicit `--home <dir>`; homeDirFor honors the same
- * override so gentle-shell's child process and this process's own
- * SessionStore always agree on the same directory.
+ * was found — see detectPi below), via resolveHomeMode above.
+ * `GENTLE_SHELL_HOME` overrides either mode with an explicit
+ * `--home <dir>`; homeDirFor honors the same override so gentle-shell's
+ * child process and this process's own SessionStore always agree on the
+ * same directory.
  */
 export function resolveHomeArgs(config: HomeConfig, env: NodeJS.ProcessEnv = process.env): readonly string[] {
   const override = env.GENTLE_SHELL_HOME;
   if (override) return ["--home", override];
-  return config.home === HOME_MODE.LINK ? ["--link"] : ["--isolated"];
+  return resolveHomeMode(config) === HOME_MODE.LINK ? ["--link"] : ["--isolated"];
+}
+
+/**
+ * Single source of truth for the pi-dir rule (T6 follow-up): the linked
+ * home is `PI_CODING_AGENT_DIR` when set, else `<homedir>/.pi/agent`.
+ * homeDirFor and detectPi below both call this instead of separately
+ * re-encoding the same lookup.
+ */
+export function piAgentDir(env: NodeJS.ProcessEnv = process.env, resolveHomedir: () => string = homedir): string {
+  return env.PI_CODING_AGENT_DIR || path.join(resolveHomedir(), ".pi", "agent");
 }
 
 /**
@@ -39,11 +61,7 @@ export function homeDirFor(
   const override = env.GENTLE_SHELL_HOME;
   if (override) return override;
 
-  if (mode === HOME_MODE.LINK) {
-    const piOverride = env.PI_CODING_AGENT_DIR;
-    if (piOverride) return piOverride;
-    return path.join(resolveHomedir(), ".pi", "agent");
-  }
+  if (mode === HOME_MODE.LINK) return piAgentDir(env, resolveHomedir);
 
   return path.join(resolveHomedir(), ".gentle-shell", "agent");
 }
@@ -59,7 +77,7 @@ export function detectPi(
   resolveHomedir: () => string = homedir,
   exists: (candidate: string) => boolean = existsSync,
 ): PiDetection {
-  const dir = env.PI_CODING_AGENT_DIR || path.join(resolveHomedir(), ".pi", "agent");
+  const dir = piAgentDir(env, resolveHomedir);
   const found = exists(dir);
 
   return {

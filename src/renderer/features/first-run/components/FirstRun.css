@@ -33,6 +33,23 @@
   font-size: 0.95rem;
 }
 
+.gc-first-run__error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--red);
+  background: var(--raised);
+}
+
+.gc-first-run__error-message {
+  margin: 0;
+  color: var(--red);
+  font-size: 0.85rem;
+}
+
 .gc-first-run__detection {
   display: flex;
   flex-direction: column;

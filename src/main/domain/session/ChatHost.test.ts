@@ -254,4 +254,42 @@ describe("ChatHost", () => {
     await second;
     expect(handles[1]?.args).toContain("--link");
   });
+
+  it("stop() awaits the internal start chain before stopping the current session, so a queued start cannot outlive quit", async () => {
+    const { spawner, handles, events } = createFakeSpawner();
+    const store = fakeSessionStore([session({ id: "sess-1", path: "/a/sess-1.jsonl" })]);
+    const host = new ChatHost({ spawner, locator: fakeLocator, sessionStore: store, env: {} });
+
+    // An already-open, live chat...
+    await host.openChat("sess-1");
+    expect(handles).toHaveLength(1);
+
+    // ...then newChat() is requested (queuing behind the still-live open
+    // session — its own performStart will stop that session first, before
+    // starting the next one), and stop() is called immediately after,
+    // racing the still-queued newChat: without joining startChain first,
+    // stop() would act on whatever `current` happens to be at this exact
+    // synchronous instant (still the open session, not yet the queued
+    // one), leaving the queued session's eventual child unstopped.
+    const queuedNew = host.newChat();
+    const stopping = host.stop();
+
+    // The queued newChat's own internal `await this.current?.stop()` is
+    // now stopping the open session; let it exit so newChat's performStart
+    // can proceed to spawn its own session.
+    handles[0]?.resolveExited({ code: 0, signal: null });
+    await vi.waitFor(() => expect(handles).toHaveLength(2));
+
+    // stop()'s own await of the now-current (queued) session; let it exit
+    // too, so this resolves without waiting out PiSession's 3s stop grace
+    // period.
+    handles[1]?.resolveExited({ code: 0, signal: null });
+
+    await stopping;
+    await queuedNew;
+
+    // No live child remains: both sessions were told to stop (endStdin),
+    // including the one the queued newChat produced.
+    expect(events).toEqual(["spawn:0", "endStdin:0", "spawn:1", "endStdin:1"]);
+  });
 });

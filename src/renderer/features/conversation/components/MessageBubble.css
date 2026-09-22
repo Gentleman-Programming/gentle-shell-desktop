@@ -8,8 +8,9 @@
 
 .gc-message--user {
   align-self: flex-end;
-  background: var(--accent);
-  color: var(--bg);
+  background: var(--raised);
+  color: var(--text);
+  border: 1px solid var(--accent);
 }
 
 .gc-message--assistant {

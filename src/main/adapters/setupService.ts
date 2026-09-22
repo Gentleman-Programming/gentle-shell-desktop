@@ -25,7 +25,21 @@ export function createSetupService(
     },
 
     async chooseHome(mode: HomeMode): Promise<void> {
-      configStore.write({ home: mode });
+      try {
+        configStore.write({ home: mode });
+      } catch (error) {
+        // Wraps whatever configStore.write throws (ENOSPC, EACCES, a
+        // malformed userData path, ...) with a clear message instead of
+        // leaking the raw fs error: ipc's handle() rejection carries only
+        // the message text to the renderer (T6 follow-up), and
+        // FirstRunContainer shows it as-is ("Could not save your choice:
+        // <message>"), so this message alone must already read clearly.
+        throw new Error(`Could not save the home choice: ${errorMessage(error)}`, { cause: error });
+      }
     },
   };
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

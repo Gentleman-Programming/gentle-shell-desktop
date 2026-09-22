@@ -55,4 +55,18 @@ describe("createSetupService", () => {
 
     expect(configStore.written).toEqual([{ home: "link" }]);
   });
+
+  it("chooseHome(mode) wraps a configStore.write failure with a clear message instead of leaking the raw fs error", async () => {
+    const configStore: AppConfigStore = {
+      read: () => ({}),
+      write: () => {
+        throw new Error("EACCES: permission denied, mkdir '/root/.config'");
+      },
+    };
+    const service = createSetupService(configStore, {}, () => false);
+
+    await expect(service.chooseHome("link")).rejects.toThrow(
+      /could not save.*home choice.*EACCES: permission denied, mkdir '\/root\/\.config'/i,
+    );
+  });
 });
