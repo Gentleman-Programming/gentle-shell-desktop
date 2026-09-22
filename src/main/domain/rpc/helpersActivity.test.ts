@@ -209,4 +209,62 @@ describe("parseHelpersActivity", () => {
     expect(parseHelpersActivity(undefined)).toEqual(emptyHelpersActivity());
     expect(parseHelpersActivity([])).toEqual(emptyHelpersActivity());
   });
+
+  // D1 advisory follow-up: `new Date(nonFiniteOrOutOfRangeEpoch).toISOString()`
+  // throws a RangeError instead of returning a string. A single malformed
+  // timestamp field from gentle-agents must never crash the whole decode.
+  it("drops an out-of-range epoch timestamp instead of throwing", () => {
+    // 8_640_000_000_000_001 is one past JS's maximum representable Date
+    // (±8,640,000,000,000,000ms from the epoch) — a finite number that
+    // still makes `new Date(...)` invalid.
+    const payload = JSON.stringify({
+      schema: "gentle-agents.activity/v1",
+      summary: { running: 0, queued: 0, waiting: 0, finished: 0 },
+      tasks: [
+        {
+          summary: {
+            id: "task-1",
+            agent: "a",
+            label: "l",
+            prompt: "p",
+            status: "running",
+            createdAt: "2026-09-22T10:00:00.000Z",
+            lastActivityAt: 8_640_000_000_000_001,
+            turns: 0,
+            toolCalls: 0,
+          },
+          thread: { version: 0, dropped: 0, items: [] },
+        },
+      ],
+    });
+
+    expect(() => parseHelpersActivity([payload])).not.toThrow();
+    expect(parseHelpersActivity([payload])?.tasks[0]?.lastActivityAt).toBeUndefined();
+  });
+
+  it("drops a non-finite epoch timestamp (Infinity, from an overflowing JSON number literal) instead of throwing", () => {
+    // JSON.parse accepts a numeric literal that overflows to Infinity even
+    // though the JSON spec has no Infinity keyword — this is how a
+    // malformed upstream payload could produce a non-finite number here.
+    const payload = '{"schema":"gentle-agents.activity/v1","summary":{},"tasks":[{"summary":{"id":"task-1","agent":"a","label":"l","prompt":"p","status":"running","createdAt":"2026-09-22T10:00:00.000Z","lastActivityAt":1e400,"turns":0,"toolCalls":0},"thread":{"version":0,"dropped":0,"items":[]}}]}';
+
+    expect(() => parseHelpersActivity([payload])).not.toThrow();
+    expect(parseHelpersActivity([payload])?.tasks[0]?.lastActivityAt).toBeUndefined();
+  });
+
+  it("drops a task whose createdAt is an out-of-range epoch instead of throwing (createdAt is required)", () => {
+    const payload = JSON.stringify({
+      schema: "gentle-agents.activity/v1",
+      summary: {},
+      tasks: [
+        {
+          summary: { id: "task-1", agent: "a", label: "l", prompt: "p", status: "running", createdAt: 8_640_000_000_000_001, turns: 0, toolCalls: 0 },
+          thread: { version: 0, dropped: 0, items: [] },
+        },
+      ],
+    });
+
+    expect(() => parseHelpersActivity([payload])).not.toThrow();
+    expect(parseHelpersActivity([payload])?.tasks).toEqual([]);
+  });
 });

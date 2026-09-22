@@ -1,0 +1,23 @@
+.gc-helpers-footer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.gc-helpers-footer__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.gc-helpers-footer__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
