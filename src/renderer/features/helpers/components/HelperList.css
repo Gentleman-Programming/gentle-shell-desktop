@@ -14,3 +14,47 @@
   color: var(--muted);
   font-size: 0.85rem;
 }
+
+.gc-helper-list__earlier {
+  margin-top: 0.2rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.2rem;
+}
+
+.gc-helper-list__earlier-toggle {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-2);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.gc-helper-list__earlier-toggle:hover {
+  background: var(--raised);
+}
+
+.gc-helper-list__earlier-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.gc-helper-list__earlier-hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.gc-helper-list__earlier-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}

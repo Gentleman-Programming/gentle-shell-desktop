@@ -212,16 +212,20 @@ function describeAnswer(answer: DialogAnswer): string {
 
 /**
  * D4: seeds "chat-migration" (the one EXAMPLE_CHATS chat marked WORKING)
- * with three helpers so the Helpers tab is reachable under `pnpm dev:web`
+ * with helpers so the Helpers tab is reachable under `pnpm dev:web`
  * without a real gentle-agents process — a running helper with a thread
  * that grows every ~800ms (text -> thinking -> tool running -> tool done ->
- * text, repeated), a waiting helper, and a done one. Only chat-migration
- * gets a scenario: every other chat's helpers stay empty, matching
- * emptyState().
+ * text, repeated), a waiting helper, a done one, and two helpers already
+ * finished days ago (so the "Earlier" group — see format.ts's
+ * partitionHelpers, maintainer decision 2026-09-22 — has something to
+ * show in the preview). Only chat-migration gets a scenario: every other
+ * chat's helpers stay empty, matching emptyState().
  */
 const RUNNING_TASK_ID = "mock-helper-running";
 const WAITING_TASK_ID = "mock-helper-waiting";
 const DONE_TASK_ID = "mock-helper-done";
+const EARLIER_DONE_TASK_ID = "mock-helper-earlier-done";
+const EARLIER_FAILED_TASK_ID = "mock-helper-earlier-failed";
 const HELPERS_STEP_DELAY_MS = 800;
 const HELPERS_SCENARIO_CYCLES = 3;
 
@@ -298,10 +302,14 @@ async function runHelpersScenario(token: number): Promise<void> {
   }
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 function startHelpersScenario(): void {
   helpersScenarioToken += 1;
   const token = helpersScenarioToken;
   const now = new Date().toISOString();
+  const twoDaysAgo = new Date(Date.now() - 2 * DAY_MS).toISOString();
+  const oneDayAgo = new Date(Date.now() - DAY_MS).toISOString();
 
   const tasks: HelperTask[] = [
     makeHelperTask({
@@ -351,6 +359,41 @@ function startHelpersScenario(): void {
           { kind: "tool", callId: "mock-call-audit-1", name: "Grep", args: { pattern: "readConfig" }, running: false, output: "3 matches" },
           { kind: "text", text: "Found 3 call sites, all already using the loader — no direct file reads left." },
         ],
+      },
+    }),
+    makeHelperTask({
+      id: EARLIER_DONE_TASK_ID,
+      agent: "general-purpose",
+      label: "Draft the migration plan",
+      prompt: "Write up the plan for migrating the config schema.",
+      status: HELPER_STATUS.DONE,
+      createdAt: twoDaysAgo,
+      startedAt: twoDaysAgo,
+      endedAt: twoDaysAgo,
+      turns: 2,
+      toolCalls: 1,
+      thread: {
+        version: 0,
+        dropped: 0,
+        items: [{ kind: "text", text: "Drafted the migration plan for the deprecated config fields." }],
+      },
+    }),
+    makeHelperTask({
+      id: EARLIER_FAILED_TASK_ID,
+      agent: "general-purpose",
+      label: "Check the staging deploy",
+      prompt: "Verify the staging deploy picked up the schema change.",
+      status: HELPER_STATUS.FAILED,
+      createdAt: oneDayAgo,
+      startedAt: oneDayAgo,
+      endedAt: oneDayAgo,
+      turns: 1,
+      toolCalls: 1,
+      error: "Staging deploy webhook timed out.",
+      thread: {
+        version: 0,
+        dropped: 0,
+        items: [{ kind: "text", text: "Checking the staging deploy for the schema change." }],
       },
     }),
   ];

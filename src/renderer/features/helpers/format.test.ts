@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { HelperTask, HelperThreadItem } from "@shared/bridge-types";
-import { countSteps, formatElapsed, formatMetaLine, formatSummaryLine, labelThreadItems, statusLabel, summarizeTool } from "./format";
+import {
+  countSteps,
+  formatElapsed,
+  formatEarlierDateHint,
+  formatMetaLine,
+  formatSummaryLine,
+  labelThreadItems,
+  partitionHelpers,
+  statusLabel,
+  summarizeTool,
+} from "./format";
 
 function baseTask(overrides: Partial<HelperTask> = {}): HelperTask {
   return {
@@ -131,5 +141,68 @@ describe("formatSummaryLine", () => {
 
   it("shows a single neutral message when nothing is happening", () => {
     expect(formatSummaryLine({ running: 0, queued: 0, waiting: 0, finished: 0 })).toBe("No helpers yet");
+  });
+});
+
+describe("partitionHelpers", () => {
+  const openedAt = "2026-09-22T10:00:00.000Z";
+
+  it("buckets a terminal task that finished before openedAt as earlier", () => {
+    const task = baseTask({ status: "done", endedAt: "2026-09-20T10:00:00.000Z" });
+    expect(partitionHelpers([task], openedAt)).toEqual({ current: [], earlier: [task] });
+  });
+
+  it("buckets a terminal task that finished after openedAt as current", () => {
+    const task = baseTask({ status: "done", endedAt: "2026-09-23T10:00:00.000Z" });
+    expect(partitionHelpers([task], openedAt)).toEqual({ current: [task], earlier: [] });
+  });
+
+  it("keeps a still-running task current even with old timestamps", () => {
+    const task = baseTask({ status: "running", startedAt: "2026-09-10T10:00:00.000Z" });
+    expect(partitionHelpers([task], openedAt)).toEqual({ current: [task], earlier: [] });
+  });
+
+  it("falls back to lastActivityAt, then createdAt, when endedAt is missing", () => {
+    const viaLastActivity = baseTask({
+      status: "failed",
+      endedAt: undefined,
+      lastActivityAt: "2026-09-20T10:00:00.000Z",
+      createdAt: "2026-09-23T10:00:00.000Z",
+    });
+    expect(partitionHelpers([viaLastActivity], openedAt)).toEqual({ current: [], earlier: [viaLastActivity] });
+
+    const viaCreatedAt = baseTask({
+      status: "cancelled",
+      endedAt: undefined,
+      lastActivityAt: undefined,
+      createdAt: "2026-09-20T10:00:00.000Z",
+    });
+    expect(partitionHelpers([viaCreatedAt], openedAt)).toEqual({ current: [], earlier: [viaCreatedAt] });
+  });
+
+  it("preserves the existing order within each bucket", () => {
+    const running = baseTask({ id: "running", status: "running", startedAt: "2026-09-22T09:00:00.000Z" });
+    const oldDone = baseTask({ id: "old-done", status: "done", endedAt: "2026-09-20T10:00:00.000Z" });
+    const newDone = baseTask({ id: "new-done", status: "done", endedAt: "2026-09-23T10:00:00.000Z" });
+    const olderDone = baseTask({ id: "older-done", status: "done", endedAt: "2026-09-19T10:00:00.000Z" });
+
+    expect(partitionHelpers([running, oldDone, newDone, olderDone], openedAt)).toEqual({
+      current: [running, newDone],
+      earlier: [oldDone, olderDone],
+    });
+  });
+});
+
+describe("formatEarlierDateHint", () => {
+  it("returns undefined for an empty earlier group", () => {
+    expect(formatEarlierDateHint([])).toBeUndefined();
+  });
+
+  it("formats the latest endedAt among the earlier group", () => {
+    const tasks = [
+      baseTask({ id: "1", status: "done", endedAt: "2026-09-18T10:00:00.000Z" }),
+      baseTask({ id: "2", status: "done", endedAt: "2026-09-20T10:00:00.000Z" }),
+    ];
+    expect(formatEarlierDateHint(tasks)).toBe("until Sep 20, 2026");
   });
 });
