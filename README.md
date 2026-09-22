@@ -45,3 +45,5 @@ The gentle-shell launcher itself is not published on npm yet: `pnpm dev`/`pnpm p
 See "What it shows" above for why the app sets `GENTLE_SHELL_INTERACTIVE_HOST=1`; the spawn itself lives in `src/main/domain/session/PiSession.ts`.
 
 See `src/README.md` for why the source tree is shaped the way it is.
+
+`pnpm dev:local-pi` runs the app against a local gentle-pi checkout (default `../gentle-pi-worktrees/desktop-integration`, override with `GENTLE_SHELL_BIN=<path>/bin/gentle-shell.mjs`) until gentle-pi ships the launcher and the interactive-host feature on npm.
