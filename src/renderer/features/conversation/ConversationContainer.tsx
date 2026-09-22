@@ -1,71 +1,89 @@
 import { useEffect, useState } from "react";
-import { MESSAGE_ROLE, type ChatMessage } from "@shared/bridge-types";
+import type { ChatState, ChatSummary, DialogAnswer } from "@shared/bridge-types";
 import { useBridge } from "@renderer/shared/bridge/useBridge";
 import { Composer } from "./components/Composer";
-import { MessageBubble } from "./components/MessageBubble";
+import { ConversationHeader } from "./components/ConversationHeader";
+import { MessageThread } from "./components/MessageThread";
+import { StatusLine } from "./components/StatusLine";
 import "./ConversationContainer.css";
 
-let nextErrorId = 0;
+/**
+ * Which chat is open right now. App.tsx owns this as small local state (no
+ * global store for M1, see odd/tasks/desktop-m1-chat-core.md) and passes it
+ * down; ChatsContainer only reports selection intent up to App, it never
+ * calls chat.open/chat.new itself, because GentleBridge tracks exactly one
+ * "currently open" chat.
+ */
+export type ActiveChat = { readonly kind: "new" } | { readonly kind: "existing"; readonly chat: ChatSummary };
 
-function errorMessage(text: string): ChatMessage {
-  nextErrorId += 1;
-  return { id: `error-${nextErrorId}`, role: MESSAGE_ROLE.ASSISTANT, text: `Message could not be sent: ${text}` };
+export interface ConversationContainerProps {
+  readonly activeChat: ActiveChat;
+}
+
+function emptyChatState(): ChatState {
+  return { messages: [], working: false, pendingDialogs: [], activity: 0 };
+}
+
+function errorText(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause);
 }
 
 /**
- * Conversation container: owns the message list and the draft text. T3
- * wires it to the finalized bridge shape — onState pushes replace T1's
- * streamed-callback shape (sendMessage no longer takes a chatId or an
- * onTextDelta callback; ChatHost pushes ChatState for whichever chat is
- * currently open, and openChat/newChat return the initial state). Real
- * chat selection from the sidebar is T4 scope; this opens a fresh chat on
- * mount so `pnpm dev:web` keeps behaving the same way it did in T1.
+ * Conversation container: ONE source of truth for the thread is the pushed
+ * `ChatState` (messages, working, pendingDialogs, lastError) — nothing is
+ * derived or invented locally. Errors (ChatState.lastError and
+ * bridge.onError pushes) render in a dedicated StatusLine, never as a
+ * synthetic ChatMessage appended to the thread.
  */
-export function ConversationContainer() {
+export function ConversationContainer({ activeChat }: ConversationContainerProps) {
   const bridge = useBridge();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [working, setWorking] = useState(false);
+  const [chatState, setChatState] = useState<ChatState>(emptyChatState());
+  const [bridgeError, setBridgeError] = useState<string | undefined>(undefined);
   const [draft, setDraft] = useState("");
 
+  // Subscribes once: GentleBridge pushes state/error for whichever chat is
+  // currently open, independent of which activeChat this render owns.
   useEffect(() => {
-    const unsubscribeState = bridge.onState((state) => {
-      setMessages([...state.messages]);
-      setWorking(state.working);
-    });
-    const unsubscribeError = bridge.onError((message) => {
-      setMessages((current) => [...current, errorMessage(message)]);
-    });
-
-    bridge.newChat().catch((cause: unknown) => {
-      setMessages((current) => [...current, errorMessage(cause instanceof Error ? cause.message : String(cause))]);
-    });
-
+    const unsubscribeState = bridge.onState(setChatState);
+    const unsubscribeError = bridge.onError(setBridgeError);
     return () => {
       unsubscribeState();
       unsubscribeError();
     };
   }, [bridge]);
 
-  const handleSubmit = (): void => {
+  // Opens (or starts) the selected chat whenever the selection changes.
+  useEffect(() => {
+    setBridgeError(undefined);
+    const opening = activeChat.kind === "existing" ? bridge.openChat(activeChat.chat.id) : bridge.newChat();
+    opening.then(setChatState).catch((cause: unknown) => setBridgeError(errorText(cause)));
+  }, [bridge, activeChat]);
+
+  const handleSend = (): void => {
     const text = draft.trim();
-    if (text.length === 0 || working) return;
+    if (text.length === 0 || chatState.working) return;
 
     setDraft("");
-    bridge.sendMessage(text).catch((cause: unknown) => {
-      setMessages((current) => [...current, errorMessage(cause instanceof Error ? cause.message : String(cause))]);
-    });
+    bridge.sendMessage(text).catch((cause: unknown) => setBridgeError(errorText(cause)));
   };
+
+  const handleAbort = (): void => {
+    bridge.abort().catch((cause: unknown) => setBridgeError(errorText(cause)));
+  };
+
+  const handleAnswerDialog = (id: string, answer: DialogAnswer): void => {
+    bridge.answerDialog(id, answer).catch((cause: unknown) => setBridgeError(errorText(cause)));
+  };
+
+  const title = activeChat.kind === "existing" ? activeChat.chat.title : "New chat";
+  const error = bridgeError ?? chatState.lastError;
 
   return (
     <section className="gc-conversation">
-      <div className="gc-conversation__thread">
-        {messages.length === 0 ? (
-          <p className="gc-conversation__empty">Start a conversation with Gentle.</p>
-        ) : (
-          messages.map((message) => <MessageBubble key={message.id} message={message} />)
-        )}
-      </div>
-      <Composer value={draft} disabled={working} onChange={setDraft} onSubmit={handleSubmit} />
+      <ConversationHeader title={title} working={chatState.working} />
+      <StatusLine error={error} />
+      <MessageThread messages={chatState.messages} dialogs={chatState.pendingDialogs} onAnswerDialog={handleAnswerDialog} />
+      <Composer value={draft} working={chatState.working} onChange={setDraft} onSend={handleSend} onAbort={handleAbort} />
     </section>
   );
 }

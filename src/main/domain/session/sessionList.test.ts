@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { CHAT_STATE } from "@shared/bridge-types";
-import { groupChatsByDay, toChatSummaries } from "./sessionList";
+import { toChatSummaries } from "./sessionList";
 import type { SessionInfoLike } from "../../ports";
+
+// groupChatsByDay/ChatDayGroup moved to @shared/chatGrouping.ts in T4 (the
+// renderer sidebar needs it too); its tests moved with it to
+// @shared/chatGrouping.test.ts. sessionList.ts still re-exports both names
+// for API stability — see that file's doc comment.
 
 function makeSession(overrides: Partial<SessionInfoLike> = {}): SessionInfoLike {
   return {
@@ -51,47 +56,5 @@ describe("toChatSummaries", () => {
     const summaries = toChatSummaries([older, newer]);
 
     expect(summaries.map((summary) => summary.id)).toEqual(["newer", "older"]);
-  });
-});
-
-describe("groupChatsByDay", () => {
-  const now = new Date("2026-09-21T12:00:00.000Z");
-
-  it('groups a chat updated today under "Today" (UTC calendar day)', () => {
-    const summaries = toChatSummaries([makeSession({ id: "a", modified: new Date("2026-09-21T09:00:00.000Z") })]);
-    expect(groupChatsByDay(summaries, now)).toEqual([{ label: "Today", chats: summaries }]);
-  });
-
-  it('groups a chat updated yesterday under "Yesterday"', () => {
-    const summaries = toChatSummaries([makeSession({ id: "a", modified: new Date("2026-09-20T09:00:00.000Z") })]);
-    expect(groupChatsByDay(summaries, now)).toEqual([{ label: "Yesterday", chats: summaries }]);
-  });
-
-  it("groups an older chat under its ISO calendar date", () => {
-    const summaries = toChatSummaries([makeSession({ id: "a", modified: new Date("2026-09-10T09:00:00.000Z") })]);
-    expect(groupChatsByDay(summaries, now)).toEqual([{ label: "2026-09-10", chats: summaries }]);
-  });
-
-  it("keeps same-day chats in one group, preserving their (already-sorted) order", () => {
-    const summaries = toChatSummaries([
-      makeSession({ id: "a", modified: new Date("2026-09-21T09:00:00.000Z") }),
-      makeSession({ id: "b", modified: new Date("2026-09-21T08:00:00.000Z") }),
-    ]);
-
-    const groups = groupChatsByDay(summaries, now);
-
-    expect(groups).toHaveLength(1);
-    expect(groups[0]?.chats.map((chat) => chat.id)).toEqual(["a", "b"]);
-  });
-
-  it("returns Today and Yesterday as separate, ordered groups", () => {
-    const summaries = toChatSummaries([
-      makeSession({ id: "today", modified: new Date("2026-09-21T09:00:00.000Z") }),
-      makeSession({ id: "yesterday", modified: new Date("2026-09-20T09:00:00.000Z") }),
-    ]);
-
-    const groups = groupChatsByDay(summaries, now);
-
-    expect(groups.map((group) => group.label)).toEqual(["Today", "Yesterday"]);
   });
 });

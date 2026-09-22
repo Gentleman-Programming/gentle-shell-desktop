@@ -3,17 +3,29 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  width: 100%;
   padding: 0.6rem 0.75rem;
   border-radius: 8px;
   color: var(--text-2);
+  background: transparent;
+  border: 1px solid transparent;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
 }
 
 .gc-chat-list-item:hover {
   background: var(--raised);
 }
 
+.gc-chat-list-item--selected {
+  background: var(--raised);
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
 .gc-chat-list-item__title {
-  font-size: 0.875rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

@@ -7,10 +7,14 @@ describe("theme", () => {
     expect(theme.accent).toBe(gentlemanCute.vars.accent);
   });
 
-  it("exposes the full Gentleman-Cute token set as CSS custom property names", () => {
-    expect(theme.bg).toBe("#060407");
-    expect(theme.panel).toBe("#100A0F");
-    expect(theme.text).toBe("#F6EFF3");
-    expect(theme.accentActive).toBe("#FFB1DD");
+  it("mirrors the rest of the token set against the committed Gentleman-Cute fixture", () => {
+    // theme.ts renames the fixture's `vars` keys (bgPanel -> panel,
+    // activePink -> accentActive, ...); pinned here instead of literal hex
+    // strings so a future palette change in the fixture fails this test
+    // instead of silently drifting from theme.ts/tokens.css.
+    expect(theme.bg).toBe(gentlemanCute.vars.bg);
+    expect(theme.panel).toBe(gentlemanCute.vars.bgPanel);
+    expect(theme.text).toBe(gentlemanCute.vars.text);
+    expect(theme.accentActive).toBe(gentlemanCute.vars.activePink);
   });
 });
