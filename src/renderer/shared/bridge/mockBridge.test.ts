@@ -112,4 +112,59 @@ describe("mockBridge", () => {
 
     expect(states.at(-1)?.messages.at(-1)?.text).toContain("hello Gentle");
   });
+
+  // D4: the "Migrate the config schema" working chat (chat-migration) seeds
+  // three helpers so the Helpers tab is reachable under `pnpm dev:web`
+  // without a real gentle-agents process.
+  describe("helpers scenario (chat-migration)", () => {
+    it("seeds three helper tasks (running, waiting, done) with a matching summary when opened", async () => {
+      const state = await mockBridge.openChat("chat-migration");
+
+      expect(state.helpers.tasks).toHaveLength(3);
+      expect(state.helpers.tasks.map((task) => task.status).sort()).toEqual(["done", "running", "waiting"]);
+      expect(state.helpers.summary).toEqual({ running: 1, queued: 0, waiting: 1, finished: 1 });
+    });
+
+    it("leaves helpers empty for any other chat", async () => {
+      const state = await mockBridge.openChat("chat-readme");
+      expect(state.helpers).toEqual({ summary: { running: 0, queued: 0, waiting: 0, finished: 0 }, tasks: [] });
+    });
+
+    it("grows the running task's thread over time", async () => {
+      vi.useFakeTimers();
+      try {
+        const { states } = collectStates();
+        await mockBridge.openChat("chat-migration");
+
+        const runningTask = () => states.at(-1)?.helpers.tasks.find((task) => task.status === "running");
+        expect(runningTask()?.thread.items).toHaveLength(0);
+
+        await vi.advanceTimersByTimeAsync(800);
+        expect(runningTask()?.thread.items.length).toBeGreaterThan(0);
+
+        const afterOneStep = runningTask()?.thread.items.length ?? 0;
+        await vi.advanceTimersByTimeAsync(800);
+        expect(runningTask()?.thread.items.length ?? 0).toBeGreaterThan(afterOneStep);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("stops growing the previous chat's thread once a different chat is opened", async () => {
+      vi.useFakeTimers();
+      try {
+        const { states } = collectStates();
+        await mockBridge.openChat("chat-migration");
+        await vi.advanceTimersByTimeAsync(800);
+
+        await mockBridge.openChat("chat-readme");
+        const countAfterSwitch = states.length;
+
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(states.length).toBe(countAfterSwitch);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
 });
