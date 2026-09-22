@@ -1,9 +1,41 @@
 import type { ChatState, ChatSummary, DialogAnswer, PromptResult } from "@shared/bridge-types";
+import { boundedStop } from "../lifecycle/boundedStop";
+import type { RpcEvent } from "../rpc/types";
 import type { HomeSettings, LauncherLocator, ProcessSpawner, SessionStore } from "../../ports";
 import { PiSession } from "./PiSession";
 import { toChatSummaries } from "./sessionList";
 
 const NO_HOME_SETTINGS: HomeSettings = { homeArgs: () => [] };
+
+/**
+ * Bounds how long `openChat` waits for pi's `get_messages` history response
+ * (PiSession.start() sends it automatically for a sessionPath-backed
+ * session) before returning anyway, so a slow or missing response never
+ * blocks the renderer from opening the chat — see `waitForHistoryResponse`
+ * below. Later pushes (the response itself, if it arrives late, or any
+ * live event) keep flowing through the normal `onState` subscription
+ * either way.
+ */
+const HISTORY_LOAD_TIMEOUT_MS = 2000;
+
+/**
+ * Resolves once `session` reports its `get_messages` history response
+ * (success or failure) on its `event` stream. Reused with `boundedStop`
+ * (src/main/domain/lifecycle/boundedStop.ts) instead of a bespoke timer,
+ * so `performStart` only waits for a session actually started with a
+ * sessionPath — `newChat` never sends `get_messages` in the first place,
+ * so there is nothing to wait for there.
+ */
+function waitForHistoryResponse(session: PiSession): Promise<void> {
+  return new Promise((resolve) => {
+    const onEvent = (event: RpcEvent): void => {
+      if (event.type !== "response" || event.command !== "get_messages") return;
+      session.off("event", onEvent);
+      resolve();
+    };
+    session.on("event", onEvent);
+  });
+}
 
 export interface ChatHostDeps {
   readonly spawner: ProcessSpawner;
@@ -136,7 +168,19 @@ export class ChatHost {
     session.on("error", (error) => this.emitError(error.message));
 
     this.current = session;
-    session.start();
+
+    if (sessionPath) {
+      // Attach the listener before start() so it can never miss a response
+      // that (in principle) arrived before this line runs.
+      const historyLoaded = waitForHistoryResponse(session);
+      session.start();
+      await boundedStop(() => historyLoaded, HISTORY_LOAD_TIMEOUT_MS);
+    } else {
+      // newChat: PiSession never sends get_messages without a sessionPath,
+      // so there is nothing to wait for.
+      session.start();
+    }
+
     return session.getState();
   }
 

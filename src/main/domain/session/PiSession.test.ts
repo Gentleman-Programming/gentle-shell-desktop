@@ -76,6 +76,22 @@ function handleLine(line) {
     return;
   }
 
+  if (cmd.type === "get_messages") {
+    write({
+      type: "response",
+      id: cmd.id,
+      command: "get_messages",
+      success: true,
+      data: {
+        messages: [
+          { role: "user", content: "What is 2+2?", timestamp: 0 },
+          { role: "assistant", content: [{ type: "text", text: "4" }], timestamp: 0 },
+        ],
+      },
+    });
+    return;
+  }
+
   if (cmd.type === "extension_ui_response") {
     const resolve = pendingDialogs.get(cmd.id);
     pendingDialogs.delete(cmd.id);
@@ -111,11 +127,12 @@ function waitFor(session: PiSession, predicate: (state: ChatState) => boolean, t
 describe("PiSession", () => {
   let tmpDir: string | undefined;
 
-  function createSession(env: NodeJS.ProcessEnv): PiSession {
+  function createSession(env: NodeJS.ProcessEnv, options: { sessionPath?: string } = {}): PiSession {
     return new PiSession({
       spawner: createNodeProcessSpawner(),
       locator: createLauncherLocator(env),
       env,
+      sessionPath: options.sessionPath,
     });
   }
 
@@ -148,6 +165,20 @@ describe("PiSession", () => {
     // message_end.message is authoritative (see chatReducer's extractAssistantText),
     // so the final text is the un-spaced-joined content block, not the raw deltas.
     expect(settled.messages[1]).toMatchObject({ role: "assistant", text: "hello world", streaming: false });
+
+    await session.stop();
+  });
+
+  it("seeds ChatState.messages from get_messages history when started with a sessionPath", async () => {
+    const scriptPath = writeFakeScript();
+    const session = createSession({ GENTLE_SHELL_BIN: scriptPath }, { sessionPath: "/fake/session.jsonl" });
+
+    session.start();
+
+    const withHistory = await waitFor(session, (state) => state.messages.length === 2);
+
+    expect(withHistory.messages[0]).toMatchObject({ id: "msg-0", role: "user", text: "What is 2+2?" });
+    expect(withHistory.messages[1]).toMatchObject({ id: "msg-1", role: "assistant", text: "4", streaming: false });
 
     await session.stop();
   });
@@ -476,5 +507,105 @@ describe("PiSession: Electron host follow-ups", () => {
     session.start();
 
     expect(handles[0]?.env).toMatchObject({ FOO: "bar", ELECTRON_RUN_AS_NODE: "1", GENTLE_SHELL_INTERACTIVE_HOST: "1" });
+  });
+
+  it("sends get_messages when started with a sessionPath and seeds ChatState.messages from the response", () => {
+    const { spawner, handles } = createFakeSpawner();
+    const session = new PiSession({ spawner, locator: fakeLocator, env: {}, sessionPath: "/a/sess-1.jsonl" });
+
+    session.start();
+
+    expect(handles[0]?.writes).toHaveLength(1);
+    const sent = JSON.parse(handles[0]?.writes[0] ?? "{}");
+    expect(sent).toMatchObject({ type: "get_messages" });
+    expect(typeof sent.id).toBe("string");
+
+    handles[0]?.emitStdout(
+      JSON.stringify({
+        type: "response",
+        id: sent.id,
+        command: "get_messages",
+        success: true,
+        data: {
+          messages: [
+            { role: "user", content: "hi", timestamp: 0 },
+            { role: "assistant", content: [{ type: "text", text: "hello" }], timestamp: 0 },
+          ],
+        },
+      }),
+    );
+
+    expect(session.getState().messages).toEqual([
+      { id: "msg-0", role: "user", text: "hi" },
+      { id: "msg-1", role: "assistant", text: "hello", streaming: false },
+    ]);
+  });
+
+  it("never sends get_messages for a fresh session (no sessionPath)", () => {
+    const { spawner, handles } = createFakeSpawner();
+    const session = new PiSession({ spawner, locator: fakeLocator, env: {} });
+
+    session.start();
+
+    expect(handles[0]?.writes).toEqual([]);
+  });
+
+  it("surfaces lastError instead of throwing when the get_messages response fails", () => {
+    const { spawner, handles } = createFakeSpawner();
+    const session = new PiSession({ spawner, locator: fakeLocator, env: {}, sessionPath: "/a/sess-1.jsonl" });
+
+    session.start();
+    const sent = JSON.parse(handles[0]?.writes[0] ?? "{}");
+
+    handles[0]?.emitStdout(
+      JSON.stringify({ type: "response", id: sent.id, command: "get_messages", success: false, error: "boom" }),
+    );
+
+    expect(session.getState().lastError).toBe("Could not load this chat's history");
+    expect(session.getState().messages).toEqual([]);
+  });
+
+  it("ignores a get_messages response whose id does not match the pending request", () => {
+    const { spawner, handles } = createFakeSpawner();
+    const session = new PiSession({ spawner, locator: fakeLocator, env: {}, sessionPath: "/a/sess-1.jsonl" });
+
+    session.start();
+
+    handles[0]?.emitStdout(
+      JSON.stringify({
+        type: "response",
+        id: "some-other-id",
+        command: "get_messages",
+        success: true,
+        data: { messages: [{ role: "user", content: "should be ignored", timestamp: 0 }] },
+      }),
+    );
+
+    expect(session.getState().messages).toEqual([]);
+  });
+
+  it("never overwrites already-live messages with a late get_messages history response", () => {
+    const { spawner, handles } = createFakeSpawner();
+    const session = new PiSession({ spawner, locator: fakeLocator, env: {}, sessionPath: "/a/sess-1.jsonl" });
+
+    session.start();
+    const sent = JSON.parse(handles[0]?.writes[0] ?? "{}");
+
+    // A live prompt races ahead of the history response.
+    session.prompt("hi there");
+    expect(session.getState().messages).toHaveLength(1);
+
+    handles[0]?.emitStdout(
+      JSON.stringify({
+        type: "response",
+        id: sent.id,
+        command: "get_messages",
+        success: true,
+        data: { messages: [{ role: "user", content: "should not appear", timestamp: 0 }] },
+      }),
+    );
+
+    expect(session.getState().messages).toHaveLength(1);
+    expect(session.getState().messages[0]).toMatchObject({ text: "hi there" });
   });
 });
