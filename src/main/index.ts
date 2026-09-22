@@ -1,5 +1,5 @@
 import path from "node:path";
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, shell } from "electron";
 import {
   createAppConfigStore,
   createDynamicPiSessionStore,
@@ -88,6 +88,18 @@ function createWindow(): void {
 
   const unregisterHandlers = registerHandlers(chatHost, setupService, window.webContents, ipcMain);
   window.on("closed", unregisterHandlers);
+
+  // Assistant replies now render Markdown links (Markdown.tsx forces
+  // target="_blank" on every <a>), so a click reaches here instead of
+  // navigating the app's own BrowserWindow. Only hand http(s) links to the
+  // OS default browser; deny everything else (no new Electron windows, no
+  // other schemes) since this window never needs to open one itself.
+  window.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      void shell.openExternal(url);
+    }
+    return { action: "deny" };
+  });
 
   window.once("ready-to-show", () => window.show());
 
