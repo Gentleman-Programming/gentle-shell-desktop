@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import type { ChatState, ChatSummary, DialogAnswer } from "@shared/bridge-types";
 import { useBridge } from "@renderer/shared/bridge/useBridge";
+import { HelpersContainer } from "@renderer/features/helpers/HelpersContainer";
 import { Composer } from "./components/Composer";
-import { ConversationHeader } from "./components/ConversationHeader";
+import { CONVERSATION_PANE, ConversationHeader, type ConversationPane } from "./components/ConversationHeader";
+import { HelpersStrip } from "./components/HelpersStrip";
 import { MessageThread } from "./components/MessageThread";
 import { StatusLine } from "./components/StatusLine";
 import "./ConversationContainer.css";
@@ -46,6 +48,7 @@ export function ConversationContainer({ activeChat }: ConversationContainerProps
   const [chatState, setChatState] = useState<ChatState>(emptyChatState());
   const [bridgeError, setBridgeError] = useState<string | undefined>(undefined);
   const [draft, setDraft] = useState("");
+  const [pane, setPane] = useState<ConversationPane>(CONVERSATION_PANE.CHAT);
 
   // Subscribes once: GentleBridge pushes state/error for whichever chat is
   // currently open, independent of which activeChat this render owns.
@@ -63,6 +66,12 @@ export function ConversationContainer({ activeChat }: ConversationContainerProps
   // before this request settles (e.g. quickly clicking two chats), its
   // resolved/rejected result must not clobber the state that belongs to
   // the newer selection.
+  // Reset to the chat pane whenever the selected chat changes — a helper
+  // tab left open on the previous chat must never bleed into the next one.
+  useEffect(() => {
+    setPane(CONVERSATION_PANE.CHAT);
+  }, [activeChat]);
+
   useEffect(() => {
     setBridgeError(undefined);
     let cancelled = false;
@@ -105,10 +114,23 @@ export function ConversationContainer({ activeChat }: ConversationContainerProps
 
   return (
     <section className="gc-conversation">
-      <ConversationHeader title={title} working={chatState.working} />
+      <ConversationHeader
+        title={title}
+        working={chatState.working}
+        pane={pane}
+        runningHelpersCount={chatState.helpers.summary.running}
+        onSelectPane={setPane}
+      />
       <StatusLine error={error} />
-      <MessageThread messages={chatState.messages} dialogs={chatState.pendingDialogs} onAnswerDialog={handleAnswerDialog} />
-      <Composer value={draft} working={chatState.working} onChange={setDraft} onSend={handleSend} onAbort={handleAbort} />
+      {pane === CONVERSATION_PANE.HELPERS ? (
+        <HelpersContainer activity={chatState.helpers} onBackToChat={() => setPane(CONVERSATION_PANE.CHAT)} />
+      ) : (
+        <>
+          <HelpersStrip helpers={chatState.helpers} onOpen={() => setPane(CONVERSATION_PANE.HELPERS)} />
+          <MessageThread messages={chatState.messages} dialogs={chatState.pendingDialogs} onAnswerDialog={handleAnswerDialog} />
+          <Composer value={draft} working={chatState.working} onChange={setDraft} onSend={handleSend} onAbort={handleAbort} />
+        </>
+      )}
     </section>
   );
 }

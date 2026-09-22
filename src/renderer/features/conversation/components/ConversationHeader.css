@@ -17,3 +17,37 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.gc-conversation-header__tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: auto;
+  padding: 0.2rem;
+  border-radius: 999px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.gc-conversation-header__tab {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-2);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.gc-conversation-header__tab:hover {
+  color: var(--text);
+}
+
+.gc-conversation-header__tab--active {
+  background: var(--accent);
+  color: var(--bg);
+}
