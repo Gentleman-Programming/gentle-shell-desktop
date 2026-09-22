@@ -19,7 +19,8 @@
     "package:mac": "electron-vite build && electron-builder --mac --publish never",
     "package:win": "electron-vite build && electron-builder --win --publish never",
     "package:linux": "electron-vite build && electron-builder --linux --publish never",
-    "smoke:electron": "electron-vite build && node scripts/smoke-electron.mjs"
+    "smoke:electron": "electron-vite build && node scripts/smoke-electron.mjs",
+    "dev:local-pi": "GENTLE_SHELL_BIN=${GENTLE_SHELL_BIN:-../gentle-pi-worktrees/desktop-integration/bin/gentle-shell.mjs} electron-vite dev"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
@@ -39,6 +40,8 @@
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.85.1",
+    "dompurify": "^3.4.15",
+    "marked": "^15.0.12",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   }

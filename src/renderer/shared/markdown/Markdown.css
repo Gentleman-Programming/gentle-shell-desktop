@@ -1,0 +1,95 @@
+.gs-markdown {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.gs-markdown > :first-child {
+  margin-top: 0;
+}
+
+.gs-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.gs-markdown p {
+  margin: 0.4rem 0;
+}
+
+.gs-markdown code {
+  font-family: var(--font-mono);
+  background: var(--raised);
+  border-radius: 4px;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.85em;
+}
+
+.gs-markdown pre {
+  font-family: var(--font-mono);
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  overflow-x: auto;
+}
+
+.gs-markdown pre code {
+  background: none;
+  padding: 0;
+}
+
+.gs-markdown a {
+  color: var(--blue);
+}
+
+.gs-markdown ul,
+.gs-markdown ol {
+  margin: 0.4rem 0;
+  padding-left: 1.4rem;
+}
+
+.gs-markdown li {
+  margin: 0.15rem 0;
+}
+
+.gs-markdown blockquote {
+  margin: 0.4rem 0;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--line-strong);
+  color: var(--text-2);
+}
+
+.gs-markdown h1,
+.gs-markdown h2,
+.gs-markdown h3,
+.gs-markdown h4,
+.gs-markdown h5,
+.gs-markdown h6 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  line-height: 1.3;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.gs-markdown h1 {
+  font-size: 1rem;
+}
+
+.gs-markdown hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 0.5rem 0;
+}
+
+.gs-markdown table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 0.4rem 0;
+}
+
+.gs-markdown th,
+.gs-markdown td {
+  border: 1px solid var(--line);
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+}

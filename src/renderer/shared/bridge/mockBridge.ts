@@ -1,5 +1,6 @@
 import {
   CHAT_STATE,
+  HELPER_STATUS,
   MESSAGE_ROLE,
   type ChatMessage,
   type ChatState,
@@ -7,6 +8,12 @@ import {
   type Dialog,
   type DialogAnswer,
   type GentleBridge,
+  type HelperTask,
+  type HelperThread,
+  type HelperThreadItem,
+  type HelperThreadToolItem,
+  type HelpersActivity,
+  type HelpersSummary,
   type HomeMode,
   type PiDetection,
   type PromptResult,
@@ -93,7 +100,10 @@ function firstRunOverride(): boolean | undefined {
 }
 
 function emptyState(): ChatState {
-  return { messages: [], working: false, pendingDialogs: [], activity: 0 };
+  // D4 (a "working" chat with three helpers, browser-verified) fills this
+  // in later; for now the mock bridge just needs a compiling, empty
+  // HelpersActivity so it keeps matching the real ChatState shape.
+  return { messages: [], working: false, pendingDialogs: [], activity: 0, helpers: { summary: { running: 0, queued: 0, waiting: 0, finished: 0 }, tasks: [] } };
 }
 
 let currentState: ChatState = emptyState();
@@ -114,6 +124,7 @@ const errorListeners = new Set<(message: string) => void>();
  * this module backs never wants its own state wiped mid-session.
  */
 export function resetMockBridge(): void {
+  helpersScenarioToken += 1; // invalidate any in-flight D4 growth loop
   homeChoice = undefined;
   currentState = emptyState();
   nextMessageId = 0;
@@ -199,17 +210,213 @@ function describeAnswer(answer: DialogAnswer): string {
   return `Got it: "${answer.value}".`;
 }
 
+/**
+ * D4: seeds "chat-migration" (the one EXAMPLE_CHATS chat marked WORKING)
+ * with helpers so the Helpers tab is reachable under `pnpm dev:web`
+ * without a real gentle-agents process — a running helper with a thread
+ * that grows every ~800ms (text -> thinking -> tool running -> tool done ->
+ * text, repeated), a waiting helper, a done one, and two helpers already
+ * finished days ago (so the "Earlier" group — see format.ts's
+ * partitionHelpers, maintainer decision 2026-09-22 — has something to
+ * show in the preview). Only chat-migration gets a scenario: every other
+ * chat's helpers stay empty, matching emptyState().
+ */
+const RUNNING_TASK_ID = "mock-helper-running";
+const WAITING_TASK_ID = "mock-helper-waiting";
+const DONE_TASK_ID = "mock-helper-done";
+const EARLIER_DONE_TASK_ID = "mock-helper-earlier-done";
+const EARLIER_FAILED_TASK_ID = "mock-helper-earlier-failed";
+const HELPERS_STEP_DELAY_MS = 800;
+const HELPERS_SCENARIO_CYCLES = 3;
+
+function makeHelperTask(fields: Pick<HelperTask, "id" | "agent" | "label" | "prompt" | "status"> & Partial<HelperTask>): HelperTask {
+  const now = new Date().toISOString();
+  return {
+    createdAt: now,
+    turns: 0,
+    toolCalls: 0,
+    thread: { version: 0, dropped: 0, items: [] },
+    ...fields,
+  };
+}
+
+function helpersSummaryFor(tasks: readonly HelperTask[]): HelpersSummary {
+  return {
+    running: tasks.filter((task) => task.status === HELPER_STATUS.RUNNING).length,
+    queued: tasks.filter((task) => task.status === HELPER_STATUS.QUEUED).length,
+    waiting: tasks.filter((task) => task.status === HELPER_STATUS.WAITING).length,
+    finished: tasks.filter((task) => task.status === HELPER_STATUS.DONE || task.status === HELPER_STATUS.FAILED || task.status === HELPER_STATUS.CANCELLED)
+      .length,
+  };
+}
+
+function appendThreadItem(thread: HelperThread, item: HelperThreadItem): HelperThread {
+  return { ...thread, items: [...thread.items, item] };
+}
+
+function updateLastToolItem(thread: HelperThread, patch: Partial<HelperThreadToolItem>): HelperThread {
+  const lastToolIndex = thread.items.map((item) => item.kind).lastIndexOf("tool");
+  if (lastToolIndex === -1) return thread;
+
+  const items = thread.items.slice();
+  items[lastToolIndex] = { ...(items[lastToolIndex] as HelperThreadToolItem), ...patch };
+  return { ...thread, items };
+}
+
+const TOOL_STEPS: ReadonlyArray<{ readonly name: string; readonly args: Record<string, unknown> }> = [
+  { name: "Read", args: { paths: ["src/config/schema.ts", "src/config/loader.ts", "src/config/defaults.ts"] } },
+  { name: "Edit", args: { path: "src/config/schema.ts" } },
+];
+
+/** One step per ~800ms tick of the running helper's thread: a fixed script (not an infinite loop) so the mock never grows unbounded memory. */
+const RUNNING_TASK_STEPS: ReadonlyArray<(thread: HelperThread, callId: string) => HelperThread> = [
+  (thread) => appendThreadItem(thread, { kind: "text", text: "Migrating the config schema to the new shape." }),
+  (thread) => appendThreadItem(thread, { kind: "thinking", text: "Checking which fields moved before touching the loader." }),
+  (thread, callId) => {
+    const step = TOOL_STEPS[thread.items.filter((item) => item.kind === "tool").length % TOOL_STEPS.length]!;
+    return appendThreadItem(thread, { kind: "tool", callId, name: step.name, args: step.args, running: true });
+  },
+  (thread) => updateLastToolItem(thread, { running: false, output: "done" }),
+  (thread) => appendThreadItem(thread, { kind: "text", text: "Schema fields migrated, updating the loader next." }),
+];
+
+let helpersScenarioToken = 0;
+
+function updateRunningHelperThread(step: (thread: HelperThread, callId: string) => HelperThread, callId: string): void {
+  const tasks = currentState.helpers.tasks.map((task) =>
+    task.id === RUNNING_TASK_ID ? { ...task, thread: step(task.thread, callId), lastActivityAt: new Date().toISOString() } : task,
+  );
+  if (tasks === currentState.helpers.tasks) return; // the running task already left this chat (switched away)
+  setState({ ...currentState, helpers: { ...currentState.helpers, tasks } });
+}
+
+async function runHelpersScenario(token: number): Promise<void> {
+  let stepId = 0;
+  for (let cycle = 0; cycle < HELPERS_SCENARIO_CYCLES; cycle += 1) {
+    for (const step of RUNNING_TASK_STEPS) {
+      await delay(HELPERS_STEP_DELAY_MS);
+      if (token !== helpersScenarioToken) return;
+      stepId += 1;
+      updateRunningHelperThread(step, `mock-call-${stepId}`);
+    }
+  }
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function startHelpersScenario(): void {
+  helpersScenarioToken += 1;
+  const token = helpersScenarioToken;
+  const now = new Date().toISOString();
+  const twoDaysAgo = new Date(Date.now() - 2 * DAY_MS).toISOString();
+  const oneDayAgo = new Date(Date.now() - DAY_MS).toISOString();
+
+  const tasks: HelperTask[] = [
+    makeHelperTask({
+      id: RUNNING_TASK_ID,
+      agent: "general-purpose",
+      label: "Migrate the config schema",
+      prompt: "Move the deprecated config fields to their new location and update the loader.",
+      status: HELPER_STATUS.RUNNING,
+      createdAt: now,
+      startedAt: now,
+      turns: 1,
+    }),
+    makeHelperTask({
+      id: WAITING_TASK_ID,
+      agent: "general-purpose",
+      label: "Confirm the breaking change",
+      prompt: "Ask whether removing the old field name is acceptable.",
+      status: HELPER_STATUS.WAITING,
+      createdAt: now,
+      startedAt: now,
+      turns: 1,
+      thread: {
+        version: 0,
+        dropped: 0,
+        items: [
+          { kind: "text", text: "Ready to drop the old `configPath` field — confirm?" },
+          { kind: "note", text: "Waiting on your answer." },
+        ],
+      },
+    }),
+    makeHelperTask({
+      id: DONE_TASK_ID,
+      agent: "general-purpose",
+      label: "Audit config readers",
+      prompt: "Find every place that reads the config file directly.",
+      status: HELPER_STATUS.DONE,
+      createdAt: now,
+      startedAt: now,
+      endedAt: now,
+      turns: 3,
+      toolCalls: 1,
+      thread: {
+        version: 0,
+        dropped: 0,
+        items: [
+          { kind: "text", text: "Auditing config readers across the codebase." },
+          { kind: "tool", callId: "mock-call-audit-1", name: "Grep", args: { pattern: "readConfig" }, running: false, output: "3 matches" },
+          { kind: "text", text: "Found 3 call sites, all already using the loader — no direct file reads left." },
+        ],
+      },
+    }),
+    makeHelperTask({
+      id: EARLIER_DONE_TASK_ID,
+      agent: "general-purpose",
+      label: "Draft the migration plan",
+      prompt: "Write up the plan for migrating the config schema.",
+      status: HELPER_STATUS.DONE,
+      createdAt: twoDaysAgo,
+      startedAt: twoDaysAgo,
+      endedAt: twoDaysAgo,
+      turns: 2,
+      toolCalls: 1,
+      thread: {
+        version: 0,
+        dropped: 0,
+        items: [{ kind: "text", text: "Drafted the migration plan for the deprecated config fields." }],
+      },
+    }),
+    makeHelperTask({
+      id: EARLIER_FAILED_TASK_ID,
+      agent: "general-purpose",
+      label: "Check the staging deploy",
+      prompt: "Verify the staging deploy picked up the schema change.",
+      status: HELPER_STATUS.FAILED,
+      createdAt: oneDayAgo,
+      startedAt: oneDayAgo,
+      endedAt: oneDayAgo,
+      turns: 1,
+      toolCalls: 1,
+      error: "Staging deploy webhook timed out.",
+      thread: {
+        version: 0,
+        dropped: 0,
+        items: [{ kind: "text", text: "Checking the staging deploy for the schema change." }],
+      },
+    }),
+  ];
+
+  const helpers: HelpersActivity = { summary: helpersSummaryFor(tasks), tasks };
+  setState({ ...currentState, helpers });
+  void runHelpersScenario(token);
+}
+
 export const mockBridge: GentleBridge = {
   async listChats(): Promise<ChatSummary[]> {
     return EXAMPLE_CHATS;
   },
 
-  async openChat(_id: string): Promise<ChatState> {
+  async openChat(id: string): Promise<ChatState> {
+    helpersScenarioToken += 1; // invalidate any growth loop from a previously open chat
     setState(emptyState());
+    if (id === "chat-migration") startHelpersScenario();
     return currentState;
   },
 
   async newChat(): Promise<ChatState> {
+    helpersScenarioToken += 1;
     setState(emptyState());
     return currentState;
   },

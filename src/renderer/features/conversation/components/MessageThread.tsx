@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { ChatMessage, Dialog, DialogAnswer } from "@shared/bridge-types";
+import { MESSAGE_ROLE, type ChatMessage, type Dialog, type DialogAnswer } from "@shared/bridge-types";
 import { DialogCard } from "./DialogCard";
 import { MessageBubble } from "./MessageBubble";
 import "./MessageThread.css";
@@ -21,7 +21,17 @@ export function MessageThread({ messages, dialogs, onAnswerDialog }: MessageThre
     bottomRef.current?.scrollIntoView({ behavior: "auto" });
   }, [messages, dialogs]);
 
-  const isEmpty = messages.length === 0 && dialogs.length === 0;
+  // Safety net for the domain-level fix in chatReducer.ts/history.ts: an
+  // assistant message that finalized (streaming !== true) with nothing but
+  // whitespace text renders as an empty grey bubble. It should already have
+  // been dropped upstream, but this belongs here too so no other producer
+  // of `messages` can reintroduce the same empty bubble. A still-streaming
+  // empty assistant message stays visible as the typing placeholder; user
+  // messages are never filtered.
+  const visibleMessages = messages.filter(
+    (message) => message.role !== MESSAGE_ROLE.ASSISTANT || message.streaming === true || message.text.trim().length > 0,
+  );
+  const isEmpty = visibleMessages.length === 0 && dialogs.length === 0;
 
   return (
     <div className="gc-thread" data-testid="gc-message-thread">
@@ -29,7 +39,7 @@ export function MessageThread({ messages, dialogs, onAnswerDialog }: MessageThre
         <p className="gc-thread__empty">Start a conversation with Gentle.</p>
       ) : (
         <>
-          {messages.map((message) => (
+          {visibleMessages.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}
           {dialogs.map((dialog) => (

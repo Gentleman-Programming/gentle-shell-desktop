@@ -1,0 +1,21 @@
+.gc-helpers-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.75rem 1rem 0;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.gc-helpers-strip:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}

@@ -1,5 +1,17 @@
-import { MESSAGE_ROLE, type ChatMessage, type ChatState, type Dialog } from "@shared/bridge-types";
-import type { AssistantMessageEvent, RpcEvent, RpcExtensionUIRequest, RpcMessage } from "./types";
+import {
+  HELPER_STATUS,
+  MESSAGE_ROLE,
+  type ChatMessage,
+  type ChatState,
+  type Dialog,
+  type HelperTask,
+  type HelpersActivity,
+} from "@shared/bridge-types";
+import { emptyHelpersActivity, parseHelpersActivity } from "./helpersActivity";
+import type { AssistantMessageEvent, FireAndForgetMethod, RpcEvent, RpcExtensionUIRequest, RpcMessage } from "./types";
+
+/** The fire-and-forget branch of RpcExtensionUIRequest (notify, setStatus, setWidget, setTitle, set_editor_text). */
+type FireAndForgetUIRequest = Extract<RpcExtensionUIRequest, { readonly method: FireAndForgetMethod }>;
 
 // ChatState itself now lives in @shared/bridge-types (T3: the renderer
 // receives it directly through GentleBridge.onState/openChat/newChat).
@@ -13,7 +25,11 @@ export const INITIAL_CHAT_STATE: ChatState = {
   working: false,
   pendingDialogs: [],
   activity: 0,
+  helpers: emptyHelpersActivity(),
 };
+
+/** The one widgetKey gentle-agents publishes its per-chat helpers activity under (`gentle-agents.activity/v1`). */
+const HELPERS_WIDGET_KEY = "gentle-agents";
 
 const ACTIVITY_DELTA_TYPES: ReadonlySet<AssistantMessageEvent["type"]> = new Set([
   "thinking_start",
@@ -28,9 +44,12 @@ const ACTIVITY_DELTA_TYPES: ReadonlySet<AssistantMessageEvent["type"]> = new Set
  * Folds one decoded RPC event into chat state. Pure: same inputs, same
  * output, no I/O, no id generation from Date.now()/crypto (message ids are
  * derived from `state.messages.length`, which is unique per open call
- * because each open appends exactly one message).
+ * because each open appends exactly one message). The optional `now` is the
+ * one exception: the caller (PiSession) supplies the wall-clock time as an
+ * ISO string for the `setWidget` helpers-retention fallback below instead
+ * of this file reading the clock itself.
  */
-export function reduceChat(state: ChatState, event: RpcEvent): ChatState {
+export function reduceChat(state: ChatState, event: RpcEvent, now?: string): ChatState {
   switch (event.type) {
     case "agent_start":
       return { ...state, working: true };
@@ -48,7 +67,7 @@ export function reduceChat(state: ChatState, event: RpcEvent): ChatState {
     case "tool_execution_end":
       return { ...state, activity: state.activity + 1 };
     case "extension_ui_request":
-      return applyExtensionUIRequest(state, event);
+      return applyExtensionUIRequest(state, event, now);
     case "extension_error":
       return { ...state, lastError: event.error };
     // turn_start/turn_end and command-response envelopes carry nothing the
@@ -103,6 +122,22 @@ function closeAssistantMessage(state: ChatState, message: RpcMessage): ChatState
   // message_end.message is authoritative per rpc.md; resync from its text
   // content blocks when present, otherwise keep what text_delta accumulated.
   const authoritativeText = extractAssistantText(message) ?? last.text;
+
+  // An assistant message that only ever carried thinking/toolCall parts
+  // (never a text part, and no text_delta landed either) finalizes with
+  // nothing to show: drop it instead of leaving an empty grey bubble in the
+  // thread. Every fixture/test replayed here closes an open message with
+  // message_end (see prompt-turn.jsonl and tool-only-message.jsonl); no
+  // observed event flow lets a message reach agent_settled without first
+  // going through message_end, so finalization removal lives here only.
+  // Dropping the last element shrinks `state.messages.length` back down, so
+  // the id scheme (`msg-${state.messages.length}` in openAssistantMessage)
+  // reassigns the freed id to the next assistant message with no gap or
+  // extra bookkeeping needed.
+  if (authoritativeText.trim().length === 0) {
+    return { ...state, messages: removeLast(state.messages) };
+  }
+
   const updated: ChatMessage = { ...last, text: authoritativeText, streaming: false };
   return { ...state, messages: replaceAt(state.messages, lastIndex, updated) };
 }
@@ -127,7 +162,7 @@ function isTextBlock(value: unknown): value is { type: "text"; text: string } {
   );
 }
 
-function applyExtensionUIRequest(state: ChatState, event: RpcExtensionUIRequest): ChatState {
+function applyExtensionUIRequest(state: ChatState, event: RpcExtensionUIRequest, now: string | undefined): ChatState {
   switch (event.method) {
     case "select":
       return pushDialog(state, { id: event.id, method: "select", title: event.title, options: event.options });
@@ -142,10 +177,104 @@ function applyExtensionUIRequest(state: ChatState, event: RpcExtensionUIRequest)
       });
     case "editor":
       return pushDialog(state, { id: event.id, method: "editor", title: event.title, prefill: event.prefill });
+    case "setWidget":
+      return applySetWidget(state, event, now);
     default:
-      // Fire-and-forget: notify, setStatus, setWidget, setTitle, set_editor_text.
+      // Other fire-and-forget methods: notify, setStatus, setTitle, set_editor_text.
       return state;
   }
+}
+
+/**
+ * `setWidget` is fire-and-forget on the wire like the other widget/status
+ * methods, but the one gentle-agents publishes under `widgetKey:
+ * "gentle-agents"` carries this chat's per-chat helpers activity (M2), so
+ * it folds into `helpers` instead of being dropped. Any other widgetKey
+ * (a different extension's own widget) is still ignored — never a global
+ * list, per the M2 objective (the parent-child relation stays direct).
+ */
+function applySetWidget(state: ChatState, event: FireAndForgetUIRequest, now: string | undefined): ChatState {
+  if (event.widgetKey !== HELPERS_WIDGET_KEY) return state;
+
+  const widgetLines = Array.isArray(event.widgetLines) ? toStringArray(event.widgetLines) : undefined;
+  const parsed = parseHelpersActivity(widgetLines);
+  // undefined means "malformed frame": keep the previous helpers state
+  // rather than clobbering it with nothing (see helpersActivity.ts).
+  if (!parsed) return state;
+
+  const helpers: HelpersActivity = { summary: parsed.summary, tasks: mergeHelperTasks(state.helpers.tasks, parsed.tasks, now) };
+  return { ...state, helpers };
+}
+
+/**
+ * gentle-pi keeps a task's record in its in-memory store only while it is
+ * running; once it finishes the record moves to disk and the next
+ * `gentle-agents.activity/v1` frame simply omits it (`summary.finished`
+ * still counts it, but `tasks` no longer carries it). Without this merge
+ * the Helpers tab would show the finished count going up while the task
+ * itself vanishes from the list.
+ *
+ * - A task present in `nextTasks` always replaces its previous record
+ *   outright (the frame is authoritative for anything it still reports).
+ * - A task from `previousTasks` missing from `nextTasks` is retained with
+ *   its last known record: `running`/`waiting`/`queued` is promoted to
+ *   `done` with `endedAt` filled from `now` (only if it didn't already have
+ *   one), and `failed`/`cancelled`/`done` is kept exactly as it was — a
+ *   terminal status is never re-derived.
+ */
+function mergeHelperTasks(previousTasks: readonly HelperTask[], nextTasks: readonly HelperTask[], now: string | undefined): HelperTask[] {
+  const nextIds = new Set(nextTasks.map((task) => task.id));
+  const retained = previousTasks.filter((task) => !nextIds.has(task.id)).map((task) => retainDroppedTask(task, now));
+  return orderHelperTasks([...nextTasks, ...retained]);
+}
+
+const NON_TERMINAL_HELPER_STATUSES: ReadonlySet<HelperTask["status"]> = new Set([
+  HELPER_STATUS.RUNNING,
+  HELPER_STATUS.WAITING,
+  HELPER_STATUS.QUEUED,
+]);
+
+function retainDroppedTask(task: HelperTask, now: string | undefined): HelperTask {
+  if (!NON_TERMINAL_HELPER_STATUSES.has(task.status)) return task;
+  return { ...task, status: HELPER_STATUS.DONE, endedAt: task.endedAt ?? now };
+}
+
+/** running, then waiting, then queued, then finished (done/failed/cancelled) sorted by `endedAt` desc. */
+function orderHelperTasks(tasks: readonly HelperTask[]): HelperTask[] {
+  const running: HelperTask[] = [];
+  const waiting: HelperTask[] = [];
+  const queued: HelperTask[] = [];
+  const finished: HelperTask[] = [];
+
+  for (const task of tasks) {
+    switch (task.status) {
+      case HELPER_STATUS.RUNNING:
+        running.push(task);
+        break;
+      case HELPER_STATUS.WAITING:
+        waiting.push(task);
+        break;
+      case HELPER_STATUS.QUEUED:
+        queued.push(task);
+        break;
+      default:
+        finished.push(task);
+    }
+  }
+
+  finished.sort(compareEndedAtDesc);
+  return [...running, ...waiting, ...queued, ...finished];
+}
+
+function compareEndedAtDesc(a: HelperTask, b: HelperTask): number {
+  const aEnded = a.endedAt ?? "";
+  const bEnded = b.endedAt ?? "";
+  if (aEnded === bEnded) return 0;
+  return aEnded > bEnded ? -1 : 1;
+}
+
+function toStringArray(value: readonly unknown[]): readonly string[] {
+  return value.filter((item): item is string => typeof item === "string");
 }
 
 function pushDialog(state: ChatState, dialog: Dialog): ChatState {
@@ -156,4 +285,8 @@ function replaceAt<T>(items: readonly T[], index: number, value: T): T[] {
   const copy = items.slice();
   copy[index] = value;
   return copy;
+}
+
+function removeLast<T>(items: readonly T[]): T[] {
+  return items.slice(0, -1);
 }

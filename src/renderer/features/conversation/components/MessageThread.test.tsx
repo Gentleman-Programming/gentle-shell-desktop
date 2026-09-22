@@ -31,6 +31,31 @@ describe("MessageThread", () => {
     expect(rendered[2]).toHaveTextContent("Delete it?");
   });
 
+  it("does not render an assistant bubble with empty text once it stopped streaming", () => {
+    const messages: ChatMessage[] = [
+      { id: "m1", role: MESSAGE_ROLE.USER, text: "run the tool" },
+      { id: "m2", role: MESSAGE_ROLE.ASSISTANT, text: "", streaming: false },
+      { id: "m3", role: MESSAGE_ROLE.ASSISTANT, text: "done", streaming: false },
+    ];
+
+    render(<MessageThread messages={messages} dialogs={[]} onAnswerDialog={vi.fn()} />);
+
+    const thread = screen.getByTestId("gc-message-thread");
+    const rendered = [...thread.querySelectorAll(".gc-message")];
+    expect(rendered).toHaveLength(2);
+    expect(rendered[0]).toHaveTextContent("run the tool");
+    expect(rendered[1]).toHaveTextContent("done");
+  });
+
+  it("still renders an empty assistant bubble while it is streaming (typing placeholder)", () => {
+    const messages: ChatMessage[] = [{ id: "m1", role: MESSAGE_ROLE.ASSISTANT, text: "", streaming: true }];
+
+    render(<MessageThread messages={messages} dialogs={[]} onAnswerDialog={vi.fn()} />);
+
+    const thread = screen.getByTestId("gc-message-thread");
+    expect(thread.querySelectorAll(".gc-message")).toHaveLength(1);
+  });
+
   it("forwards dialog answers with the dialog id", () => {
     const dialogs: Dialog[] = [{ id: "d1", method: "confirm", title: "Delete it?" }];
     const onAnswerDialog = vi.fn();

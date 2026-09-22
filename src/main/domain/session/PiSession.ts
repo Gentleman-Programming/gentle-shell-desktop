@@ -1,7 +1,8 @@
 import { MESSAGE_ROLE, type ChatMessage, type ChatState, type DialogAnswer, type PromptResult } from "@shared/bridge-types";
 import { INITIAL_CHAT_STATE, reduceChat } from "../rpc/chatReducer";
 import { decodeLine, encodeCommand } from "../rpc/codec";
-import type { RpcCommand, RpcEvent } from "../rpc/types";
+import { extractHistoryMessages, historyToMessages } from "../rpc/history";
+import type { RpcCommand, RpcEvent, RpcResponse } from "../rpc/types";
 import type { LauncherLocator, ProcessSpawner, SpawnedProcess } from "../../ports";
 
 export interface PiSessionOptions {
@@ -56,6 +57,16 @@ class TypedEmitter<Events> {
 const STOP_GRACE_PERIOD_MS = 3000;
 
 /**
+ * Set on every spawned pi process (M2 prerequisite, see
+ * odd/tasks/desktop-m2-helpers.md): only with this flag does gentle-pi
+ * enable RPC dialogs for ask_user_question/ask_user_choice and publish
+ * subagent activity via the gentle-agents setWidget widget. Applied last
+ * in start()'s env merge so neither `this.env` nor a launcher's own env
+ * (e.g. ELECTRON_RUN_AS_NODE) can accidentally suppress it.
+ */
+const GENTLE_SHELL_INTERACTIVE_HOST_ENV = { GENTLE_SHELL_INTERACTIVE_HOST: "1" } as const;
+
+/**
  * Owns one `gentle-shell --mode rpc` child process: spawns it through a
  * ProcessSpawner (resolved via a LauncherLocator), decodes its stdout into
  * RpcEvents, folds them into ChatState with the pure reducer, and emits
@@ -80,6 +91,13 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
   private state: ChatState = INITIAL_CHAT_STATE;
   private process: SpawnedProcess | undefined;
   private stopping = false;
+  private historyRequestCounter = 0;
+  /** Set right after a `get_messages` history request is sent (reopening a
+   * session with a `sessionPath`); cleared once its matching response
+   * arrives. Lets `applyHistoryResponse` correlate the response by `id`
+   * and ignore anything else that happens to carry `command: "get_messages"`
+   * (a stale or unrelated response). */
+  private pendingHistoryRequestId: string | undefined;
 
   constructor(options: PiSessionOptions) {
     super();
@@ -113,7 +131,7 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
         "rpc",
         ...(this.sessionPath ? ["--session", this.sessionPath] : []),
       ];
-      const env = launcher.env ? { ...this.env, ...launcher.env } : this.env;
+      const env = { ...this.env, ...(launcher.env ?? {}), ...GENTLE_SHELL_INTERACTIVE_HOST_ENV };
       const proc = this.spawner.spawn(launcher.command, args, env, this.cwd);
       this.process = proc;
 
@@ -121,9 +139,24 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
       proc.onStderrLine((line) => this.handleStderrLine(line));
       proc.onError((error) => this.surfaceError(error));
       proc.exited.then(({ code, signal, error }) => this.handleExit(code, signal, error)).catch(() => undefined);
+
+      // Reopening an existing chat (sessionPath set): the child already has
+      // this session's prior messages, but the renderer starts with an
+      // empty thread until we ask for them. A fresh chat has no history to
+      // load, so this is skipped entirely when sessionPath is unset.
+      if (this.sessionPath) this.requestHistory();
     } catch (error) {
       this.surfaceError(toError(error));
     }
+  }
+
+  /** Sends `get_messages` with a fresh correlation id, tracked in
+   * `pendingHistoryRequestId` so the matching response (handled in
+   * `applyHistoryResponse`) can be told apart from any other response. */
+  private requestHistory(): void {
+    const id = `history-${this.historyRequestCounter++}`;
+    this.pendingHistoryRequestId = id;
+    this.send({ type: "get_messages", id });
   }
 
   /**
@@ -214,12 +247,40 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
       const decoded = decodeLine(line);
       if ("kind" in decoded) return; // unknown/unmodeled line: nothing to fold or emit
 
-      this.state = reduceChat(this.state, decoded);
+      // `now` feeds reduceChat's setWidget helpers-retention fallback
+      // (endedAt for a task gentle-pi drops after it finishes); PiSession
+      // is the impure boundary, reduceChat itself stays pure.
+      this.state = reduceChat(this.state, decoded, new Date().toISOString());
+      // reduceChat has no case for "response" (its default arm returns
+      // state unchanged), so folding the get_messages history response in
+      // here, right after, never fights it.
+      if (decoded.type === "response") this.state = this.applyHistoryResponse(this.state, decoded);
       this.emit("event", decoded);
       this.emit("state", this.state);
     } catch (error) {
       this.surfaceError(toError(error));
     }
+  }
+
+  /**
+   * Folds the `get_messages` history response into `state.messages`, once:
+   * a response for any other command, or one whose `id` does not match
+   * `pendingHistoryRequestId` (stale or unrelated), is ignored outright.
+   * Never throws: a failed response surfaces as `lastError` instead of an
+   * empty thread with no explanation.
+   */
+  private applyHistoryResponse(state: ChatState, response: RpcResponse): ChatState {
+    if (response.command !== "get_messages" || response.id !== this.pendingHistoryRequestId) return state;
+    this.pendingHistoryRequestId = undefined;
+
+    if (!response.success) {
+      return { ...state, lastError: "Could not load this chat's history" };
+    }
+    // Never clobber messages a live prompt already appended while the
+    // history request was still in flight.
+    if (state.messages.length > 0) return state;
+
+    return { ...state, messages: historyToMessages(extractHistoryMessages(response.data)) };
   }
 
   /**

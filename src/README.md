@@ -25,6 +25,12 @@ stays local to `src/main` until a second process needs it too.
 contributor should be able to read the folder names and know the product,
 before opening a single file.
 
+`features/helpers` stays its own feature folder rather than living inside
+`conversation`: only `conversation` opens it (Scope Rule — one consumer
+stays local), but it is a distinct concern (a chat's subagents, not its
+messages), so it gets its own screaming name instead of a `components/`
+subfolder buried in another feature.
+
 `src/renderer/shared/` holds only code genuinely used by 2+ features today
 (`ui/atoms`, `theme`, `bridge`). Nothing moves there speculatively.
 

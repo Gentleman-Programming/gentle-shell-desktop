@@ -24,3 +24,23 @@
   color: var(--red);
   border-color: var(--red);
 }
+
+.gc-pill--running {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.gc-pill--waiting {
+  color: var(--blue);
+  border-color: var(--blue);
+}
+
+.gc-pill--done {
+  color: var(--green);
+  border-color: var(--green);
+}
+
+.gc-pill--failed {
+  color: var(--red);
+  border-color: var(--red);
+}
