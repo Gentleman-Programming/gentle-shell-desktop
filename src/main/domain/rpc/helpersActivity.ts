@@ -62,10 +62,21 @@ function toNumber(value: unknown, fallback = 0): number {
   return typeof value === "number" ? value : fallback;
 }
 
-/** Accepts an ISO timestamp string as-is, normalizes an epoch-ms number to ISO, and drops anything else. */
+/**
+ * Accepts an ISO timestamp string as-is, normalizes an epoch-ms number to
+ * ISO, and drops anything else. D1 advisory follow-up: `new
+ * Date(value).toISOString()` throws a RangeError for a non-finite (NaN,
+ * Infinity — reachable from a JSON number literal that overflows, e.g.
+ * `1e400`) or merely out-of-range (finite but beyond JS's ±8.64e15ms Date
+ * range) epoch value, so both are guarded and treated the same as any
+ * other malformed field: dropped instead of throwing.
+ */
 function toIsoString(value: unknown): string | undefined {
   if (typeof value === "string") return value;
-  if (typeof value === "number") return new Date(value).toISOString();
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+  }
   return undefined;
 }
 
