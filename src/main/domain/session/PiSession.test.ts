@@ -456,4 +456,25 @@ describe("PiSession: Electron host follow-ups", () => {
 
     expect(handles[0]?.env).toMatchObject({ FOO: "bar", ELECTRON_RUN_AS_NODE: "1" });
   });
+
+  it("always marks the spawned pi process as an interactive host via GENTLE_SHELL_INTERACTIVE_HOST=1 (M2 prerequisite)", () => {
+    const { spawner, handles } = createFakeSpawner();
+    const session = new PiSession({ spawner, locator: fakeLocator, env: { FOO: "bar" } });
+
+    session.start();
+
+    expect(handles[0]?.env).toMatchObject({ FOO: "bar", GENTLE_SHELL_INTERACTIVE_HOST: "1" });
+  });
+
+  it("GENTLE_SHELL_INTERACTIVE_HOST survives being merged alongside the launcher's own env", () => {
+    const { spawner, handles } = createFakeSpawner();
+    const locator: LauncherLocator = {
+      locate: () => ({ command: process.execPath, args: ["entry.mjs"], env: { ELECTRON_RUN_AS_NODE: "1" } }),
+    };
+    const session = new PiSession({ spawner, locator, env: { FOO: "bar" } });
+
+    session.start();
+
+    expect(handles[0]?.env).toMatchObject({ FOO: "bar", ELECTRON_RUN_AS_NODE: "1", GENTLE_SHELL_INTERACTIVE_HOST: "1" });
+  });
 });
