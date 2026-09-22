@@ -11,13 +11,23 @@ export const CHAT_STATE = {
   NEEDS_YOU: "needs-you",
 } as const;
 
-export type ChatState = (typeof CHAT_STATE)[keyof typeof CHAT_STATE];
+/**
+ * A chat's status in the sidebar list. Named `ChatStatus`, not `ChatState`,
+ * to avoid colliding with the full per-conversation `ChatState` below
+ * (messages/working/pendingDialogs/lastError/activity) — two genuinely
+ * different things that both wanted the name "ChatState" once this file
+ * became their shared home.
+ */
+export type ChatStatus = (typeof CHAT_STATE)[keyof typeof CHAT_STATE];
 
 export interface ChatSummary {
   readonly id: string;
   readonly title: string;
+  /** Working directory the session was started in (pi SessionInfo.cwd). */
+  readonly cwd: string;
   readonly updatedAt: string;
-  readonly state: ChatState;
+  readonly messageCount: number;
+  readonly state: ChatStatus;
 }
 
 export const MESSAGE_ROLE = {
@@ -72,17 +82,53 @@ export interface Dialog {
 }
 
 /**
- * Surface exposed on `window.gentle` by the preload script.
- * T1 types the full shape; T2/T3 wire it to the real pi RPC adapter and
- * session store. Until then the real preload implementation throws.
+ * Mirrors pi's rpc-types.ts `RpcExtensionUIResponse`: `confirm` dialogs
+ * answer with `confirmed`, `select`/`input`/`editor` answer with `value`,
+ * and any dialog can be dismissed with `cancelled: true`. Lives here (not
+ * src/main/domain/session/PiSession.ts, where T2 first defined it) because
+ * the renderer now constructs these values too, answering a Dialog card
+ * through GentleBridge.answerDialog.
+ */
+export type DialogAnswer = { readonly value: string } | { readonly confirmed: boolean } | { readonly cancelled: true };
+
+/**
+ * The full state of the currently open conversation: messages, whether the
+ * assistant is working, pending dialogs awaiting an answer, the last
+ * surfaced error, and an activity counter for thinking/tool events (no
+ * thinking or tool output is shown — see the M1 objective). Moved here
+ * from src/main/domain/rpc/chatReducer.ts (T2) because the renderer now
+ * receives it directly as GentleBridge.onState's payload and openChat/
+ * newChat's return value — the Scope Rule promotes it out of src/main once
+ * a second process needs the shape.
+ */
+export interface ChatState {
+  readonly messages: readonly ChatMessage[];
+  readonly working: boolean;
+  readonly pendingDialogs: readonly Dialog[];
+  readonly lastError?: string;
+  readonly activity: number;
+}
+
+/**
+ * Surface exposed on `window.gentle` by the preload script. T1 typed the
+ * listChats/sendMessage skeleton; T3 finalizes the full shape and wires it
+ * to the real IPC bridge (src/preload/bridge.ts) and main-process ChatHost
+ * (src/main/domain/session/ChatHost.ts, src/main/ipc/registerHandlers.ts).
  */
 export interface GentleBridge {
   listChats(): Promise<ChatSummary[]>;
-  sendMessage(
-    chatId: string,
-    text: string,
-    onTextDelta: (delta: string) => void,
-  ): Promise<ChatMessage>;
+  /** Opens an existing chat by id and returns its current ChatState. */
+  openChat(id: string): Promise<ChatState>;
+  /** Starts a fresh chat (no prior session file) and returns its initial ChatState. */
+  newChat(): Promise<ChatState>;
+  /** Sends a message in whichever chat is currently open. */
+  sendMessage(text: string): Promise<void>;
+  abort(): Promise<void>;
+  answerDialog(id: string, answer: DialogAnswer): Promise<void>;
+  /** Subscribes to ChatState pushes for the currently open chat. Returns an unsubscribe function. */
+  onState(callback: (state: ChatState) => void): () => void;
+  /** Subscribes to error messages surfaced by the currently open chat. Returns an unsubscribe function. */
+  onError(callback: (message: string) => void): () => void;
 }
 
 declare global {

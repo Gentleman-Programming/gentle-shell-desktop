@@ -6,6 +6,7 @@ import { createNodeProcessSpawner } from "../../adapters/nodeProcessSpawner";
 import { createLauncherLocator } from "../../adapters/launcherLocator";
 import { PiSession } from "./PiSession";
 import type { ChatState } from "../rpc/chatReducer";
+import type { LauncherLocator, ProcessSpawner, SpawnedProcess } from "../../ports";
 
 /**
  * A tiny fake `gentle-shell --mode rpc` script: reads JSON lines on stdin,
@@ -253,5 +254,183 @@ describe("PiSession", () => {
     expect(session.getState().lastError).toMatch(/no active process/);
 
     await stopPromise;
+  });
+});
+
+/**
+ * A controllable fake ProcessSpawner (no real child process) for the
+ * Electron-host follow-up tests below: stderr-to-log routing, unexpected
+ * exit cleanup, the double-start guard, prompt()-while-working, and env
+ * merging. These need precise control over stdout/stderr timing and the
+ * spawned env, which the real fake-RPC-script tests above cannot give
+ * without racing real process I/O.
+ */
+interface FakeProcessHandle {
+  readonly command: string;
+  readonly args: readonly string[];
+  readonly env: NodeJS.ProcessEnv;
+  readonly writes: string[];
+  killed: boolean;
+  emitStdout(line: string): void;
+  emitStderr(line: string): void;
+  resolveExited(result: { code: number | null; signal: NodeJS.Signals | null; error?: Error }): void;
+}
+
+function createFakeSpawner(): { spawner: ProcessSpawner; handles: FakeProcessHandle[] } {
+  const handles: FakeProcessHandle[] = [];
+
+  const spawner: ProcessSpawner = {
+    spawn(command, args, env): SpawnedProcess {
+      const stdoutHandlers: Array<(line: string) => void> = [];
+      const stderrHandlers: Array<(line: string) => void> = [];
+      const errorHandlers: Array<(error: Error) => void> = [];
+      const writes: string[] = [];
+
+      let resolveExitedFn: (result: { code: number | null; signal: NodeJS.Signals | null; error?: Error }) => void = () => undefined;
+      const exited = new Promise<{ code: number | null; signal: NodeJS.Signals | null; error?: Error }>((resolve) => {
+        resolveExitedFn = resolve;
+      });
+
+      const handle: FakeProcessHandle = {
+        command,
+        args,
+        env,
+        writes,
+        killed: false,
+        emitStdout(line) {
+          for (const handler of stdoutHandlers) handler(line);
+        },
+        emitStderr(line) {
+          for (const handler of stderrHandlers) handler(line);
+        },
+        resolveExited(result) {
+          resolveExitedFn(result);
+        },
+      };
+      handles.push(handle);
+
+      return {
+        exited,
+        writeStdin(text: string) {
+          writes.push(text);
+        },
+        endStdin() {},
+        onStdoutLine(handler) {
+          stdoutHandlers.push(handler);
+        },
+        onStderrLine(handler) {
+          stderrHandlers.push(handler);
+        },
+        onError(handler) {
+          errorHandlers.push(handler);
+        },
+        kill() {
+          handle.killed = true;
+        },
+      };
+    },
+  };
+
+  return { spawner, handles };
+}
+
+const fakeLocator: LauncherLocator = { locate: () => ({ command: "fake-gentle-shell", args: [] }) };
+
+/** Flush the microtask queue so `proc.exited.then(...)` handlers inside PiSession run. */
+async function flushMicrotasks(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
+describe("PiSession: Electron host follow-ups", () => {
+  it("routes stderr lines to the injectable onLog callback instead of surfacing them as lastError", () => {
+    const { spawner, handles } = createFakeSpawner();
+    const logLines: string[] = [];
+    const session = new PiSession({ spawner, locator: fakeLocator, env: {}, onLog: (line) => logLines.push(line) });
+
+    session.start();
+    handles[0]?.emitStderr("some diagnostic output");
+
+    expect(logLines).toEqual(["some diagnostic output"]);
+    expect(session.getState().lastError).toBeUndefined();
+  });
+
+  it("resets working and clears pending dialogs on an unexpected exit, surfacing exactly one error", async () => {
+    const { spawner, handles } = createFakeSpawner();
+    const session = new PiSession({ spawner, locator: fakeLocator, env: {} });
+    const errors: Error[] = [];
+    session.on("error", (error) => errors.push(error));
+
+    session.start();
+    handles[0]?.emitStdout(JSON.stringify({ type: "agent_start" }));
+    handles[0]?.emitStdout(
+      JSON.stringify({ type: "extension_ui_request", id: "dlg-1", method: "select", title: "Pick", options: ["A"] }),
+    );
+
+    expect(session.getState().working).toBe(true);
+    expect(session.getState().pendingDialogs).toHaveLength(1);
+
+    handles[0]?.resolveExited({ code: 1, signal: null });
+    await flushMicrotasks();
+
+    expect(session.getState().working).toBe(false);
+    expect(session.getState().pendingDialogs).toEqual([]);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toMatch(/exited unexpectedly/);
+  });
+
+  it("guards start() against a double start: the second call surfaces an error instead of spawning again", () => {
+    const { spawner, handles } = createFakeSpawner();
+    const session = new PiSession({ spawner, locator: fakeLocator, env: {} });
+    const errors: Error[] = [];
+    session.on("error", (error) => errors.push(error));
+
+    session.start();
+    session.start();
+
+    expect(handles).toHaveLength(1);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toMatch(/already started|active/i);
+  });
+
+  it("rejects prompt() while working: no message appended, no stdin write, lastError set", () => {
+    const { spawner, handles } = createFakeSpawner();
+    const session = new PiSession({ spawner, locator: fakeLocator, env: {} });
+
+    session.start();
+    handles[0]?.emitStdout(JSON.stringify({ type: "agent_start" }));
+    expect(session.getState().working).toBe(true);
+
+    const beforeCount = session.getState().messages.length;
+    const result = session.prompt("another message");
+
+    expect(result).toEqual({ queued: false, reason: "Gentle is still working" });
+    expect(session.getState().messages).toHaveLength(beforeCount);
+    expect(handles[0]?.writes).toEqual([]);
+    expect(session.getState().lastError).toBe("Gentle is still working");
+  });
+
+  it("prompt() while idle still queues normally and returns { queued: true }", () => {
+    const { spawner, handles } = createFakeSpawner();
+    const session = new PiSession({ spawner, locator: fakeLocator, env: {} });
+
+    session.start();
+    const result = session.prompt("hi");
+
+    expect(result).toEqual({ queued: true });
+    expect(session.getState().messages).toHaveLength(1);
+    expect(handles[0]?.writes).toHaveLength(1);
+  });
+
+  it("merges the launcher's env (e.g. ELECTRON_RUN_AS_NODE for a JS entry) into the spawned process env", () => {
+    const { spawner, handles } = createFakeSpawner();
+    const locator: LauncherLocator = {
+      locate: () => ({ command: process.execPath, args: ["entry.mjs"], env: { ELECTRON_RUN_AS_NODE: "1" } }),
+    };
+    const session = new PiSession({ spawner, locator, env: { FOO: "bar" } });
+
+    session.start();
+
+    expect(handles[0]?.env).toMatchObject({ FOO: "bar", ELECTRON_RUN_AS_NODE: "1" });
   });
 });

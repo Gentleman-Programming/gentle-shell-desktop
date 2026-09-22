@@ -3,8 +3,9 @@
  * implement them, so the domain never imports Electron/Node APIs directly.
  *
  * ProcessSpawner and LauncherLocator are T2's ports for running
- * `gentle-shell --mode rpc` as a child process. SessionStorePlaceholder
- * stays a placeholder for T3 (SessionManager.listAll()).
+ * `gentle-shell --mode rpc` as a child process. SessionStore is T3's port
+ * for listing pi chats (adapters/piSessionStore.ts implements it over
+ * SessionManager.listAll()).
  */
 
 /** One line-oriented handle to a spawned child process. */
@@ -31,6 +32,15 @@ export interface ProcessSpawner {
 export interface ResolvedLauncher {
   readonly command: string;
   readonly args: readonly string[];
+  /**
+   * Extra environment variables to merge on top of PiSession's own env
+   * before spawning. Used for `ELECTRON_RUN_AS_NODE=1` when `command` is
+   * `process.execPath` running a JS entry: under Electron, `process.execPath`
+   * is the Electron binary, not a plain Node binary, so without this flag
+   * the child launches Electron itself instead of running the script as
+   * Node. Harmless (and unread) when this app runs under plain Node.
+   */
+  readonly env?: Readonly<Record<string, string>>;
 }
 
 /** Resolves how to invoke the gentle-shell launcher (see adapters/launcherLocator.ts). */
@@ -38,6 +48,25 @@ export interface LauncherLocator {
   locate(): ResolvedLauncher;
 }
 
-export interface SessionStorePlaceholder {
-  readonly kind: "placeholder";
+/**
+ * The subset of pi's `SessionInfo` (from @earendil-works/pi-coding-agent)
+ * that sessionList.ts maps into a ChatSummary. Declared locally (not
+ * imported from the pi package) so the domain mapping in
+ * src/main/domain/session/sessionList.ts stays pure and dependency-free —
+ * only the adapter (piSessionStore.ts) touches the real package.
+ */
+export interface SessionInfoLike {
+  readonly id: string;
+  /** The session's jsonl file path; ChatHost.openChat passes this to
+   * PiSession as `sessionPath` (`--session <path>`) to reopen it. */
+  readonly path: string;
+  readonly cwd: string;
+  readonly name?: string;
+  readonly modified: Date;
+  readonly messageCount: number;
+  readonly firstMessage: string;
+}
+
+export interface SessionStore {
+  listAll(): Promise<SessionInfoLike[]>;
 }

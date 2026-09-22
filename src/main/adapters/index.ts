@@ -3,3 +3,4 @@
 // adapter.
 export * from "./nodeProcessSpawner";
 export * from "./launcherLocator";
+export * from "./piSessionStore";

@@ -1,5 +1,5 @@
-import { MESSAGE_ROLE, type ChatMessage } from "@shared/bridge-types";
-import { INITIAL_CHAT_STATE, reduceChat, type ChatState } from "../rpc/chatReducer";
+import { MESSAGE_ROLE, type ChatMessage, type ChatState, type DialogAnswer } from "@shared/bridge-types";
+import { INITIAL_CHAT_STATE, reduceChat } from "../rpc/chatReducer";
 import { decodeLine, encodeCommand } from "../rpc/codec";
 import type { RpcCommand, RpcEvent } from "../rpc/types";
 import type { LauncherLocator, ProcessSpawner, SpawnedProcess } from "../../ports";
@@ -12,14 +12,24 @@ export interface PiSessionOptions {
   readonly sessionPath?: string;
   readonly env: NodeJS.ProcessEnv;
   readonly cwd?: string;
+  /**
+   * Receives raw child stderr lines (diagnostics, warnings) for logging.
+   * Defaults to a no-op. Stderr output is not, by itself, evidence of a
+   * failure (see handleStderrLine) so it no longer sets `lastError`.
+   */
+  readonly onLog?: (line: string) => void;
 }
 
-/**
- * Mirrors rpc-types.ts `RpcExtensionUIResponse`: `confirm` answers with
- * `confirmed`, `select`/`input`/`editor` answer with `value`, any dialog
- * can be dismissed with `cancelled: true`.
- */
-export type DialogAnswer = { readonly value: string } | { readonly confirmed: boolean } | { readonly cancelled: true };
+/** Result of `prompt()`: M1 has no queue, so a prompt sent while the
+ * assistant is already working is rejected outright rather than buffered. */
+export interface PromptResult {
+  readonly queued: boolean;
+  readonly reason?: string;
+}
+
+// DialogAnswer now lives in @shared/bridge-types (T3: the renderer
+// constructs these too, answering a Dialog card through
+// GentleBridge.answerDialog).
 
 interface PiSessionEventMap {
   readonly state: ChatState;
@@ -72,6 +82,7 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
   private readonly sessionPath: string | undefined;
   private readonly env: NodeJS.ProcessEnv;
   private readonly cwd: string | undefined;
+  private readonly onLog: (line: string) => void;
 
   private state: ChatState = INITIAL_CHAT_STATE;
   private process: SpawnedProcess | undefined;
@@ -85,10 +96,21 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
     this.sessionPath = options.sessionPath;
     this.env = options.env;
     this.cwd = options.cwd;
+    this.onLog = options.onLog ?? (() => undefined);
   }
 
-  /** Resolves the launcher, spawns it with `--mode rpc`, and starts streaming events. */
+  /**
+   * Resolves the launcher, spawns it with `--mode rpc`, and starts streaming
+   * events. Guarded against a double start: while a process is already
+   * active, a second call surfaces an error instead of spawning a second
+   * child (which would silently orphan the first one's stdin/stdout wiring).
+   */
   start(): void {
+    if (this.process) {
+      this.surfaceError(new Error("PiSession: already started (a session is already active)"));
+      return;
+    }
+
     try {
       const launcher = this.locator.locate();
       const args = [
@@ -98,7 +120,8 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
         "rpc",
         ...(this.sessionPath ? ["--session", this.sessionPath] : []),
       ];
-      const proc = this.spawner.spawn(launcher.command, args, this.env, this.cwd);
+      const env = launcher.env ? { ...this.env, ...launcher.env } : this.env;
+      const proc = this.spawner.spawn(launcher.command, args, env, this.cwd);
       this.process = proc;
 
       proc.onStdoutLine((line) => this.handleLine(line));
@@ -110,11 +133,23 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
     }
   }
 
-  /** Sends `prompt` and appends the user's message to state immediately (no round trip needed to show it). */
-  prompt(text: string): void {
+  /**
+   * Sends `prompt` and appends the user's message to state immediately (no
+   * round trip needed to show it). M1 keeps this simple with no queue: a
+   * prompt sent while the assistant is still working is rejected outright
+   * (no message appended, nothing written to stdin) instead of buffered.
+   */
+  prompt(text: string): PromptResult {
+    if (this.state.working) {
+      const reason = "Gentle is still working";
+      this.surfaceError(new Error(reason));
+      return { queued: false, reason };
+    }
+
     this.state = appendUserMessage(this.state, text);
     this.emit("state", this.state);
     this.send({ type: "prompt", message: text });
+    return { queued: true };
   }
 
   abort(): void {
@@ -187,20 +222,31 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
     }
   }
 
+  /**
+   * Child stderr is diagnostics/warnings, not by itself evidence of a
+   * failure (pi logs there routinely) — route it to the injectable logger
+   * instead of surfacing it as `lastError`, which previously made routine
+   * stderr output look like a fatal error to the UI.
+   */
   private handleStderrLine(line: string): void {
     if (line.trim().length === 0) return;
-    this.surfaceError(new Error(line));
+    this.onLog(line);
   }
 
   /**
    * Clears `this.process` unconditionally so the next `send()` never
    * writes to a dead child's stdin (R4-001), whether the exit was clean,
    * a crash, or a spawn failure. A spawn failure already surfaced its
-   * real error via `onError`, so it is not re-reported here.
+   * real error via `onError`, so it is not re-reported here. An
+   * unexpected exit (not requested via stop()) also resets `working` and
+   * drops any pending dialogs: the child that would have resolved them is
+   * gone, so a stale "working" pill or an unanswerable dialog card would
+   * otherwise strand the UI.
    */
   private handleExit(code: number | null, signal: NodeJS.Signals | null, spawnError?: Error): void {
     this.process = undefined;
     if (this.stopping || code === 0 || spawnError) return;
+    this.state = { ...this.state, working: false, pendingDialogs: [] };
     this.surfaceError(new Error(`gentle-shell exited unexpectedly (code ${code ?? "null"}${signal ? `, signal ${signal}` : ""})`));
   }
 
