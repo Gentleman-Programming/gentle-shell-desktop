@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import type { HelperTask } from "@shared/bridge-types";
 import { HelperThread } from "./HelperThread";
+
+beforeEach(() => {
+  Element.prototype.scrollIntoView = vi.fn();
+});
 
 function task(overrides: Partial<HelperTask> = {}): HelperTask {
   return {
@@ -88,5 +92,36 @@ describe("HelperThread", () => {
   it("renders a placeholder when the thread has no items yet", () => {
     render(<HelperThread task={task({ thread: { version: 0, dropped: 0, items: [] } })} showToolDetails={false} followLive={false} />);
     expect(screen.getByText("No activity yet.")).toBeInTheDocument();
+  });
+
+  it("keeps the follow-live sentinel inside the scrolling items container", () => {
+    const { container } = render(<HelperThread task={task()} showToolDetails={false} followLive={false} />);
+
+    const scrollContainer = container.querySelector(".gc-helper-thread__items");
+    const sentinel = screen.getByTestId("helper-thread-end");
+
+    expect(scrollContainer).not.toBeNull();
+    expect(scrollContainer).toContainElement(sentinel);
+  });
+
+  it("auto-scrolls the sentinel while Follow live is on and stops once it is turned off", () => {
+    const spy = Element.prototype.scrollIntoView as ReturnType<typeof vi.fn>;
+    const items = task().thread.items;
+
+    const { rerender } = render(<HelperThread task={task()} showToolDetails={false} followLive={false} />);
+    expect(spy).not.toHaveBeenCalled();
+
+    rerender(<HelperThread task={task({ thread: { version: 1, dropped: 0, items } })} showToolDetails={false} followLive />);
+    expect(spy).toHaveBeenCalled();
+
+    spy.mockClear();
+    rerender(
+      <HelperThread
+        task={task({ thread: { version: 2, dropped: 0, items: [...items, { kind: "note", text: "one more" }] } })}
+        showToolDetails={false}
+        followLive={false}
+      />,
+    );
+    expect(spy).not.toHaveBeenCalled();
   });
 });

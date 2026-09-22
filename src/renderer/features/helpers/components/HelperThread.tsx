@@ -52,8 +52,8 @@ export function HelperThread({ task, showToolDetails, followLive }: HelperThread
             <HelperThreadItem key={itemKey(entry, index)} entry={entry} showToolDetails={showToolDetails} />
           ))
         )}
+        <div ref={bottomRef} data-testid="helper-thread-end" />
       </div>
-      <div ref={bottomRef} />
     </div>
   );
 }
