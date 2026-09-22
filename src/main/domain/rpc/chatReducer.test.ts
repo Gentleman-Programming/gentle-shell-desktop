@@ -114,6 +114,77 @@ describe("reduceChat: assistant message streaming", () => {
     expect(state.messages[0]?.text).toBe("kept");
     expect(state.messages[0]?.streaming).toBe(false);
   });
+
+  it("a tool-only assistant message stays present while streaming (typing placeholder)", () => {
+    let state = reduceChat(INITIAL_CHAT_STATE, {
+      type: "message_start",
+      message: { role: "assistant", content: [] },
+    });
+    state = reduceChat(state, {
+      type: "message_update",
+      assistantMessageEvent: { type: "toolcall_start", contentIndex: 0, id: "call_1", toolName: "bash" },
+    });
+    expect(state.messages).toEqual([{ id: "msg-0", role: "assistant", text: "", streaming: true }]);
+  });
+
+  it("message_end drops an assistant message that finalizes with empty trimmed text (tool-only or thinking-only content)", () => {
+    let state = reduceChat(INITIAL_CHAT_STATE, {
+      type: "message_start",
+      message: { role: "assistant", content: [] },
+    });
+    state = reduceChat(state, {
+      type: "message_update",
+      assistantMessageEvent: { type: "toolcall_start", contentIndex: 0, id: "call_1", toolName: "bash" },
+    });
+    state = reduceChat(state, {
+      type: "message_update",
+      assistantMessageEvent: { type: "toolcall_end", contentIndex: 0, toolCall: { id: "call_1", name: "bash", arguments: {} } },
+    });
+    state = reduceChat(state, {
+      type: "message_end",
+      message: {
+        role: "assistant",
+        content: [{ type: "toolCall", id: "call_1", name: "bash", arguments: {} }],
+      },
+    });
+    expect(state.messages).toEqual([]);
+  });
+
+  it("message_end drops an assistant message whose authoritative text is only whitespace", () => {
+    let state = reduceChat(INITIAL_CHAT_STATE, {
+      type: "message_start",
+      message: { role: "assistant", content: [] },
+    });
+    state = reduceChat(state, {
+      type: "message_end",
+      message: { role: "assistant", content: [{ type: "text", text: "   " }] },
+    });
+    expect(state.messages).toEqual([]);
+  });
+
+  it("message_end dropping an empty assistant message keeps ids contiguous for the next message", () => {
+    let state = reduceChat(INITIAL_CHAT_STATE, {
+      type: "message_start",
+      message: { role: "user", content: [] },
+    });
+    state = { ...state, messages: [{ id: "msg-0", role: "user" as const, text: "hi" }] };
+    state = reduceChat(state, {
+      type: "message_start",
+      message: { role: "assistant", content: [] },
+    });
+    expect(state.messages[1]?.id).toBe("msg-1");
+    state = reduceChat(state, {
+      type: "message_end",
+      message: { role: "assistant", content: [] },
+    });
+    expect(state.messages).toEqual([{ id: "msg-0", role: "user", text: "hi" }]);
+
+    state = reduceChat(state, {
+      type: "message_start",
+      message: { role: "assistant", content: [] },
+    });
+    expect(state.messages[1]?.id).toBe("msg-1");
+  });
 });
 
 describe("reduceChat: thinking, toolcall, tool_execution never touch messages", () => {
@@ -237,6 +308,12 @@ describe("reduceChat: fixture replays", () => {
     expect(state.lastError).toBeUndefined();
     // 3 thinking + 3 toolcall + 3 tool_execution deltas.
     expect(state.activity).toBe(9);
+  });
+
+  it("a turn whose assistant message only calls a tool leaves no empty message behind after message_end", () => {
+    const state = replay(readFixtureEvents("tool-only-message.jsonl"));
+    expect(state.messages).toEqual([]);
+    expect(state.working).toBe(false);
   });
 
   it("a select dialog mid-turn surfaces in pendingDialogs and leaves the agent working", () => {

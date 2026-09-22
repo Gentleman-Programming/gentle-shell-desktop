@@ -122,6 +122,22 @@ function closeAssistantMessage(state: ChatState, message: RpcMessage): ChatState
   // message_end.message is authoritative per rpc.md; resync from its text
   // content blocks when present, otherwise keep what text_delta accumulated.
   const authoritativeText = extractAssistantText(message) ?? last.text;
+
+  // An assistant message that only ever carried thinking/toolCall parts
+  // (never a text part, and no text_delta landed either) finalizes with
+  // nothing to show: drop it instead of leaving an empty grey bubble in the
+  // thread. Every fixture/test replayed here closes an open message with
+  // message_end (see prompt-turn.jsonl and tool-only-message.jsonl); no
+  // observed event flow lets a message reach agent_settled without first
+  // going through message_end, so finalization removal lives here only.
+  // Dropping the last element shrinks `state.messages.length` back down, so
+  // the id scheme (`msg-${state.messages.length}` in openAssistantMessage)
+  // reassigns the freed id to the next assistant message with no gap or
+  // extra bookkeeping needed.
+  if (authoritativeText.trim().length === 0) {
+    return { ...state, messages: removeLast(state.messages) };
+  }
+
   const updated: ChatMessage = { ...last, text: authoritativeText, streaming: false };
   return { ...state, messages: replaceAt(state.messages, lastIndex, updated) };
 }
@@ -269,4 +285,8 @@ function replaceAt<T>(items: readonly T[], index: number, value: T): T[] {
   const copy = items.slice();
   copy[index] = value;
   return copy;
+}
+
+function removeLast<T>(items: readonly T[]): T[] {
+  return items.slice(0, -1);
 }

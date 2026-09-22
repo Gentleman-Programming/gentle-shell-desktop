@@ -80,6 +80,29 @@ describe("historyToMessages", () => {
   it("returns an empty array for an empty history", () => {
     expect(historyToMessages([])).toEqual([]);
   });
+
+  it("skips an assistant message whose joined text is empty after trimming (tool-only or thinking-only content)", () => {
+    const messages: RpcMessage[] = [
+      { role: "user", content: "run it", timestamp: 0 },
+      {
+        role: "assistant",
+        content: [
+          { type: "thinking", thinking: "let me check" },
+          { type: "toolCall", id: "call_1", name: "bash", arguments: { command: "ls" } },
+        ],
+        timestamp: 0,
+      },
+      { role: "assistant", content: [{ type: "text", text: "  " }], timestamp: 0 },
+      { role: "assistant", content: [{ type: "text", text: "done" }], timestamp: 0 },
+    ];
+
+    const result = historyToMessages(messages);
+
+    expect(result).toEqual([
+      { id: "msg-0", role: "user", text: "run it" },
+      { id: "msg-1", role: "assistant", text: "done", streaming: false },
+    ]);
+  });
 });
 
 describe("extractHistoryMessages", () => {

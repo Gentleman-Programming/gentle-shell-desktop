@@ -38,7 +38,14 @@ function toChatMessage(message: RpcMessage, index: number): ChatMessage | undefi
     return { id: `msg-${index}`, role: MESSAGE_ROLE.USER, text: extractText(message) };
   }
   if (message.role === MESSAGE_ROLE.ASSISTANT) {
-    return { id: `msg-${index}`, role: MESSAGE_ROLE.ASSISTANT, text: extractText(message), streaming: false };
+    const text = extractText(message);
+    // An assistant message whose content was only thinking/toolCall parts
+    // (or whitespace-only text) has nothing left to show once those parts
+    // are filtered out above: skip it like a toolResult, instead of
+    // rendering an empty bubble. `result.length` in historyToMessages still
+    // assigns the next id, so this never leaves a gap.
+    if (text.trim().length === 0) return undefined;
+    return { id: `msg-${index}`, role: MESSAGE_ROLE.ASSISTANT, text, streaming: false };
   }
   return undefined;
 }
