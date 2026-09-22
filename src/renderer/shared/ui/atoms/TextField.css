@@ -1,0 +1,20 @@
+.gc-text-field {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  resize: none;
+}
+
+.gc-text-field::placeholder {
+  color: var(--muted);
+}
+
+.gc-text-field:focus {
+  outline: none;
+  border-color: var(--accent);
+}

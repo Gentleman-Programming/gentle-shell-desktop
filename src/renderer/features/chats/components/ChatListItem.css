@@ -1,0 +1,38 @@
+.gc-chat-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  color: var(--text-2);
+  background: transparent;
+  border: 1px solid transparent;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gc-chat-list-item:hover {
+  background: var(--raised);
+}
+
+.gc-chat-list-item--selected {
+  background: var(--raised);
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.gc-chat-list-item__title {
+  flex: 1 1 auto;
+  /* Without min-width: 0, a flex child can never shrink below its content's
+     intrinsic width, so a long title pushes the state pill onto its own
+     line instead of the title itself truncating — this is what let
+     "needs you" wrap at 250px sidebar width. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

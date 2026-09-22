@@ -1,0 +1,5 @@
+.gc-app {
+  display: flex;
+  height: 100%;
+  font-family: var(--font-body);
+}

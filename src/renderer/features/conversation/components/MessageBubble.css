@@ -1,0 +1,26 @@
+.gc-message {
+  max-width: 65ch;
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.gc-message--user {
+  align-self: flex-end;
+  background: var(--raised);
+  color: var(--text);
+  border: 1px solid var(--accent);
+}
+
+.gc-message--assistant {
+  align-self: flex-start;
+  background: var(--raised);
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+.gc-message__text {
+  margin: 0;
+  white-space: pre-wrap;
+}
