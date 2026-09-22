@@ -21,7 +21,13 @@ export interface ConversationContainerProps {
 }
 
 function emptyChatState(): ChatState {
-  return { messages: [], working: false, pendingDialogs: [], activity: 0 };
+  return {
+    messages: [],
+    working: false,
+    pendingDialogs: [],
+    activity: 0,
+    helpers: { summary: { running: 0, queued: 0, waiting: 0, finished: 0 }, tasks: [] },
+  };
 }
 
 function errorText(cause: unknown): string {

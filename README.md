@@ -21,4 +21,6 @@ pnpm smoke:electron # build, launch the packaged main entry through Playwright, 
 
 The gentle-shell launcher itself is not published on npm yet: `pnpm dev`/`pnpm package`'s packaged app resolve it via `GENTLE_SHELL_BIN` (a path to a local `gentle-shell` checkout's `bin/gentle-shell.mjs`, or another gentle-shell executable) or a `gentle-shell` binary on `PATH` — see `src/main/adapters/launcherLocator.ts`.
 
+The app always sets `GENTLE_SHELL_INTERACTIVE_HOST=1` on the pi process it spawns; it requires a gentle-pi build with the `rpc-interactive-host` feature to enable RPC dialogs and the per-chat Helpers tab (M2) — see `src/main/domain/session/PiSession.ts`.
+
 See `src/README.md` for why the source tree is shaped the way it is.

@@ -15,8 +15,10 @@ const EXISTING_CHAT: ChatSummary = {
   state: CHAT_STATE.IDLE,
 };
 
+const EMPTY_HELPERS = { summary: { running: 0, queued: 0, waiting: 0, finished: 0 }, tasks: [] };
+
 function emptyState(): ChatState {
-  return { messages: [], working: false, pendingDialogs: [], activity: 0 };
+  return { messages: [], working: false, pendingDialogs: [], activity: 0, helpers: EMPTY_HELPERS };
 }
 
 function makeBridge(overrides: Partial<GentleBridge> = {}): GentleBridge {
@@ -87,6 +89,7 @@ describe("ConversationContainer", () => {
       working: false,
       pendingDialogs: [],
       activity: 0,
+      helpers: EMPTY_HELPERS,
     });
 
     expect(await screen.findByText("Hello there")).toBeInTheDocument();
@@ -137,7 +140,7 @@ describe("ConversationContainer", () => {
     render(<ConversationContainer activeChat={NEW_CHAT} />);
     await vi.waitFor(() => expect(bridge.newChat).toHaveBeenCalled());
 
-    pushState({ messages: [], working: false, pendingDialogs: [], activity: 0, lastError: "pi exited unexpectedly" });
+    pushState({ messages: [], working: false, pendingDialogs: [], activity: 0, helpers: EMPTY_HELPERS, lastError: "pi exited unexpectedly" });
 
     expect(await screen.findByRole("status")).toHaveTextContent("pi exited unexpectedly");
   });
@@ -160,6 +163,7 @@ describe("ConversationContainer", () => {
       working: false,
       pendingDialogs: [{ id: "dlg-1", method: "confirm", title: "Delete the file?" }],
       activity: 0,
+      helpers: EMPTY_HELPERS,
     });
 
     fireEvent.click(await screen.findByRole("button", { name: "Yes" }));
@@ -180,7 +184,7 @@ describe("ConversationContainer", () => {
     render(<ConversationContainer activeChat={NEW_CHAT} />);
     await vi.waitFor(() => expect(bridge.newChat).toHaveBeenCalled());
 
-    pushState({ messages: [], working: true, pendingDialogs: [], activity: 0 });
+    pushState({ messages: [], working: true, pendingDialogs: [], activity: 0, helpers: EMPTY_HELPERS });
 
     const textarea = screen.getByPlaceholderText("Tell Gentle what you need…");
     await vi.waitFor(() => expect(textarea).toHaveAttribute("readonly"));
@@ -219,6 +223,7 @@ describe("ConversationContainer", () => {
       working: false,
       pendingDialogs: [],
       activity: 0,
+      helpers: EMPTY_HELPERS,
     });
     await new Promise((resolve) => setTimeout(resolve, 0));
 

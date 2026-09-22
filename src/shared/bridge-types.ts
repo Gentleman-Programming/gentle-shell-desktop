@@ -111,9 +111,10 @@ export interface PromptResult {
 /**
  * The full state of the currently open conversation: messages, whether the
  * assistant is working, pending dialogs awaiting an answer, the last
- * surfaced error, and an activity counter for thinking/tool events (no
- * thinking or tool output is shown — see the M1 objective). Moved here
- * from src/main/domain/rpc/chatReducer.ts (T2) because the renderer now
+ * surfaced error, an activity counter for thinking/tool events (no
+ * thinking or tool output is shown — see the M1 objective), and the M2
+ * per-chat helpers activity (see HelpersActivity below). Moved here from
+ * src/main/domain/rpc/chatReducer.ts (T2) because the renderer now
  * receives it directly as GentleBridge.onState's payload and openChat/
  * newChat's return value — the Scope Rule promotes it out of src/main once
  * a second process needs the shape.
@@ -124,6 +125,103 @@ export interface ChatState {
   readonly pendingDialogs: readonly Dialog[];
   readonly lastError?: string;
   readonly activity: number;
+  readonly helpers: HelpersActivity;
+}
+
+export const HELPER_STATUS = {
+  QUEUED: "queued",
+  RUNNING: "running",
+  WAITING: "waiting",
+  DONE: "done",
+  FAILED: "failed",
+  CANCELLED: "cancelled",
+} as const;
+
+/** A subagent's lifecycle status, as reported by gentle-agents' `gentle-agents.activity/v1` widget payload. */
+export type HelperStatus = (typeof HELPER_STATUS)[keyof typeof HELPER_STATUS];
+
+export interface HelperThreadTextItem {
+  readonly kind: "text";
+  readonly text: string;
+}
+
+export interface HelperThreadThinkingItem {
+  readonly kind: "thinking";
+  readonly text: string;
+}
+
+export interface HelperThreadToolItem {
+  readonly kind: "tool";
+  readonly callId: string;
+  readonly name: string;
+  readonly args?: unknown;
+  readonly output?: unknown;
+  readonly running?: boolean;
+  readonly isError?: boolean;
+}
+
+export interface HelperThreadNoteItem {
+  readonly kind: "note";
+  readonly text: string;
+}
+
+/**
+ * One entry in a helper's narrated thread (D3 collapses `tool` to one line
+ * by default, behind a "Show tool details" toggle; `note` renders in
+ * amber). Lives here (not src/main/domain) because the renderer's D3
+ * Helpers tab renders it directly off ChatState.helpers.
+ */
+export type HelperThreadItem = HelperThreadTextItem | HelperThreadThinkingItem | HelperThreadToolItem | HelperThreadNoteItem;
+
+export interface HelperThread {
+  readonly version: number;
+  readonly dropped: number;
+  readonly items: readonly HelperThreadItem[];
+}
+
+/**
+ * One subagent gentle-agents is tracking for the chat that started it.
+ * Mirrors the `summary`/`thread` split in `gentle-agents.activity/v1`'s
+ * task entries: `summary` is the whitelisted TaskRecord fields (id
+ * through error), flattened here per the Const Types / Flat Interfaces
+ * pattern rather than nested one level deeper than `thread`.
+ */
+export interface HelperTask {
+  readonly id: string;
+  readonly agent: string;
+  readonly label: string;
+  readonly prompt: string;
+  readonly status: HelperStatus;
+  readonly createdAt: string;
+  readonly startedAt?: string;
+  readonly endedAt?: string;
+  readonly lastStep?: string;
+  readonly lastActivityAt?: string;
+  readonly turns: number;
+  readonly toolCalls: number;
+  readonly error?: string;
+  readonly thread: HelperThread;
+}
+
+export interface HelpersSummary {
+  readonly running: number;
+  readonly queued: number;
+  readonly waiting: number;
+  readonly finished: number;
+}
+
+/**
+ * The decoded, typed form of a `setWidget` request for `widgetKey:
+ * "gentle-agents"` (schema `gentle-agents.activity/v1`) — see
+ * src/main/domain/rpc/helpersActivity.ts's `parseHelpersActivity`. Lives
+ * here (not src/main/domain/rpc) because both main (decodes it into
+ * ChatState.helpers) and the D3 renderer (renders the Helpers tab off it)
+ * need the shape — the Scope Rule promotes it out of src/main once a
+ * second process needs it.
+ */
+export interface HelpersActivity {
+  readonly summary: HelpersSummary;
+  readonly tasks: readonly HelperTask[];
 }
 
 /**

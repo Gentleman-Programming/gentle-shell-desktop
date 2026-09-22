@@ -56,6 +56,16 @@ class TypedEmitter<Events> {
 const STOP_GRACE_PERIOD_MS = 3000;
 
 /**
+ * Set on every spawned pi process (M2 prerequisite, see
+ * odd/tasks/desktop-m2-helpers.md): only with this flag does gentle-pi
+ * enable RPC dialogs for ask_user_question/ask_user_choice and publish
+ * subagent activity via the gentle-agents setWidget widget. Applied last
+ * in start()'s env merge so neither `this.env` nor a launcher's own env
+ * (e.g. ELECTRON_RUN_AS_NODE) can accidentally suppress it.
+ */
+const GENTLE_SHELL_INTERACTIVE_HOST_ENV = { GENTLE_SHELL_INTERACTIVE_HOST: "1" } as const;
+
+/**
  * Owns one `gentle-shell --mode rpc` child process: spawns it through a
  * ProcessSpawner (resolved via a LauncherLocator), decodes its stdout into
  * RpcEvents, folds them into ChatState with the pure reducer, and emits
@@ -113,7 +123,7 @@ export class PiSession extends TypedEmitter<PiSessionEventMap> {
         "rpc",
         ...(this.sessionPath ? ["--session", this.sessionPath] : []),
       ];
-      const env = launcher.env ? { ...this.env, ...launcher.env } : this.env;
+      const env = { ...this.env, ...(launcher.env ?? {}), ...GENTLE_SHELL_INTERACTIVE_HOST_ENV };
       const proc = this.spawner.spawn(launcher.command, args, env, this.cwd);
       this.process = proc;
 

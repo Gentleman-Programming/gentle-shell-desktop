@@ -250,4 +250,123 @@ describe("reduceChat: fixture replays", () => {
     expect(state.lastError).toBe("Cannot read properties of undefined (reading 'foo')");
     expect(state.working).toBe(false);
   });
+
+  it("replays the helpers-activity fixture, skipping the malformed frame and ignoring the other extension's widget", () => {
+    const state = replay(readFixtureEvents("helpers-activity.jsonl"));
+
+    expect(state.helpers).toEqual({
+      summary: { running: 0, queued: 0, waiting: 1, finished: 1 },
+      tasks: [
+        {
+          id: "task-1",
+          agent: "researcher",
+          label: "Research the API",
+          prompt: "Look into the auth flow",
+          status: "done",
+          createdAt: "2026-09-22T10:00:00.000Z",
+          startedAt: "2026-09-22T10:00:01.000Z",
+          endedAt: "2026-09-22T10:00:30.000Z",
+          turns: 3,
+          toolCalls: 1,
+          thread: {
+            version: 3,
+            dropped: 0,
+            items: [
+              { kind: "text", text: "Starting research." },
+              { kind: "tool", callId: "call-1", name: "Read", args: { path: "rpc.md" }, output: "...", running: false, isError: false },
+              { kind: "text", text: "Done — the auth flow uses RPC extension UI requests." },
+            ],
+          },
+        },
+        {
+          id: "task-2",
+          agent: "writer",
+          label: "Draft the summary",
+          prompt: "Write it up",
+          status: "waiting",
+          createdAt: "2026-09-22T10:00:02.000Z",
+          turns: 1,
+          toolCalls: 0,
+          thread: { version: 1, dropped: 0, items: [{ kind: "note", text: "Needs your input." }] },
+        },
+      ],
+    });
+  });
+});
+
+describe("reduceChat: helpers widget (gentle-agents)", () => {
+  it("INITIAL_CHAT_STATE starts with an empty helpers activity", () => {
+    expect(INITIAL_CHAT_STATE.helpers).toEqual({ summary: { running: 0, queued: 0, waiting: 0, finished: 0 }, tasks: [] });
+  });
+
+  it("replaces helpers with the parsed activity from a setWidget request for widgetKey gentle-agents", () => {
+    const payload = JSON.stringify({
+      schema: "gentle-agents.activity/v1",
+      summary: { running: 1, queued: 0, waiting: 0, finished: 0 },
+      tasks: [
+        {
+          summary: {
+            id: "task-1",
+            agent: "researcher",
+            label: "Research",
+            prompt: "Do it",
+            status: "running",
+            createdAt: "2026-09-22T10:00:00.000Z",
+            turns: 0,
+            toolCalls: 0,
+          },
+          thread: { version: 0, dropped: 0, items: [] },
+        },
+      ],
+    });
+
+    const decoded = decodeLine(
+      JSON.stringify({ type: "extension_ui_request", id: "ui-1", method: "setWidget", widgetKey: "gentle-agents", widgetLines: [payload] }),
+    );
+    if ("kind" in decoded) throw new Error("expected a decoded extension_ui_request");
+
+    const state = reduceChat(INITIAL_CHAT_STATE, decoded);
+
+    expect(state.helpers.summary).toEqual({ running: 1, queued: 0, waiting: 0, finished: 0 });
+    expect(state.helpers.tasks).toHaveLength(1);
+    expect(state.helpers.tasks[0]?.id).toBe("task-1");
+  });
+
+  it("ignores a setWidget request for a different widgetKey, leaving helpers untouched", () => {
+    const decoded = decodeLine(
+      JSON.stringify({
+        type: "extension_ui_request",
+        id: "ui-2",
+        method: "setWidget",
+        widgetKey: "some-other-extension",
+        widgetLines: ["irrelevant"],
+      }),
+    );
+    if ("kind" in decoded) throw new Error("expected a decoded extension_ui_request");
+
+    const state = reduceChat(INITIAL_CHAT_STATE, decoded);
+
+    expect(state).toBe(INITIAL_CHAT_STATE);
+  });
+
+  it("keeps the previous helpers state when the gentle-agents widget frame is malformed", () => {
+    const validPayload = JSON.stringify({
+      schema: "gentle-agents.activity/v1",
+      summary: { running: 1, queued: 0, waiting: 0, finished: 0 },
+      tasks: [],
+    });
+    const validDecoded = decodeLine(
+      JSON.stringify({ type: "extension_ui_request", id: "ui-1", method: "setWidget", widgetKey: "gentle-agents", widgetLines: [validPayload] }),
+    );
+    if ("kind" in validDecoded) throw new Error("expected a decoded extension_ui_request");
+    const afterValid = reduceChat(INITIAL_CHAT_STATE, validDecoded);
+
+    const malformedDecoded = decodeLine(
+      JSON.stringify({ type: "extension_ui_request", id: "ui-2", method: "setWidget", widgetKey: "gentle-agents", widgetLines: ["{not valid json"] }),
+    );
+    if ("kind" in malformedDecoded) throw new Error("expected a decoded extension_ui_request");
+    const afterMalformed = reduceChat(afterValid, malformedDecoded);
+
+    expect(afterMalformed.helpers).toEqual(afterValid.helpers);
+  });
 });

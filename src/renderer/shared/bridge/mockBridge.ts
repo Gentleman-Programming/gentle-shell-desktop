@@ -93,7 +93,10 @@ function firstRunOverride(): boolean | undefined {
 }
 
 function emptyState(): ChatState {
-  return { messages: [], working: false, pendingDialogs: [], activity: 0 };
+  // D4 (a "working" chat with three helpers, browser-verified) fills this
+  // in later; for now the mock bridge just needs a compiling, empty
+  // HelpersActivity so it keeps matching the real ChatState shape.
+  return { messages: [], working: false, pendingDialogs: [], activity: 0, helpers: { summary: { running: 0, queued: 0, waiting: 0, finished: 0 }, tasks: [] } };
 }
 
 let currentState: ChatState = emptyState();
