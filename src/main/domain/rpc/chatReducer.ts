@@ -1,5 +1,9 @@
 import { MESSAGE_ROLE, type ChatMessage, type ChatState, type Dialog } from "@shared/bridge-types";
-import type { AssistantMessageEvent, RpcEvent, RpcExtensionUIRequest, RpcMessage } from "./types";
+import { emptyHelpersActivity, parseHelpersActivity } from "./helpersActivity";
+import type { AssistantMessageEvent, FireAndForgetMethod, RpcEvent, RpcExtensionUIRequest, RpcMessage } from "./types";
+
+/** The fire-and-forget branch of RpcExtensionUIRequest (notify, setStatus, setWidget, setTitle, set_editor_text). */
+type FireAndForgetUIRequest = Extract<RpcExtensionUIRequest, { readonly method: FireAndForgetMethod }>;
 
 // ChatState itself now lives in @shared/bridge-types (T3: the renderer
 // receives it directly through GentleBridge.onState/openChat/newChat).
@@ -13,7 +17,11 @@ export const INITIAL_CHAT_STATE: ChatState = {
   working: false,
   pendingDialogs: [],
   activity: 0,
+  helpers: emptyHelpersActivity(),
 };
+
+/** The one widgetKey gentle-agents publishes its per-chat helpers activity under (`gentle-agents.activity/v1`). */
+const HELPERS_WIDGET_KEY = "gentle-agents";
 
 const ACTIVITY_DELTA_TYPES: ReadonlySet<AssistantMessageEvent["type"]> = new Set([
   "thinking_start",
@@ -142,10 +150,34 @@ function applyExtensionUIRequest(state: ChatState, event: RpcExtensionUIRequest)
       });
     case "editor":
       return pushDialog(state, { id: event.id, method: "editor", title: event.title, prefill: event.prefill });
+    case "setWidget":
+      return applySetWidget(state, event);
     default:
-      // Fire-and-forget: notify, setStatus, setWidget, setTitle, set_editor_text.
+      // Other fire-and-forget methods: notify, setStatus, setTitle, set_editor_text.
       return state;
   }
+}
+
+/**
+ * `setWidget` is fire-and-forget on the wire like the other widget/status
+ * methods, but the one gentle-agents publishes under `widgetKey:
+ * "gentle-agents"` carries this chat's per-chat helpers activity (M2), so
+ * it folds into `helpers` instead of being dropped. Any other widgetKey
+ * (a different extension's own widget) is still ignored — never a global
+ * list, per the M2 objective (the parent-child relation stays direct).
+ */
+function applySetWidget(state: ChatState, event: FireAndForgetUIRequest): ChatState {
+  if (event.widgetKey !== HELPERS_WIDGET_KEY) return state;
+
+  const widgetLines = Array.isArray(event.widgetLines) ? toStringArray(event.widgetLines) : undefined;
+  const helpers = parseHelpersActivity(widgetLines);
+  // undefined means "malformed frame": keep the previous helpers state
+  // rather than clobbering it with nothing (see helpersActivity.ts).
+  return helpers ? { ...state, helpers } : state;
+}
+
+function toStringArray(value: readonly unknown[]): readonly string[] {
+  return value.filter((item): item is string => typeof item === "string");
 }
 
 function pushDialog(state: ChatState, dialog: Dialog): ChatState {
