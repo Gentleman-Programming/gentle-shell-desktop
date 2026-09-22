@@ -40,3 +40,19 @@ export function createPiSessionStore(home: string): SessionStore {
     },
   };
 }
+
+/**
+ * A SessionStore that re-resolves the current home directory (via
+ * `homeDirFor(configStore.read().home ?? "isolated", ...)`, T5) on every
+ * `listAll()` call instead of the fixed home createPiSessionStore closes
+ * over. Without this, the sidebar's session list would keep reading the
+ * home the app started with even after first-run persists a different
+ * choice, until the app was restarted.
+ */
+export function createDynamicPiSessionStore(resolveCurrentHome: () => string): SessionStore {
+  return {
+    listAll(): Promise<SessionInfoLike[]> {
+      return createPiSessionStore(resolveCurrentHome()).listAll();
+    },
+  };
+}

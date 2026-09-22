@@ -53,10 +53,24 @@ export function ConversationContainer({ activeChat }: ConversationContainerProps
   }, [bridge]);
 
   // Opens (or starts) the selected chat whenever the selection changes.
+  // Guarded against stale resolutions: if the selection changes again
+  // before this request settles (e.g. quickly clicking two chats), its
+  // resolved/rejected result must not clobber the state that belongs to
+  // the newer selection.
   useEffect(() => {
     setBridgeError(undefined);
+    let cancelled = false;
     const opening = activeChat.kind === "existing" ? bridge.openChat(activeChat.chat.id) : bridge.newChat();
-    opening.then(setChatState).catch((cause: unknown) => setBridgeError(errorText(cause)));
+    opening
+      .then((state) => {
+        if (!cancelled) setChatState(state);
+      })
+      .catch((cause: unknown) => {
+        if (!cancelled) setBridgeError(errorText(cause));
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [bridge, activeChat]);
 
   const handleSend = (): void => {
@@ -64,7 +78,12 @@ export function ConversationContainer({ activeChat }: ConversationContainerProps
     if (text.length === 0 || chatState.working) return;
 
     setDraft("");
-    bridge.sendMessage(text).catch((cause: unknown) => setBridgeError(errorText(cause)));
+    bridge
+      .sendMessage(text)
+      .then((result) => {
+        if (!result.queued) setBridgeError(result.reason ?? "Gentle did not send the message");
+      })
+      .catch((cause: unknown) => setBridgeError(errorText(cause)));
   };
 
   const handleAbort = (): void => {

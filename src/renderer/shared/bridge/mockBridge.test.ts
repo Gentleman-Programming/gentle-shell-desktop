@@ -15,6 +15,21 @@ describe("mockBridge", () => {
     await mockBridge.newChat();
   });
 
+  it("setupStatus() starts with needsChoice: true and a fake pi detection, so the first-run screen is reachable in the browser preview", async () => {
+    const status = await mockBridge.setupStatus();
+
+    expect(status.needsChoice).toBe(true);
+    expect(status.detection).toMatchObject({ found: true, hasAuth: true, hasModels: true });
+  });
+
+  it("chooseHome persists the choice: a later setupStatus() reports needsChoice: false", async () => {
+    await mockBridge.chooseHome("link");
+
+    const status = await mockBridge.setupStatus();
+
+    expect(status.needsChoice).toBe(false);
+  });
+
   it("lists two example chats plus one already-working chat", async () => {
     const chats = await mockBridge.listChats();
 
@@ -71,6 +86,16 @@ describe("mockBridge", () => {
     const final = states.at(-1);
     expect(final?.pendingDialogs).toHaveLength(0);
     expect(final?.working).toBe(false);
+  });
+
+  it('resolves { queued: false, reason } instead of notifying onError while already working (report once)', async () => {
+    const { errors } = collectStates();
+
+    await mockBridge.sendMessage("Which branch?"); // opens a dialog, leaves working: true
+    const result = await mockBridge.sendMessage("another message");
+
+    expect(result).toEqual({ queued: false, reason: "Gentle is still working" });
+    expect(errors).toHaveLength(0);
   });
 
   it("streams a plain reply word by word for an ordinary message", async () => {

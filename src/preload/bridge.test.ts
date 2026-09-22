@@ -117,6 +117,27 @@ describe("createBridge", () => {
     expect(messages).toEqual(["boom"]);
   });
 
+  it("setupStatus invokes setup.status with no payload", async () => {
+    const { ipc, invoke } = createFakeIpc();
+    invoke.mockResolvedValue({ needsChoice: true, detection: { found: true, dir: "/dir", hasAuth: true, hasModels: true } });
+    const bridge = createBridge(ipc);
+
+    await expect(bridge.setupStatus()).resolves.toEqual({
+      needsChoice: true,
+      detection: { found: true, dir: "/dir", hasAuth: true, hasModels: true },
+    });
+    expect(invoke).toHaveBeenCalledWith(IPC_CHANNELS.SETUP_STATUS);
+  });
+
+  it("chooseHome invokes setup.chooseHome with the mode", async () => {
+    const { ipc, invoke } = createFakeIpc();
+    const bridge = createBridge(ipc);
+
+    await bridge.chooseHome("link");
+
+    expect(invoke).toHaveBeenCalledWith(IPC_CHANNELS.CHOOSE_HOME, "link");
+  });
+
   it("onError's returned unsubscribe removes the listener", () => {
     const { ipc, listeners } = createFakeIpc();
     const bridge = createBridge(ipc);

@@ -24,11 +24,13 @@ function makeBridge(overrides: Partial<GentleBridge> = {}): GentleBridge {
     listChats: vi.fn().mockResolvedValue([]),
     openChat: vi.fn().mockResolvedValue(emptyState()),
     newChat: vi.fn().mockResolvedValue(emptyState()),
-    sendMessage: vi.fn().mockResolvedValue(undefined),
+    sendMessage: vi.fn().mockResolvedValue({ queued: true }),
     abort: vi.fn().mockResolvedValue(undefined),
     answerDialog: vi.fn().mockResolvedValue(undefined),
     onState: vi.fn().mockReturnValue(() => {}),
     onError: vi.fn().mockReturnValue(() => {}),
+    setupStatus: vi.fn().mockResolvedValue({ needsChoice: false, detection: { found: false, dir: "", hasAuth: false, hasModels: false } }),
+    chooseHome: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -185,6 +187,42 @@ describe("ConversationContainer", () => {
     fireEvent.keyDown(textarea, { key: "Escape" });
 
     expect(bridge.abort).toHaveBeenCalled();
+  });
+
+  it("guards the open/new effect against a stale resolution when the selection changes before it settles", async () => {
+    let resolveFirst: (state: ChatState) => void = () => {};
+    const firstChat: ChatSummary = { ...EXISTING_CHAT, id: "chat-1", title: "First chat" };
+    const secondChat: ChatSummary = { ...EXISTING_CHAT, id: "chat-2", title: "Second chat" };
+
+    const bridge = makeBridge({
+      openChat: vi.fn((id: string) => {
+        if (id === "chat-1") {
+          return new Promise<ChatState>((resolve) => {
+            resolveFirst = resolve;
+          });
+        }
+        return Promise.resolve(emptyState());
+      }),
+    });
+    window.gentle = bridge;
+
+    const { rerender } = render(<ConversationContainer activeChat={{ kind: "existing", chat: firstChat }} />);
+    await vi.waitFor(() => expect(bridge.openChat).toHaveBeenCalledWith("chat-1"));
+
+    rerender(<ConversationContainer activeChat={{ kind: "existing", chat: secondChat }} />);
+    await vi.waitFor(() => expect(bridge.openChat).toHaveBeenCalledWith("chat-2"));
+
+    // The stale first request resolves after the second one was already
+    // requested; its state must never overwrite what belongs to chat-2.
+    resolveFirst({
+      messages: [{ id: "stale", role: MESSAGE_ROLE.ASSISTANT, text: "stale reply", streaming: false }],
+      working: false,
+      pendingDialogs: [],
+      activity: 0,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(screen.queryByText("stale reply")).not.toBeInTheDocument();
   });
 
   it("does not call sendMessage when the draft is only whitespace", async () => {

@@ -1,17 +1,25 @@
-import type { ChatState, ChatSummary, DialogAnswer } from "@shared/bridge-types";
-import type { LauncherLocator, ProcessSpawner, SessionStore } from "../../ports";
+import type { ChatState, ChatSummary, DialogAnswer, PromptResult } from "@shared/bridge-types";
+import type { HomeSettings, LauncherLocator, ProcessSpawner, SessionStore } from "../../ports";
 import { PiSession } from "./PiSession";
 import { toChatSummaries } from "./sessionList";
+
+const NO_HOME_SETTINGS: HomeSettings = { homeArgs: () => [] };
 
 export interface ChatHostDeps {
   readonly spawner: ProcessSpawner;
   readonly locator: LauncherLocator;
   readonly sessionStore: SessionStore;
   readonly env: NodeJS.ProcessEnv;
-  /** e.g. `["--home", home]`; forwarded to every spawned PiSession so the
-   * child pi process and this process's own SessionStore agree on the
-   * same home. */
-  readonly homeArgs?: readonly string[];
+  /** Resolves the launcher home flags (e.g. `["--link"]`) fresh on every
+   * spawned session, from the persisted home choice (T5) instead of a
+   * fixed constant, so a choice made mid-session takes effect on the very
+   * next open/new. Defaults to no flags when omitted (e.g. plain unit
+   * tests that don't care about home). */
+  readonly homeSettings?: HomeSettings;
+  /** Receives raw child stderr lines from every spawned PiSession, forwarded
+   * unchanged from PiSessionOptions.onLog (T5 host follow-up). Defaults to
+   * a no-op. */
+  readonly log?: (line: string) => void;
 }
 
 type StateListener = (state: ChatState) => void;
@@ -30,6 +38,13 @@ export class ChatHost {
   private current: PiSession | undefined;
   private readonly stateListeners = new Set<StateListener>();
   private readonly errorListeners = new Set<ErrorListener>();
+  /** Serializes startSession calls: a second open/new call queues behind
+   * whatever the previous one is still doing (stopping the old session,
+   * starting the new one) instead of racing it. Without this, two
+   * overlapping calls can both observe `this.current` as unset and both
+   * spawn a live child, leaking the first one — see ChatHost.test.ts's
+   * "startSession serializes overlapping open/new calls" test. */
+  private startChain: Promise<void> = Promise.resolve();
 
   constructor(deps: ChatHostDeps) {
     this.deps = deps;
@@ -65,9 +80,12 @@ export class ChatHost {
     return this.startSession(undefined);
   }
 
-  async sendMessage(text: string): Promise<void> {
-    const result = this.requireCurrent().prompt(text);
-    if (!result.queued) throw new Error(result.reason ?? "ChatHost: prompt was not queued");
+  /** Resolves the PromptResult as-is instead of throwing when the
+   * assistant is already working: PiSession.prompt already reports the
+   * decline once (state push + this return value), so rejecting here too
+   * would report it a second time through the IPC error path. */
+  async sendMessage(text: string): Promise<PromptResult> {
+    return this.requireCurrent().prompt(text);
   }
 
   async abort(): Promise<void> {
@@ -83,15 +101,30 @@ export class ChatHost {
     await this.current?.stop();
   }
 
+  /** Queues this start behind the previous one via `startChain` (see its
+   * doc comment) instead of running `performStart` directly. */
   private async startSession(sessionPath: string | undefined): Promise<ChatState> {
+    const run = this.startChain.then(() => this.performStart(sessionPath));
+    // Keep the chain alive regardless of this step's outcome, so one
+    // failed start (e.g. a locator error) never permanently wedges every
+    // later open/new call behind a rejected promise.
+    this.startChain = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  }
+
+  private async performStart(sessionPath: string | undefined): Promise<ChatState> {
     await this.current?.stop();
 
     const session = new PiSession({
       spawner: this.deps.spawner,
       locator: this.deps.locator,
-      homeArgs: this.deps.homeArgs,
+      homeArgs: (this.deps.homeSettings ?? NO_HOME_SETTINGS).homeArgs(),
       sessionPath,
       env: this.deps.env,
+      onLog: this.deps.log,
     });
     session.on("state", (state) => this.emitState(state));
     session.on("error", (error) => this.emitError(error.message));

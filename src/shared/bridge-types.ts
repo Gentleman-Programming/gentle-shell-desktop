@@ -92,6 +92,23 @@ export interface Dialog {
 export type DialogAnswer = { readonly value: string } | { readonly confirmed: boolean } | { readonly cancelled: true };
 
 /**
+ * Result of `sendMessage`/`PiSession.prompt`: M1 has no queue, so a prompt
+ * sent while the assistant is already working is declined outright rather
+ * than buffered. Lives here (not src/main/domain/session/PiSession.ts,
+ * where T2 first defined it) because GentleBridge.sendMessage (T5) now
+ * resolves this value straight to the renderer instead of throwing — the
+ * Scope Rule promotes it out of src/main once a second process needs the
+ * shape. `reason` is set only when `queued` is false; the renderer shows
+ * it in the status line, and ChatState.lastError also carries it for
+ * anyone reading pushed state directly, but never both an event AND a
+ * rejection ("report once" — see PiSession.prompt).
+ */
+export interface PromptResult {
+  readonly queued: boolean;
+  readonly reason?: string;
+}
+
+/**
  * The full state of the currently open conversation: messages, whether the
  * assistant is working, pending dialogs awaiting an answer, the last
  * surfaced error, and an activity counter for thinking/tool events (no
@@ -110,10 +127,50 @@ export interface ChatState {
 }
 
 /**
+ * Whether the desktop app links to an existing plain pi CLI install
+ * (`--link`, reusing `~/.pi/agent` or `PI_CODING_AGENT_DIR`) or keeps its
+ * own isolated home (`--isolated`, `~/.gentle-shell/agent`) — the choice
+ * T5's first-run screen offers. Lives here (not
+ * src/main/domain/home/home.ts, where it is resolved and persisted)
+ * because the renderer's first-run screen sends this same value back
+ * through GentleBridge.chooseHome — the Scope Rule promotes it out of
+ * src/main once a second process needs the shape.
+ */
+export const HOME_MODE = {
+  LINK: "link",
+  ISOLATED: "isolated",
+} as const;
+
+export type HomeMode = (typeof HOME_MODE)[keyof typeof HOME_MODE];
+
+/**
+ * Whether `~/.pi/agent` (or `PI_CODING_AGENT_DIR`) exists, and what a
+ * plain pi CLI install left there — what the first-run screen's
+ * "We found pi on this machine" detection card renders.
+ */
+export interface PiDetection {
+  readonly found: boolean;
+  readonly dir: string;
+  readonly hasAuth: boolean;
+  readonly hasModels: boolean;
+}
+
+/** GentleBridge.setupStatus()'s result: whether first-run should be shown
+ * (no home choice persisted yet AND pi was detected) and what detectPi
+ * found either way, so the screen can render its detection card even when
+ * a choice already exists (defensive; App.tsx only renders the screen
+ * when `needsChoice` is true). */
+export interface SetupStatus {
+  readonly needsChoice: boolean;
+  readonly detection: PiDetection;
+}
+
+/**
  * Surface exposed on `window.gentle` by the preload script. T1 typed the
  * listChats/sendMessage skeleton; T3 finalizes the full shape and wires it
  * to the real IPC bridge (src/preload/bridge.ts) and main-process ChatHost
- * (src/main/domain/session/ChatHost.ts, src/main/ipc/registerHandlers.ts).
+ * (src/main/domain/session/ChatHost.ts, src/main/ipc/registerHandlers.ts);
+ * T5 adds first-run/home.
  */
 export interface GentleBridge {
   listChats(): Promise<ChatSummary[]>;
@@ -121,14 +178,22 @@ export interface GentleBridge {
   openChat(id: string): Promise<ChatState>;
   /** Starts a fresh chat (no prior session file) and returns its initial ChatState. */
   newChat(): Promise<ChatState>;
-  /** Sends a message in whichever chat is currently open. */
-  sendMessage(text: string): Promise<void>;
+  /** Sends a message in whichever chat is currently open. Resolves with
+   * `{ queued: false, reason }` instead of rejecting when the assistant is
+   * already working, so the caller reports it exactly once. */
+  sendMessage(text: string): Promise<PromptResult>;
   abort(): Promise<void>;
   answerDialog(id: string, answer: DialogAnswer): Promise<void>;
   /** Subscribes to ChatState pushes for the currently open chat. Returns an unsubscribe function. */
   onState(callback: (state: ChatState) => void): () => void;
   /** Subscribes to error messages surfaced by the currently open chat. Returns an unsubscribe function. */
   onError(callback: (message: string) => void): () => void;
+  /** Whether to show the first-run home-choice screen, and what pi
+   * detection found. */
+  setupStatus(): Promise<SetupStatus>;
+  /** Persists the chosen home mode; the next spawned session and the
+   * session list use it. */
+  chooseHome(mode: HomeMode): Promise<void>;
 }
 
 declare global {
