@@ -6,7 +6,7 @@
   "main": "out/main/index.js",
   "description": "Desktop chat window for Gentle Shell / pi.",
   "author": "Gentleman-Programming",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "dev": "electron-vite dev",
     "dev:web": "vite --config vite.web.config.ts",
