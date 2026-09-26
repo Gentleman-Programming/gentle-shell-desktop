@@ -23,10 +23,9 @@ export function createLauncherLocator(env: NodeJS.ProcessEnv = process.env): Lau
       if (onPath) return { command: onPath, args: [] };
 
       throw new Error(
-        "gentle-shell launcher not found. gentle-shell is not published on npm yet: " +
-          "set GENTLE_SHELL_BIN to your local checkout's bin/gentle-shell.mjs (or another " +
-          "gentle-shell executable), or install a gentle-shell binary named `gentle-shell` " +
-          "on PATH. See the README Development section.",
+        "gentle-shell launcher not found. Install it with `npm install -g gentle-pi` " +
+          "(gentle-pi 3.7.0 or newer) so `gentle-shell` is on PATH, or set GENTLE_SHELL_BIN " +
+          "to its full path (`which gentle-shell`). See the README Try it section.",
       );
     },
   };
