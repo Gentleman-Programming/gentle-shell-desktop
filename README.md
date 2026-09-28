@@ -113,7 +113,7 @@ See "What it shows" above for why the app sets `GENTLE_SHELL_INTERACTIVE_HOST=1`
 
 See `src/README.md` for why the source tree is shaped the way it is.
 
-`pnpm dev:local-pi` runs the app against a local gentle-pi checkout (default `../gentle-pi-worktrees/desktop-integration`, override with `GENTLE_SHELL_BIN=<path>/bin/gentle-shell.mjs`), useful when changing gentle-pi and the app together.
+`pnpm dev:local-pi` runs the app against a local gentle-pi checkout (default `../gentle-pi-worktrees/desktop-integration`, override with `GENTLE_SHELL_BIN=<path>/bin/gentle-shell.mjs` or `$env:GENTLE_SHELL_BIN="<path>\\bin\\gentle-shell.mjs"` on Windows PowerShell), useful when changing gentle-pi and the app together.
 
 ## License
 
