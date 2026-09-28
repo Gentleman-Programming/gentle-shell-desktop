@@ -3,11 +3,34 @@ import type { Readable } from "node:stream";
 import { LineSplitter } from "../domain/rpc/codec";
 import type { ProcessSpawner, SpawnedProcess } from "../ports";
 
-/** child_process.spawn-backed ProcessSpawner, line-splitting stdout/stderr through the domain LineSplitter. */
-export function createNodeProcessSpawner(): ProcessSpawner {
+export interface NodeProcessSpawnerOptions {
+  /** Optional child_process.spawn replacement (useful for unit tests). */
+  readonly spawn?: typeof spawn;
+  /** Optional platform override (useful for testing cross-platform behaviors like win32). */
+  readonly platform?: NodeJS.Platform;
+}
+
+/**
+ * child_process.spawn-backed ProcessSpawner, line-splitting stdout/stderr through the domain LineSplitter.
+ *
+ * Windows specifics:
+ * - windowsHide: true prevents a visible cmd console window per chat (Issue #24).
+ * - shell: true is enabled on win32 for .cmd and .bat files to avoid spawn EFTYPE / EINVAL errors (Issue #23).
+ */
+export function createNodeProcessSpawner(options: NodeProcessSpawnerOptions = {}): ProcessSpawner {
+  const spawnFn = options.spawn ?? spawn;
+  const platform = options.platform ?? process.platform;
+
   return {
     spawn(command, args, env, cwd): SpawnedProcess {
-      const child = spawn(command, [...args], { env, cwd, stdio: ["pipe", "pipe", "pipe"] });
+      const isBatch = platform === "win32" && /\.(cmd|bat)$/i.test(command.trim().replace(/^"|"$/g, ""));
+      const child = spawnFn(command, [...args], {
+        env,
+        cwd,
+        stdio: ["pipe", "pipe", "pipe"],
+        windowsHide: true,
+        ...(isBatch ? { shell: true } : {}),
+      });
 
       const stdoutLineHandlers: Array<(line: string) => void> = [];
       const stderrLineHandlers: Array<(line: string) => void> = [];
