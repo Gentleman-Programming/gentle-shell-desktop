@@ -21,7 +21,7 @@ Source: `odd/tasks/desktop-m1-chat-core.md:38`. JS launcher entries run under El
 
 - **Protocol.** The contract is pi's RPC protocol, with gentle-shell extensions on top ([04-rpc-contract.md](../../04-rpc-contract.md)).
 - **External launcher.** The launcher is found on `PATH` or through `GENTLE_SHELL_BIN` (`src/main/adapters/launcherLocator.ts:16-31`). M1 also says that "Electron's bundled Node runs [pi] in the main process without a sidecar" (`odd/tasks/desktop-m1-chat-core.md:18`), but the code runs an external launcher. See [Undecided](README.md#undecided--not-recorded).
-- **Known problems.** Windows `.cmd` spawning ([audit A4](../audit.md#a4-windows-cmd-launcher-spawned-without-a-shell)) and the lack of a version handshake ([A8](../audit.md#a8-no-version-handshake)).
+- **Known problems.** Windows `.cmd` spawning ([audit A4](../audit.md#a4-windows-cmd-launcher-spawned-without-a-shell)) and the lack of a version handshake ([audit A8](../audit.md#a8-no-version-handshake)).
 
 ## Status
 

@@ -16,7 +16,7 @@
 
 `Inference:` marks reasoning, not stated fact. `UNVERIFIED:` marks a claim that was checked but not confirmed.
 
-**Citation keys.** `gentle-shell-desktop@5ab4a00:` is the desktop repo `main`. Paths such as `03-architecture/audit.md` are corpus pages in `docs/`. Discord dates are converted from the thread's `d/m/yy` format (saved copy of the thread "Gentle Desktop", not in the repository).
+**Citation keys.** `gentle-shell-desktop@5ab4a00:` is the desktop repo `main`. Paths such as `03-architecture/audit.md` are corpus pages in `docs/`. Discord dates are converted from the thread's `d/m/yy` format (saved copy of the thread "Gentle Desktop", not in the repository). IDs from other pages carry their page (`audit A3`, `gap G9`, `inventory C20`, `vision Q1`, `UX U9`, `design D1`, `SCR-01`); a qualifier covers the IDs after it (`audit A3, A11`). Unqualified M1 and M2 are the maintainer's milestones, not inventory rows; D1–D12 are this page's governance rules.
 
 **IDs.** Corpus IDs collide across pages, so this page always qualifies them: `audit A3` ([audit](03-architecture/audit.md#summary)), `gap G1` ([RPC contract](04-rpc-contract.md#gaps-the-desktop-needs)), `inventory C17` ([capability inventory](05-capability-inventory.md)), `UX U11` ([UX principles](06-ux/principles.md)), `design D5` ([design-system differences](06-ux/design-system.md#differences)), `ADR 0005` ([ADR index](03-architecture/adr/README.md#index)), `SCR-03` ([screens](06-ux/screens.md#at-a-glance)), `vision Q2` ([vision](00-vision.md#open-questions-for-the-maintainer)).
 
@@ -74,7 +74,7 @@ Counts are the totals of the [coverage summary](05-capability-inventory.md#cover
 
 **Owner:** `TBD`.
 
-**Headcount: 2–3** **[community proposal]**. Rationale: 14 audit findings are in this scope (A1, A2, A3, A5, A6, A7, A8, A10, A11, A12, A13, A14, A17 in part, A19; counting rule: every finding named in the scope above, shared and partial ones included, as in the other areas), including the only High finding that blocks several surfaces (audit A3 is a main blocker of SCR-01 and SCR-06 in [screens §At a glance](06-ux/screens.md#at-a-glance); [audit §Risks](03-architecture/audit.md#risks-for-scaling-the-ui) ties it to several chats at once and the ODD panel), plus 93 inventory rows marked yes, partial or spawn. `Inference:` the multi-chat sequence is serial (A3, then A11, then A1), so more than three people would wait on each other.
+**Headcount: 2–3** **[community proposal]**. Rationale: 14 audit findings are in this scope (audit A1, A2, A3, A5, A6, A7, A8, A10, A11, A12, A13, A14, A17 in part, A19; counting rule: every finding named in the scope above, shared and partial ones included, as in the other areas), including the only High finding that blocks several surfaces (audit A3 is a main blocker of SCR-01 and SCR-06 in [screens §At a glance](06-ux/screens.md#at-a-glance); [audit §Risks](03-architecture/audit.md#risks-for-scaling-the-ui) ties it to several chats at once and the ODD panel), plus 93 inventory rows marked yes, partial or spawn. `Inference:` the multi-chat sequence is serial (audit A3, then A11, then A1), so more than three people would wait on each other.
 
 **Interfaces**
 - Frontend: the preload bridge types (`src/shared/bridge-types.ts`, ADR 0002) are the contract between the two.
@@ -88,7 +88,7 @@ Counts are the totals of the [coverage summary](05-capability-inventory.md#cover
 gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`; [02-ecosystem](02-ecosystem.md)), so this area is titled by repository: pi, gentle-shell (package `gentle-pi`) and gentle-ai.
 
 **Scope**
-- **RPC gaps that need an upstream change.** Gaps G1–G8 and G10. `Inference` (from [02 §Where each change belongs](02-ecosystem.md#where-each-change-belongs), itself labelled `Inference`): G3, G4, G5 and G10 belong in pi; G2, G6, G7 and G8 in gentle-shell; G1 in gentle-shell plus an inbound channel that may also need pi.
+- **RPC gaps that need an upstream change.** Gaps G1–G8 and G10. `Inference` (from [02 §Where each change belongs](02-ecosystem.md#where-each-change-belongs), itself labelled `Inference`): gaps G3, G4, G5 and G10 belong in pi; gaps G2, G6, G7 and G8 in gentle-shell; gap G1 in gentle-shell plus an inbound channel that may also need pi.
 - **gentle-shell commands that fail under RPC.** Inventory P1, P3, Y4, R3 ([02 §Where each change belongs](02-ecosystem.md#where-each-change-belongs)).
 - **Launcher behavior.** Machine-readable setup progress for audit A9 (inventory L5), home semantics for audit A19.
 - **gentle-ai outside the session.** Inventory GA1–GA5 ([05](05-capability-inventory.md#gentle-ai-outside-the-session)).
@@ -117,7 +117,7 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 **Scope**
 - **Screens.** Implementing [SCR-01 to SCR-19](06-ux/screens.md#at-a-glance). Three exist partly (SCR-01, SCR-02, SCR-03) and SCR-09 exists partly; the other 15 do not exist.
 - **Renderer architecture.** ADR [0004](03-architecture/adr/0004-renderer-scope-rule-and-screaming-architecture.md) (Scope Rule, Screaming Architecture, container/presentational, atomic `shared/ui`), [0007](03-architecture/adr/0007-text-only-chat-view.md), [0010](03-architecture/adr/0010-standalone-renderer-with-mock-bridge.md).
-- **Audit findings.** A15 (silent mock-bridge fallback; with Platform), the renderer part of A17 (`shared/markdown` with one consumer, dangling note reference), A13 (with Core).
+- **Audit findings.** Audit A15 (silent mock-bridge fallback; with Platform), the renderer part of audit A17 (`shared/markdown` with one consumer, dangling note reference), audit A13 (with Core).
 - **Inventory.** Host-side rows (9), and the surface half of every row Core wires. Examples named in [02](02-ecosystem.md#where-each-change-belongs): `notify` toasts (inventory C20), tool cards (inventory C17), steering (inventory C4).
 - **Theme implementation.** ADR [0009](03-architecture/adr/0009-hardcoded-gentleman-cute-theme.md) and the token fixes in design D1–D12, once UX decides them.
 
@@ -127,7 +127,7 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 
 **Owner:** `TBD`.
 
-**Headcount: 2–4** **[community proposal]**. Rationale: 19 screens, 15 of them not started; the mockup screens (SCR-01 to SCR-09) and the inventory-derived ones (SCR-10 to SCR-19) can proceed in parallel once their blockers clear. `Inference:` most new screens are blocked by gaps (for example SCR-04 by gap G2, SCR-07 by G3 and G4), so the upper end only pays off once Upstream integration delivers.
+**Headcount: 2–4** **[community proposal]**. Rationale: 19 screens, 15 of them not started; the mockup screens (SCR-01 to SCR-09) and the inventory-derived ones (SCR-10 to SCR-19) can proceed in parallel once their blockers clear. `Inference:` most new screens are blocked by gaps (for example SCR-04 by gap G2, SCR-07 by gaps G3 and G4), so the upper end only pays off once Upstream integration delivers.
 
 **Interfaces**
 - Core: the bridge contract.
@@ -142,7 +142,7 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 - **Principles.** UX [U1–U12](06-ux/principles.md#at-a-glance); UX U9, U10, U11 and U12 are tagged community.
 - **Screen specs and information architecture.** [Screens](06-ux/screens.md) and its [open questions](06-ux/screens.md#open-questions) (which derived screens are in scope, the work progress panel, one or several settings screens).
 - **Design system.** Token and component differences design D1–D12 ([design system](06-ux/design-system.md#differences)) and theme switching ([§Themes](06-ux/design-system.md#themes)).
-- **Product framing questions** to bring to the maintainer: vision Q1 (accessible vs full-featured) and Q8 (profiles).
+- **Product framing questions** to bring to the maintainer: vision Q1 (accessible vs full-featured) and vision Q8 (profiles).
 - **UX framing of community proposals** [0001](07-proposals/0001-agent-flow-graph.md)–[0003](07-proposals/0003-post-hoc-audit-by-questions.md), until the maintainer accepts or declines them.
 
 **Out of scope**
@@ -174,7 +174,7 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 
 **Owner:** `TBD`.
 
-**Headcount: 1–2** **[community proposal]**. Rationale: one Medium audit finding (A16) with several parts, plus real-runtime fixtures and the Windows reproduction. The existing suite is already large (286 tests at M2 close, `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m2-helpers.md:59`), so the gap is coverage of real behavior, not volume.
+**Headcount: 1–2** **[community proposal]**. Rationale: one Medium audit finding (audit A16) with several parts, plus real-runtime fixtures and the Windows reproduction. The existing suite is already large (286 tests at M2 close, `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m2-helpers.md:59`), so the gap is coverage of real behavior, not volume.
 
 **Interfaces**
 - Platform: CI jobs run QA's suites.
@@ -186,8 +186,8 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 ### Platform and distribution
 
 **Scope**
-- **Audit findings.** A4 (High: Windows `.cmd` spawn), A9 (first-run provisioning progress; with Upstream integration), A18 (launcher discovery and platform coverage), A15 (mock bridge in packaged builds; with Frontend).
-- **CI infrastructure.** The workflow audit A16 recommends, with a Windows job once A4 lands ([audit §3 Platform](03-architecture/audit.md#3-platform)).
+- **Audit findings.** Audit A4 (High: Windows `.cmd` spawn), audit A9 (first-run provisioning progress; with Upstream integration), audit A18 (launcher discovery and platform coverage), audit A15 (mock bridge in packaged builds; with Frontend).
+- **CI infrastructure.** The workflow audit A16 recommends, with a Windows job once audit A4 lands ([audit §3 Platform](03-architecture/audit.md#3-platform)).
 - **Packaging.** `electron-builder` targets for macOS, Windows and Linux (`gentle-shell-desktop@5ab4a00:package.json:18-21`). Only macOS (Apple silicon) is tested, and there are no signed builds (`gentle-shell-desktop@5ab4a00:README.md:7`).
 - **Runtime shipping.** Prepares evidence for the undecided "bundled vs external runtime" question (vision Q2, [ADR not recorded](03-architecture/adr/README.md#undecided--not-recorded)). The maintainer decides it.
 
@@ -235,7 +235,7 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 |---|---|---|---|
 | **Accessibility** | Named as an area by Matrak (Discord, 2026-09-27). Proposed rule UX [U11](06-ux/principles.md#u11-accessible-by-default) and keyboard parity UX [U10](06-ux/principles.md#u10-keyboard-parity-with-the-cli), both **[community]**. Not covered by the audit (`03-architecture/audit.md:18`). | Keyboard reach, focus, live regions, reduced motion (UX U11 rule). | UX, Frontend, QA |
 | **Performance** | Named as an area by Matrak (Discord, 2026-09-27). Rendering performance and packaged-app size are not covered by the audit (`03-architecture/audit.md:18`). No measurement exists in the corpus. | `Inference:` a baseline first (startup, long chats, many helpers), since nothing is measured yet. | Core, Frontend, Platform |
-| **Security** | Audit A14 (IPC validation, sandbox, CSP without `'unsafe-eval'`, `will-navigate` guard) and A15 (mock bridge in packaged builds). | IPC surface and packaged-build behavior. | Core, Platform, Frontend |
+| **Security** | Audit A14 (IPC validation, sandbox, CSP without `'unsafe-eval'`, `will-navigate` guard) and audit A15 (mock bridge in packaged builds). | IPC surface and packaged-build behavior. | Core, Platform, Frontend |
 
 ## Interest expressed in the thread
 

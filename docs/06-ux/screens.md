@@ -197,7 +197,7 @@ None of these has a mockup. They exist because the inventory lists capabilities 
 | Interactions | Apply, create, snapshot, duplicate, rename, delete, export, import, pin (from the `/gentle:profiles` panel keys, inventory P1). |
 | Today | None (inventory Q27). |
 | Mockup intent | **No mockup; derived from inventory.** The mockup shows a profile only in the status bar and the default model (`gs-mockup.html:819`, `:731`). |
-| Blockers | Gap G6 (no profile state over RPC); inventory P1, P3: `UNVERIFIED:` both panels likely throw under RPC (`ctx.ui.custom()` returns `undefined`); [vision Q8](../00-vision.md#open-questions-for-the-maintainer). Inventory P2 pin files have a documented JSON shape (`Inference:` readable host-side). |
+| Blockers | Gap G6 (no profile state over RPC); inventory P1, P3: `Inference:` (not run) both panels likely throw a `TypeError` under RPC (`ctx.ui.custom()` returns `undefined`); [vision Q8](../00-vision.md#open-questions-for-the-maintainer). Inventory P2 pin files have a documented JSON shape (`Inference:` readable host-side). |
 
 ### SCR-11. Session tree and branches
 

@@ -4,7 +4,7 @@
 
 Gentle Desktop is an Electron app with one window and one open chat at a time. The main process spawns `gentle-shell --mode rpc` as a child process for the conversation. It also imports pi in-process to list existing chats. This page describes that architecture as it is at `gentle-shell-desktop@5ab4a00`. Findings and risks are in [audit.md](audit.md). Recorded decisions are in [adr/](adr/README.md). The wire protocol is in [04-rpc-contract.md](../04-rpc-contract.md).
 
-**How to read citations.** Paths with no repository prefix are in `gentle-shell-desktop@5ab4a00`. Other repositories use `repo@shortsha:path:line`. The pinned SHAs are `gentle-shell@1162ce9` (npm package `gentle-pi` 3.7.0), `pi@d981de1` (pi 0.85.1) and `pi@d86654a` (pi 0.99.1). Lines labelled `Inference:` are reasoning, not verified behavior. Lines labelled `UNVERIFIED:` were checked but could not be confirmed.
+**How to read citations.** Paths with no repository prefix are in `gentle-shell-desktop@5ab4a00`. Other repositories use `repo@shortsha:path:line`. The pinned SHAs are `gentle-shell@1162ce9` (npm package `gentle-pi` 3.7.0), `pi@d981de1` (pi 0.85.1) and `pi@d86654a` (pi 0.99.1). Lines labelled `Inference:` are reasoning, not verified behavior. Lines labelled `UNVERIFIED:` were checked but could not be confirmed. IDs from other pages are qualified (`audit A3`, `gap G9`); unqualified M1–M6 are the maintainer's milestones, and T-numbers are tasks inside them.
 
 ## At a glance
 
@@ -157,7 +157,7 @@ All channel names come from one constant shared by main and preload (`src/shared
 | `STATE_PUSH` | `chat.state` | push | from `ChatHost.onState` | `:39` |
 | `ERROR_PUSH` | `chat.error` | push | from `ChatHost.onError` | `:40` |
 
-Handler arguments are passed through with no runtime validation, and pushes carry no chat id (`src/main/ipc/registerHandlers.ts:28-40`). See [audit A3](audit.md#a3-single-session-host-with-positional-message-ids) and [A14](audit.md#a14-preload-and-ipc-hardening).
+Handler arguments are passed through with no runtime validation, and pushes carry no chat id (`src/main/ipc/registerHandlers.ts:28-40`). See [audit A3](audit.md#a3-single-session-host-with-positional-message-ids) and [audit A14](audit.md#a14-preload-and-ipc-hardening).
 
 ## Preload bridge surface
 

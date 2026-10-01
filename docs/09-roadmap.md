@@ -239,7 +239,7 @@ A quick win here is a change that is **desktop-only** (no upstream change), **ne
 
 - **Files.** `gentle-shell-desktop@5ab4a00:src/main/adapters/nodeProcessSpawner.ts:10` (spawn without `shell`); `gentle-shell-desktop@5ab4a00:src/main/adapters/launcherLocator.ts:48` (picks `gentle-shell.cmd` first on win32).
 - **Prior art.** gentle-shell solved the same failure: `planSpawn` routes `.cmd`/`.bat` on win32 through the shell as one quoted command line (`gentle-shell@1162ce9:lib/gentle-shell-launcher.ts:952-1002`), with tests (`gentle-shell@1162ce9:tests/gentle-shell-launcher.test.ts:1522-1570`).
-- **Why no upstream or decision.** The bug and the fix are in the desktop's spawner (02 lists "Windows spawn (A4)" as desktop work, `02-ecosystem.md:148`).
+- **Why no upstream or decision.** The bug and the fix are in the desktop's spawner (02 lists "Windows spawn (audit A4)" as desktop work, `02-ecosystem.md:148`).
 - **Test-first.** RED: a unit test that a win32 `.cmd` command yields a shell plan with quoted tokens, with `platform` injected (audit A4 recommendation). Reproduce on Windows before and after; the root cause is likely but not reproduced (audit A4; a tester reported `spawn EINVAL`, `08-team.md:249`).
 
 ### QW-02. Helper statuses and tool items (audit A5)

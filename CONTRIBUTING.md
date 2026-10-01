@@ -14,7 +14,7 @@ Gentle Desktop is an early preview: M1 (chat core) and M2 (per-chat helpers) are
 
 These are the same tags, with the same sources, as the tag table in [08 §How to read this page](docs/08-team.md#how-to-read-this-page).
 
-Citations `path:line` point to files in this repository at `main` `5ab4a00` (the corpus writes them as `gentle-shell-desktop@5ab4a00:path:line`); the cited files are unchanged on the corpus branch. `Inference:` marks reasoning, not stated fact.
+Citations `path:line` point to files in this repository at `main` `5ab4a00` (the corpus writes them as `gentle-shell-desktop@5ab4a00:path:line`); the cited files are unchanged on the corpus branch. `Inference:` marks reasoning, not stated fact. IDs from other corpus pages carry their page (`audit A4`, `inventory C20`, `governance D7`, `QW-11`), following the [corpus ID convention](docs/README.md#how-to-read-it); unqualified M1 and M2 are the maintainer's milestones.
 
 Applying the maintainer's practice to community pull requests is itself a **[community proposal]** ([08 §Contribution flow](docs/08-team.md#contribution-flow)). The open governance questions are listed at the [end of this guide](#open-questions).
 
@@ -47,7 +47,7 @@ Upstream repositories have their own rules **[upstream]**; follow them there, no
 
 ## Proposing ideas
 
-Ideas that go beyond parity with gentle-shell are written as proposals in [docs/07-proposals/](docs/07-proposals/README.md#process): one file per idea at status `proposed`, opened as a pull request and added to the index. Only the maintainer moves a proposal to `accepted` or `declined` (governance D7, **[community proposal]**). The maintainer's vision stays in [00-vision.md](docs/00-vision.md) and is not edited to carry community ideas (`docs/README.md:33`).
+Ideas that go beyond parity with gentle-shell are written as proposals in [docs/07-proposals/](docs/07-proposals/README.md#process): one file per idea at status `proposed`, opened as a pull request and added to the index. Only the maintainer moves a proposal to `accepted` or `declined` (governance D7, **[community proposal]**). The maintainer's vision stays in [00-vision.md](docs/00-vision.md) and is not edited to carry community ideas (`docs/README.md:35`).
 
 ## Workflow
 
@@ -84,7 +84,7 @@ Notes:
 
 - One quick win or one coherent change per PR, with its tests and docs in the same PR.
 - When to use a feature-branch chain is not decided: 08 asks whether the group adopts it for every milestone or only for large ones ([open questions](#open-questions); [08 §Open questions](docs/08-team.md#open-questions)).
-- Corpus changes go as a pull request against the document (`docs/README.md:31-33`).
+- Corpus changes go as a pull request against the document (`docs/README.md:33-35`).
 - Code documentation that belongs with a change (`src/README.md`, the README dev section) is written by the author of that change ([08 §Docs and community](docs/08-team.md#docs-and-community)).
 
 ## Development setup

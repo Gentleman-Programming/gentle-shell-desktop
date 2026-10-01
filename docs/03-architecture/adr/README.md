@@ -6,7 +6,7 @@ This folder holds one ADR for each architecture decision that the desktop repo's
 
 **Format.** `NNNN-kebab-title.md` with Context, Decision, Consequences and Status. Status reads `accepted (recorded in <source>)`, or `accepted, amended in part (...)` when a later document changed part of the decision.
 
-**Citations.** Paths without a repository prefix are in `gentle-shell-desktop@5ab4a00`.
+**Citations.** Paths without a repository prefix are in `gentle-shell-desktop@5ab4a00`. IDs from other pages are qualified (`audit A8`, `gap G9`); unqualified M1–M6 are the maintainer's milestones, and T-numbers are tasks inside them.
 
 ## Index
 

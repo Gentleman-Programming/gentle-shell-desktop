@@ -20,7 +20,7 @@ The contract shared by all three lives in `src/shared/bridge-types.ts` (`src/REA
 
 - **The bridge.** The renderer reaches main only through `window.gentle` (`GentleBridge`): 8 request channels and 2 push channels (`src/shared/bridge-types.ts:273-295`; `src/shared/ipc-channels.ts:8-23`).
 - **Testable preload.** `createBridge` takes an injected IPC object, so it is tested without Electron (`src/preload/bridge.ts:10-19`).
-- **Gaps.** Pushes carry no chat id, and IPC arguments are not validated. See [audit A3](../audit.md#a3-single-session-host-with-positional-message-ids) and [A14](../audit.md#a14-preload-and-ipc-hardening).
+- **Gaps.** Pushes carry no chat id, and IPC arguments are not validated. See [audit A3](../audit.md#a3-single-session-host-with-positional-message-ids) and [audit A14](../audit.md#a14-preload-and-ipc-hardening).
 
 ## Status
 

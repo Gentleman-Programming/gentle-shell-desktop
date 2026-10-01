@@ -13,7 +13,7 @@ This audit covers 19 findings about `gentle-shell-desktop@5ab4a00`. The four tha
 
 ## Method and scope
 
-- **Sources.** Desktop source and docs at `gentle-shell-desktop@5ab4a00` (source on `docs/corpus` is unchanged), `gentle-shell@1162ce9`, `pi@d981de1` (0.85.1) and `pi@d86654a` (0.99.1). Protocol findings defer to [04-rpc-contract.md](../04-rpc-contract.md).
+- **Sources.** Desktop source and docs at `gentle-shell-desktop@5ab4a00` (source on `docs/corpus` is unchanged), `gentle-shell@1162ce9`, `pi@d981de1` (0.85.1) and `pi@d86654a` (0.99.1). Protocol findings defer to [04-rpc-contract.md](../04-rpc-contract.md). IDs from other pages are qualified (`gap G9`, `inventory C20`); unqualified M1–M6 are the maintainer's milestones, and T-numbers are tasks inside them.
 - **Method.** Static reading only. Nothing was built, run or installed. Behavior derived from reading code is labelled `Inference:` with "(not run)".
 - **Not covered.** Rendering performance, accessibility, packaged-app size, and a line-by-line comparison of pi 0.85.1 and 0.99.1 session parsing.
 
@@ -105,13 +105,13 @@ This audit covers 19 findings about `gentle-shell-desktop@5ab4a00`. The four tha
   - Every listed chat is `idle`: `gentle-shell-desktop@5ab4a00:src/main/domain/session/sessionList.ts:20-23`, `:35`.
 
 **Impact**
-- The mockup's sidebar statuses ("working", "needs you") and toasts about other chats cannot be built ([04-rpc-contract.md G9](../04-rpc-contract.md#gaps-the-desktop-needs)).
+- The mockup's sidebar statuses ("working", "needs you") and toasts about other chats cannot be built ([gap G9](../04-rpc-contract.md#gaps-the-desktop-needs)).
 - Ids are not tied to pi entry ids, so nothing can anchor helpers under a message, fork, or survive a reload. `Inference:` reused ids can make React reuse a component for a different message.
 
 **Severity:** High. Blocks a stated product goal (concurrent chats in the mockup).
 
 **Recommendation**
-1. Introduce a session registry keyed by pi session id: one `PiSession` per open chat, as allowed by the protocol ([G9](../04-rpc-contract.md#gaps-the-desktop-needs)).
+1. Introduce a session registry keyed by pi session id: one `PiSession` per open chat, as allowed by the protocol ([gap G9](../04-rpc-contract.md#gaps-the-desktop-needs)).
 2. Add a `chatId` to every push and command.
 3. Derive per-chat status from each session's state.
 4. Take message ids from pi (entry ids via `get_entries`/`entry_appended`, or the message's own identity) instead of array positions.
@@ -190,7 +190,7 @@ This refines [04-rpc-contract.md observation 6](../04-rpc-contract.md#compatibil
 
 **Severity:** Medium. A missing safeguard on a cross-repository boundary.
 
-**Recommendation:** Run `gentle-shell --version` once per launch (`gentle-shell@1162ce9:bin/gentle-shell.mjs:1217-1219`), show the versions, and warn below a minimum. Longer term, propose a versioned capability record upstream ([G10](../04-rpc-contract.md#gaps-the-desktop-needs)).
+**Recommendation:** Run `gentle-shell --version` once per launch (`gentle-shell@1162ce9:bin/gentle-shell.mjs:1217-1219`), show the versions, and warn below a minimum. Longer term, propose a versioned capability record upstream ([gap G10](../04-rpc-contract.md#gaps-the-desktop-needs)).
 
 ### A9. Launcher first-run provisioning shows no progress
 
@@ -220,7 +220,7 @@ This refines [04-rpc-contract.md observation 6](../04-rpc-contract.md#compatibil
 - pi creates a new session in `process.cwd()`: `pi@d86654a:packages/coding-agent/src/main.ts:448`, `:585`, `:687`.
 - pi reopens a session in its header cwd: `pi@d86654a:packages/coding-agent/src/core/session-manager.ts:1782`.
 
-**Impact:** New chats work in whatever directory the app was started from. There is no way to choose a project folder. The mockup status bar shows a cwd ([G7](../04-rpc-contract.md#gaps-the-desktop-needs)). `UNVERIFIED:` the working directory of a macOS app launched from Finder was not checked.
+**Impact:** New chats work in whatever directory the app was started from. There is no way to choose a project folder. The mockup status bar shows a cwd ([gap G7](../04-rpc-contract.md#gaps-the-desktop-needs)). `UNVERIFIED:` the working directory of a macOS app launched from Finder was not checked.
 
 **Severity:** Medium. Wrong context for the agent's file and tool operations.
 
@@ -380,9 +380,9 @@ These follow from the findings. They are not separate defects.
 | Planned surface | Blocking findings | Note |
 |---|---|---|
 | Several chats at once (mockup sidebar statuses, toasts) | A3, A1, A11 | Needs a session registry and chat-scoped pushes before any UI work. |
-| ODD panel (M3) | A3, A8 | Needs structured ODD state, which RPC does not provide ([G2](../04-rpc-contract.md#gaps-the-desktop-needs)). |
-| Helper Stop | A5 | Needs an RPC command upstream ([G1](../04-rpc-contract.md#gaps-the-desktop-needs)). The desktop parser must be correct first. |
-| Providers and extensions screens (M4) | A2, A8 | Either more in-process pi (which makes A1 and A2 worse) or new RPC commands ([G3–G5](../04-rpc-contract.md#gaps-the-desktop-needs)). |
+| ODD panel (M3) | A3, A8 | Needs structured ODD state, which RPC does not provide ([gap G2](../04-rpc-contract.md#gaps-the-desktop-needs)). |
+| Helper Stop | A5 | Needs an RPC command upstream ([gap G1](../04-rpc-contract.md#gaps-the-desktop-needs)). The desktop parser must be correct first. |
+| Providers and extensions screens (M4) | A2, A8 | Either more in-process pi (which makes A1 and A2 worse) or new RPC commands ([gaps G3–G5](../04-rpc-contract.md#gaps-the-desktop-needs)). |
 | Windows and Linux releases | A4, A16, A18 | No CI and no tested platforms besides macOS. |
 
 ## Recommendations and order

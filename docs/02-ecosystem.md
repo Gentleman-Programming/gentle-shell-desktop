@@ -50,7 +50,7 @@ flowchart TB
 | Edge | Evidence |
 |---|---|
 | Desktop spawns the launcher with `--mode rpc` | `D:main/domain/session/PiSession.ts:127-134` |
-| Launcher spawns pi with inherited stdio and loads gentle-pi with `-e <package root>` | `GS:bin/gentle-shell.mjs:1395`; [05 L8](05-capability-inventory.md#launcher-and-homes) |
+| Launcher spawns pi with inherited stdio and loads gentle-pi with `-e <package root>` | `GS:bin/gentle-shell.mjs:1395`; [inventory L8](05-capability-inventory.md#launcher-and-homes) |
 | gentle-pi calls its package-local gentle-ai for review and telemetry | `GS:scripts/install-gentle-ai.mjs:12` ("native review operations will fail with package-local-binary-missing"); `GS:docs/readme-reference.md:1035` |
 | Setup runs gentle-ai `install --agent pi --scope global` | `GS:bin/gentle-shell.mjs:819-821` |
 | The pinned binary is gentle-ai release v3.7.0 | `GS:scripts/gentle-ai-installer.mjs:39-40`, `:48-50` |
@@ -65,7 +65,7 @@ flowchart TB
 | **gentle-shell / gentle-pi** | A launcher (homes, setup, package loading) plus a pi package: 17 extension entry points, 3 themes, 12 skills, 1 prompt template. | npm `gentle-pi`, bin `gentle-shell` | `GS:package.json:2-9`, `:59-73`; counts in [05 §At a glance](05-capability-inventory.md#at-a-glance-gentle-shell-and-gentle-ai) |
 | **gentle-ai** | A Go CLI that configures AI agents, including pi. It owns native review (RDD) and telemetry. gentle-shell installs a package-local copy at postinstall. | GitHub releases; Go module `github.com/gentleman-programming/gentle-ai/v3` | `GA:README.md:10`; `GA:go.mod:1`; `GS:package.json:46`; `GS:scripts/gentle-ai-installer.mjs:40` |
 | **Companion packages** | Pi packages gentle-ai installs into a home. See [Companion packages](#companion-packages). | npm | `GA:internal/agents/pi/adapter.go:57-63` |
-| **Bundled dependency** | `@heyhuynhgiabuu/pi-pretty` 0.6.27, a runtime dependency of gentle-pi, loaded through `extensions/pi-pretty.ts`. `UNVERIFIED:` what it registers (the package is not installed in the reference checkout). | npm, installed with gentle-pi | `GS:package.json:74-76`; [05 V15](05-capability-inventory.md#shell-experience) |
+| **Bundled dependency** | `@heyhuynhgiabuu/pi-pretty` 0.6.27, a runtime dependency of gentle-pi, loaded through `extensions/pi-pretty.ts`. `UNVERIFIED:` what it registers (the package is not installed in the reference checkout). | npm, installed with gentle-pi | `GS:package.json:74-76`; [inventory V15](05-capability-inventory.md#shell-experience) |
 | **Gentle Desktop** | An Electron app: "Desktop chat window for Gentle Shell / pi." | Source only; unsigned local builds | `gentle-shell-desktop@5ab4a00:package.json:7`; `gentle-shell-desktop@5ab4a00:README.md:7` |
 
 ### Companion packages
@@ -90,7 +90,7 @@ gentle-ai also writes the shared `~/.pi/gentle-ai/persona.json` and `~/.gentle-a
 
 **Known doc drift (gentle-shell).** `GS:docs/readme-reference.md:284` still lists `npm:@juicesharp/rpiv-ask-user-question` among the packages setup installs, and a launcher comment says "gentle-ai's own managed Pi stack still installs" it (`GS:lib/gentle-shell-launcher.ts:532-533`), but gentle-ai v3.7.0 marks it retired (`GA:internal/agents/pi/adapter.go:51-55`).
 
-`gentle-ai@b388eb3` (latest `main`) has already retired `pi-mcp-adapter` ([05 GA1](05-capability-inventory.md#gentle-ai-outside-the-session)). gentle-shell 3.7.0 does not use that version.
+`gentle-ai@b388eb3` (latest `main`) has already retired `pi-mcp-adapter` ([inventory GA1](05-capability-inventory.md#gentle-ai-outside-the-session)). gentle-shell 3.7.0 does not use that version.
 
 ## Ownership
 
@@ -130,8 +130,8 @@ The consequence that matters to the desktop: the chat list runs on pi 0.85.1 whi
 | gentle-pi extensions | `ask_user_question` / `ask_user_choice` dialogs, helper activity (`gentle-agents.activity/v1`), `/gentle:*` commands typed as text | `extension_ui_request` and `prompt` | [04 §gentle-shell additions](04-rpc-contract.md#gentle-shell-additions-over-rpc) |
 | gentle-pi theme | A copy of the Gentleman-Cute tokens | Hardcoded in the renderer | `D:renderer/shared/theme/theme.ts:1-8`; [ADR 0009](03-architecture/adr/0009-hardcoded-gentleman-cute-theme.md) |
 | Agent home on disk | Whether `~/.pi/agent` (or `PI_CODING_AGENT_DIR`) exists, and whether `auth.json` and `models.json` exist | File checks at first run | `D:main/domain/home/home.ts:84-87` |
-| gentle-ai | Nothing directly. It runs inside gentle-shell commands and launcher provisioning. | — | [05 GA1–GA5](05-capability-inventory.md#gentle-ai-outside-the-session) |
-| Companion packages | Nothing directly. `Inference:` their model tools reach the desktop only as `tool_execution_*` events, which it does not render ([05 C17](05-capability-inventory.md#conversation-and-input)). | — | Search Q33 finds no Engram handling ([05](05-capability-inventory.md#desktop-searches-gentle-shell-part)) |
+| gentle-ai | Nothing directly. It runs inside gentle-shell commands and launcher provisioning. | — | [inventory GA1–GA5](05-capability-inventory.md#gentle-ai-outside-the-session) |
+| Companion packages | Nothing directly. `Inference:` their model tools reach the desktop only as `tool_execution_*` events, which it does not render ([inventory C17](05-capability-inventory.md#conversation-and-input)). | — | Search inventory Q33 finds no Engram handling ([05](05-capability-inventory.md#desktop-searches-gentle-shell-part)) |
 
 ## Where each change belongs
 
@@ -139,13 +139,13 @@ The consequence that matters to the desktop: the chat list runs on pi 0.85.1 whi
 
 | If the change… | It belongs in | Why | Evidence | Examples |
 |---|---|---|---|---|
-| Adds or changes an RPC command, event or response shape | **pi** (`earendil-works/pi`), through a Contribution Proposal issue; PRs need prior maintainer approval | pi owns the `RpcCommand` union; gentle-shell adds no command or event type | `pi@d86654a:packages/coding-agent/src/modes/rpc/rpc-types.ts:20-74`; `pi@d86654a:CONTRIBUTING.md:31-34`, `:58` | G3 sign-in, G4 default model, G5 packages, G10 version handshake |
-| Publishes new data from a gentle-shell feature | **gentle-shell**, as a `setWidget` `string[]` payload with a documented schema, like the activity schema | Needs no pi change | `GS:docs/gentle-agents-activity.md:13`; [04 §Gaps](04-rpc-contract.md#gaps-the-desktop-needs) | G2 ODD state, G6 profile, G7 status-bar fields, G8 helper result |
-| Lets the host act on a gentle-shell feature | **gentle-shell**, plus an inbound channel. Today the only inbound channels to an extension are `prompt` and dialog responses. `Inference:` a new command type would also need pi. | No host command reaches extensions | [04 §Gaps](04-rpc-contract.md#gaps-the-desktop-needs) | G1 stop a helper |
-| Makes a gentle-shell command work under RPC | **gentle-shell** | The command uses `ctx.ui.custom()` or a TUI-only gate | [05 P1, P3, Y4, R3](05-capability-inventory.md#profiles-models-and-persona) | `/gentle:profiles`, `/gentle:models`, YOLO |
-| Changes launcher behavior (setup progress, home semantics, version output) | **gentle-shell** launcher | The launcher owns homes, setup and the pi gate | [05 L5, L12](05-capability-inventory.md#launcher-and-homes) | Machine-readable setup progress |
+| Adds or changes an RPC command, event or response shape | **pi** (`earendil-works/pi`), through a Contribution Proposal issue; PRs need prior maintainer approval | pi owns the `RpcCommand` union; gentle-shell adds no command or event type | `pi@d86654a:packages/coding-agent/src/modes/rpc/rpc-types.ts:20-74`; `pi@d86654a:CONTRIBUTING.md:31-34`, `:58` | gap G3 sign-in, gap G4 default model, gap G5 packages, gap G10 version handshake |
+| Publishes new data from a gentle-shell feature | **gentle-shell**, as a `setWidget` `string[]` payload with a documented schema, like the activity schema | Needs no pi change | `GS:docs/gentle-agents-activity.md:13`; [04 §Gaps](04-rpc-contract.md#gaps-the-desktop-needs) | gap G2 ODD state, gap G6 profile, gap G7 status-bar fields, gap G8 helper result |
+| Lets the host act on a gentle-shell feature | **gentle-shell**, plus an inbound channel. Today the only inbound channels to an extension are `prompt` and dialog responses. `Inference:` a new command type would also need pi. | No host command reaches extensions | [04 §Gaps](04-rpc-contract.md#gaps-the-desktop-needs) | gap G1 stop a helper |
+| Makes a gentle-shell command work under RPC | **gentle-shell** | The command uses `ctx.ui.custom()` or a TUI-only gate | [inventory P1, P3, Y4, R3](05-capability-inventory.md#profiles-models-and-persona) | `/gentle:profiles`, `/gentle:models`, YOLO |
+| Changes launcher behavior (setup progress, home semantics, version output) | **gentle-shell** launcher | The launcher owns homes, setup and the pi gate | [inventory L5, L12](05-capability-inventory.md#launcher-and-homes) | Machine-readable setup progress |
 | Changes which companion packages a home gets | **gentle-ai** managed pi stack, then a gentle-pi pin bump | gentle-shell does not keep its own list | `GS:docs/readme-reference.md:302` | Retiring a plugin |
-| Renders or acts on data already on the wire, or changes desktop process, IPC or packaging | **Gentle Desktop** | No upstream dependency | [05](05-capability-inventory.md) rows with upstream "none"; [audit](03-architecture/audit.md) | `notify` toasts (C20), tool cards (C17), steering (C4), multi-chat (A3), Windows spawn (A4) |
+| Renders or acts on data already on the wire, or changes desktop process, IPC or packaging | **Gentle Desktop** | No upstream dependency | [05](05-capability-inventory.md) rows with upstream "none"; [audit](03-architecture/audit.md) | `notify` toasts (inventory C20), tool cards (inventory C17), steering (inventory C4), multi-chat (audit A3), Windows spawn (audit A4) |
 
 ## Community projects outside scope
 

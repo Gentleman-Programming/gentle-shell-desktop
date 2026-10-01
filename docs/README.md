@@ -9,6 +9,8 @@ Shared ground for everyone working on Gentle Desktop: what we are building, why,
 3. Go deep on [architecture](03-architecture/), the [RPC contract](04-rpc-contract.md) and the [capability inventory](05-capability-inventory.md).
 4. Then [UX](06-ux/), [proposals](07-proposals/), [team](08-team.md) and the [roadmap](09-roadmap.md).
 
+**IDs across documents.** IDs collide between pages (inventory A1–A12 and U1–U8, audit A1–A19, UX U1–U12). Inside its home page an ID is written bare; anywhere else it carries a qualifier: `inventory A5` ([capability inventory](05-capability-inventory.md)), `audit A5` ([audit](03-architecture/audit.md)), `UX U3` ([UX principles](06-ux/principles.md)), `design D3` ([design system](06-ux/design-system.md)), `gap G1` ([RPC contract](04-rpc-contract.md#gaps-the-desktop-needs)), `vision P2` and `vision Q1` ([vision](00-vision.md)), `ADR 0007` ([ADRs](03-architecture/adr/)), `SCR-03` ([screens](06-ux/screens.md)), `governance D7` ([team](08-team.md)), `QW-01` ([roadmap](09-roadmap.md)) and `M2 scope D2` (the maintainer's `odd/tasks/desktop-m2-helpers.md`). Watch the pairs that share a letter: `inventory Q6` (a desktop search) vs `vision Q1`, and `milestone M3` (a desktop milestone) vs `inventory M3`. A qualifier covers the IDs listed after it (`audit A3, A11`). A page may declare a bare form in its own legend, as the roadmap does for milestones M1–M6.
+
 ## Documents and status
 
 | Document | Purpose | Status |
@@ -23,8 +25,8 @@ Shared ground for everyone working on Gentle Desktop: what we are building, why,
 | [05-capability-inventory.md](05-capability-inventory.md) | Every gentle-shell capability and its desktop surface | draft |
 | [06-ux/](06-ux/) | Principles, screens and design system | draft |
 | [07-proposals/](07-proposals/) | Community proposals beyond parity | draft |
-| [08-team.md](08-team.md) | Areas of responsibility and governance | draft (community proposal) |
-| [09-roadmap.md](09-roadmap.md) | Milestones derived from the corpus | draft (community proposal) |
+| [08-team.md](08-team.md) | Areas of responsibility and governance | draft (community proposal, awaiting group and maintainer review) |
+| [09-roadmap.md](09-roadmap.md) | Milestones derived from the corpus | draft (community proposal, awaiting maintainer validation) |
 
 Status values: `skeleton` → `draft` → `in review` → `validated`.
 
