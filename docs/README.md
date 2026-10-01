@@ -24,7 +24,7 @@ Shared ground for everyone working on Gentle Desktop: what we are building, why,
 | [06-ux/](06-ux/) | Principles, screens and design system | draft |
 | [07-proposals/](07-proposals/) | Community proposals beyond parity | draft |
 | [08-team.md](08-team.md) | Areas of responsibility and governance | draft (community proposal) |
-| [09-roadmap.md](09-roadmap.md) | Milestones derived from the corpus | skeleton |
+| [09-roadmap.md](09-roadmap.md) | Milestones derived from the corpus | draft (community proposal) |
 
 Status values: `skeleton` → `draft` → `in review` → `validated`.
 
