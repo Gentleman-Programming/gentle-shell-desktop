@@ -13,16 +13,16 @@ Shared ground for everyone working on Gentle Desktop: what we are building, why,
 
 | Document | Purpose | Status |
 |---|---|---|
-| [00-vision.md](00-vision.md) | Product vision and philosophy (validated by the maintainer) | skeleton |
-| [01-glossary.md](01-glossary.md) | Shared vocabulary | skeleton |
-| [02-ecosystem.md](02-ecosystem.md) | Pieces, owners and how they relate to the desktop | skeleton |
+| [00-vision.md](00-vision.md) | Product vision and philosophy (to be validated by the maintainer) | draft (awaiting maintainer validation) |
+| [01-glossary.md](01-glossary.md) | Shared vocabulary | draft |
+| [02-ecosystem.md](02-ecosystem.md) | Pieces, owners and how they relate to the desktop | draft |
 | [03-architecture/current.md](03-architecture/current.md) | Architecture as it is today | draft |
 | [03-architecture/audit.md](03-architecture/audit.md) | Findings, risks and recommendations | draft |
 | [03-architecture/adr/](03-architecture/adr/) | Architecture decision records | draft |
 | [04-rpc-contract.md](04-rpc-contract.md) | The desktop ↔ gentle-shell contract and its gaps | draft |
 | [05-capability-inventory.md](05-capability-inventory.md) | Every gentle-shell capability and its desktop surface | draft |
-| [06-ux/](06-ux/) | Principles, screens and design system | skeleton |
-| [07-proposals/](07-proposals/) | Community proposals beyond parity | skeleton |
+| [06-ux/](06-ux/) | Principles, screens and design system | draft |
+| [07-proposals/](07-proposals/) | Community proposals beyond parity | draft |
 | [08-team.md](08-team.md) | Areas of responsibility and governance | skeleton |
 | [09-roadmap.md](09-roadmap.md) | Milestones derived from the corpus | skeleton |
 
