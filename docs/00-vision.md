@@ -1,21 +1,139 @@
 # Vision
 
-> Status: skeleton. This document reflects the maintainer's vision and is validated by the maintainer.
+> Status: draft (awaiting maintainer validation).
+
+> **Community draft.** The community wrote this page from the maintainer's public statements, his repository documents and his concept mockup. Nothing here is decided until the maintainer validates it. Each statement carries a provenance tag, so the maintainer can accept, correct or reject it line by line.
+
+**In one paragraph.** Gentle Desktop is a desktop chat window over pi, run through the `gentle-shell` launcher, which "runs pi with Gentle Shell loaded" **[maintainer]** (`gentle-shell-desktop@5ab4a00:README.md:19`). Its planned scope is "a plain-chat window over pi with per-chat helpers, ODD progress, providers and extensions"; today only M1 (chat core) and M2 (per-chat helpers) are done **[maintainer]** (`gentle-shell-desktop@5ab4a00:README.md:3`, `:62-64`). It is for people who want to get work done in a chat window instead of a terminal **[maintainer]** (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:11`). The community reads its purpose as carrying the gentle-shell experience to the desktop, without becoming another generic agent chat **[community]** (Discord, memoTux, 2026-09-30; context brief §2, Matrak).
+
+## How to read this page
+
+| Tag | Source | Weight |
+|---|---|---|
+| **[maintainer]** | Alan Buscaglia's Discord messages, the maintainer-authored desktop repo documents (`README.md`, `odd/tasks/desktop-m1-*.md`, `odd/tasks/desktop-m2-*.md`), and his concept mockup | Intent. The mockup is **intent, not spec**: its example data never becomes a requirement. |
+| **[gentle-shell]** | gentle-shell's own README and docs at `gentle-shell@1162ce9` | What the product the desktop sits on says about itself. |
+| **[community]** | Framing from community members (Matrak's framing in the context brief §2; Discord messages from members other than the maintainer) | Proposed for maintainer validation. Not decided. |
+| **[open question]** | Raised, not answered | Needs a maintainer decision. |
+
+**Citation keys.** `gentle-shell-desktop@5ab4a00:` is the desktop repo `main`. `gentle-shell@1162ce9:` is gentle-shell (npm package `gentle-pi` 3.7.0). `gs-mockup.html:<line>` is the saved DOM of the concept mockup at https://claude.ai/artifact/CCpKaRTkrnDrWoErY27KEL. Discord dates are converted from the thread's `d/m/yy` format.
+
+**The maintainer pointed to the mockup when asked for his vision.** When a member asked him for "un vaciado de tus ideas, objetivos y límites" (a dump of your ideas, goals and limits; Discord, memoTux, 2026-09-26), he replied "No necesitan jejeje" (you don't need it), linked the mockup, wrote "En un rato lo pongo público el repo" (I will make the repo public shortly), then "Pero sería esto" (but it would be this) **[maintainer]** (Discord, Alan Buscaglia, 2026-09-26). `Inference:` "esto" (this) most likely refers to the mockup he had just linked; given the message order, it may also include the repository. He also called the current app "muy en pañales pero anda al menos" (very early-stage, but at least it works) **[maintainer]** (Discord, Alan Buscaglia, 2026-09-26).
 
 ## Philosophy of gentle-shell
-<!-- Total control, in the friendliest possible way. A harness and workflow that guides and teaches, whatever the task or domain, while staying controllable and customizable. -->
+
+**In gentle-shell's own words** **[gentle-shell]**:
+
+- "Your coding agent for controlled development in the workspace you lead." (`gentle-shell@1162ce9:README.md:9`)
+- "Your terminal can run an agent. Your workspace should help you lead it." (`gentle-shell@1162ce9:README.md:33`)
+- "One workspace. A coding agent you direct. A workflow you can inspect." (`gentle-shell@1162ce9:README.md:35`)
+- gentle-shell turns a pi session into a workspace "so you lead the work instead of chasing it." (`gentle-shell@1162ce9:README.md:97`)
+- "Say what you need once, then keep moving. el Gentleman helps turn intent into clear scope, a sensible next step, and evidence people can review — without making every task feel like a process meeting." (`gentle-shell@1162ce9:README.md:107`)
+- The el Gentleman persona "Makes Pi behave like a senior architect and teacher, not a generic chatbot." (`gentle-shell@1162ce9:docs/readme-reference.md:103`)
+- ODD is "the everyday path": the agent "explores before changing anything, clarifies only real decisions, and keeps small understood work small." (`gentle-shell@1162ce9:README.md:127`)
+- Native review: "You still decide what happens next in your repository." (`gentle-shell@1162ce9:README.md:137`)
+- Package description: "Turn Pi into el Gentleman: an ODD development harness with focused subagents, configured TDD evidence, native review, and skill discovery." (`gentle-shell@1162ce9:package.json:4`)
+- GitHub repository description: "Gentle Shell is a Pi-native coding-agent harness for controlled development with Organic Driven Development, optional SDD/OpenSpec, subagents, TDD evidence, review guardrails, skills, and memory integrations." (`gh repo view Gentleman-Programming/gentle-shell --json description`, fetched 2026-10-01; repository metadata, not a file at `1162ce9`)
+
+**The community's summary** **[community]** (context brief §2, Matrak): gentle-shell aims at **total control in the friendliest possible way**. It is a harness and a workflow that **guides and teaches**, whatever the task or domain, while staying controllable and customizable.
+
+`Inference:` the two readings agree on control ("you lead", "you direct", "you still decide") and on teaching (the persona as "teacher"). "Friendliest possible way" and "whatever the task or domain" are the community's words; gentle-shell's own docs describe a *coding* agent.
 
 ## What Gentle Desktop is
 
+- **A plain-chat window over pi** with per-chat helpers, ODD progress, providers and extensions, as planned scope; see "Where it stands" below for what exists today **[maintainer]** (`gentle-shell-desktop@5ab4a00:README.md:3`).
+- **A client of your gentle-shell / pi setup.** Replying to a tester on Windows, the maintainer wrote: "nice! tenes que apuntar pi a los pr que dice en la docu / y te anda / es que eso lo que hace es hacer sync con pi / entonces de porsi tenes que tener pi todo con gentle-ai configurado / pero la version de los pr" (you have to point pi to the PRs the docs mention and it works; what it does is sync with pi, so you need pi fully configured with gentle-ai, but the PR version) **[maintainer]** (Discord, Alan Buscaglia, 2026-09-26 22:31). The pointer to "the PRs" was a setup instruction for testers at that date; the lasting point is that the app syncs with an existing pi set up with gentle-ai. Today it requires the `gentle-shell` launcher from gentle-pi 3.7.0 or newer **[maintainer]** (`gentle-shell-desktop@5ab4a00:README.md:12`).
+- **Built with Electron + React**, "chosen by the maintainer on 2026-09-21" **[maintainer]** (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:18`). See [ADR 0001](03-architecture/adr/0001-electron-react-typescript-stack.md).
+- **The concept mockup shows four screens:** Chats, Providers, Extensions and First run **[maintainer]** (`gs-mockup.html:462`). Within them it shows:
+  - several chats with a status each, such as "working" and "needs you" (`gs-mockup.html:481`, `:486`), and notifications: one about a helper of the open chat (`gs-mockup.html:828`) and one about another chat that needs a decision (`:833`);
+  - helpers under the message that started them, and a Helpers tab with a narrated timeline and a Stop button (`gs-mockup.html:546-549`, `:573-603`);
+  - question cards answered inline, including "Let me explain" (`gs-mockup.html:554-558`);
+  - an ODD panel with the steps Explore, Plan, Build, Verify, Deliver, tasks with commit and test evidence, and checks (`gs-mockup.html:617-644`);
+  - a status bar with folder, branch, model, effort, profile, context, cost and `ODD · RDD on` (`gs-mockup.html:814-822`);
+  - providers (subscriptions, API keys, local models) and a default model for new chats (`gs-mockup.html:694-731`);
+  - extensions managed in the app, with global and per-project scope (`gs-mockup.html:747-806`);
+  - a first-run choice between "Use my pi setup" and "Keep it separate" (`gs-mockup.html:668`, `:677`).
+- **Where it stands:** M1 (chat core) and M2 (per-chat helpers) are done; the ODD panel (M3), providers and extensions screens (M4), signing (M5) and notifications and status bar (M6) are not **[maintainer]** (`gentle-shell-desktop@5ab4a00:README.md:3`, `:62-64`; `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:22`). The [capability inventory](05-capability-inventory.md#coverage-summary) counts how much of pi and gentle-shell has a desktop surface today.
+
 ## What Gentle Desktop is not
 
+- **Not a terminal.** "Gentle Shell exists only inside pi's TUI. People who only want to get work done need a chat window, not a terminal." **[maintainer]** (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:11`)
+- **Not a tool-output viewer by default.** M1 scoped the chat as "No tool output, no thinking shown." **[maintainer]** (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:7`). The mockup keeps tool details behind an unchecked "Show tool details" toggle **[maintainer]** (`gs-mockup.html:600`; `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m2-helpers.md:18`).
+- **Not a global helper dashboard.** "Never a global list: the parent-child relation stays direct (maintainer decision, 2026-09-21)." **[maintainer]** (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m2-helpers.md:7`; [ADR 0011](03-architecture/adr/0011-helpers-scoped-per-chat.md))
+- **Not something that edits your pi install.** The launcher "never edits your vanilla pi setup" **[maintainer]** (`gentle-shell-desktop@5ab4a00:README.md:19`). The mockup says "Your pi settings are never edited", and lists "Your vanilla pi" as "untouched" **[maintainer]** (`gs-mockup.html:672`, `:738`).
+- **Not another generic agent chat** like Codex desktop or t3 **[community]** (context brief §2, Matrak; Discord, gc, 2026-09-29, asked how to avoid "una  app mas tipo  codex desktop o t3"). The maintainer has not said this in the thread.
+- **Not, for now, a remote or mobile client.** Community members proposed multiplatform, mobile and remote-agent ideas (gentle-mesh) **[community]** (Discord, memoTux, 2026-09-26; Rafael The Hutt, 2026-09-27). The maintainer did not respond to them, and the corpus keeps them [outside scope](01-glossary.md#community-terms-outside-scope) **[open question]**.
+
 ## Product principles
-<!-- Parity with the CLI experience; delegate instead of babysit; progressive disclosure of technical detail; never break the user's environment; ... -->
+
+Each principle cites its sources. A principle tagged only **[community]** is **proposed for maintainer validation**.
+
+| # | Principle | Provenance | Sources |
+|---|---|---|---|
+| P1 | **Bring gentle-shell's harness, not a bare chat.** The app surfaces what gentle-shell adds: helpers, ODD progress, review state, providers, extensions. | **[maintainer]** for the feature list; **[community]** for the framing "carry the gentle-shell experience to the desktop" | `gentle-shell-desktop@5ab4a00:README.md:3`; `gs-mockup.html:617-644`, `:822`; Discord, memoTux, 2026-09-30 ("la idea de Alan es traer la experiencia de gentle-shell (terminal) a desktop", Alan's idea is to bring the gentle-shell terminal experience to the desktop); context brief §2 |
+| P2 | **Plain language first; technical detail at the edges.** The app speaks of "Gentle", "Helpers" and "needs you". The main chat shows no tool output and no thinking; a helper's thread collapses tool calls behind a "Show tool details" toggle and shows the helper's plan as a "Plan" row. | **[maintainer]** (mockup intent) for the wording; **[maintainer]** for the M1 and M2 scope | `gs-mockup.html:486`, `:522`, `:589`, `:600`; `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:7`; `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m2-helpers.md:12`, `:18`; `gentle-shell-desktop@5ab4a00:README.md:82` |
+| P3 | **Never break the user's environment.** The user's pi setup is reused or left alone, never edited. | **[maintainer]**, **[gentle-shell]** | `gentle-shell-desktop@5ab4a00:README.md:19`, `:25`; `gs-mockup.html:672`, `:680`, `:738`; `gentle-shell@1162ce9:README.md:236` ("without installing it into your pi agent or editing its `settings.json`") |
+| P4 | **Helpers belong to the chat that started them.** | **[maintainer]** | `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m2-helpers.md:7`; `gentle-shell-desktop@5ab4a00:README.md:86-87` |
+| P5 | **Delegate instead of babysit; ask for attention only when needed.** The concept mockup shows one chat "working" while another "needs you", and a "Gentle needs a decision" notification. | **[maintainer]** (mockup intent), **[gentle-shell]** | `gs-mockup.html:481`, `:486`, `:543` ("I handed two pieces to helpers so this goes faster."), `:833`; `gentle-shell@1162ce9:README.md:157` ("Delegating work should not mean losing it.") |
+| P6 | **The user stays in control.** The agent can be stopped, questions are answered by the user, and the user decides what ships. | **[gentle-shell]**, **[maintainer]** (mockup intent) | `gentle-shell@1162ce9:README.md:9`, `:137`; `gs-mockup.html:558` ("Let me explain"), `:568` ("Esc to stop the agent"), `:603` |
+| P7 | **Make the workflow and its evidence visible.** Progress is shown as steps, tasks with commits and tests, and checks. | **[maintainer]** (mockup intent), **[gentle-shell]** | `gs-mockup.html:617-644`; `gentle-shell@1162ce9:README.md:35` ("A workflow you can inspect."), `:127` |
+| P8 | **Manage the setup in the app.** Sign-ins, models and packages are handled in the window, not only in the terminal. | **[maintainer]** (mockup intent and planned M4) | `gs-mockup.html:694-806`; `gentle-shell-desktop@5ab4a00:README.md:63` |
+| P9 | **Guide and teach.** The app helps the user learn while working, as gentle-shell's persona does. | **[community]**, supported by **[gentle-shell]** for the persona | context brief §2; `gentle-shell@1162ce9:docs/readme-reference.md:103` ("senior architect and teacher") |
+| P10 | **Go further where a GUI beats a terminal.** Examples proposed: an agent/subagent graph view, interacting with a running node, asking a finished agent why it did something. | **[community]** | context brief §2; ideas belong in [07-proposals](07-proposals/README.md) until accepted |
 
 ## Who it is for
 
+- **People who want to get work done without a terminal** **[maintainer]** (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:11`).
+- **Existing pi users**, who can reuse their sign-ins, models and chats; the mockup marks "Use my pi setup" as recommended **[maintainer]** (`gentle-shell-desktop@5ab4a00:README.md:25`; `gs-mockup.html:668-674`).
+- **People without pi, or who want a separate space** **[maintainer]** (`gentle-shell-desktop@5ab4a00:README.md:26`; `gs-mockup.html:677-687`).
+- **Teams sharing project settings?** Not established as an audience. The only source is example data on the mockup's Extensions screen, ".pi/settings.json (shared with your team)" (`gs-mockup.html:806`), and the mockup states "Content is example data." (`gs-mockup.html:462`) **[open question]**.
+- **How accessible versus how complete** is unresolved. DanielOtero31 recalled the maintainer saying on a stream the day before that "la idea es que fuera más accesible pero que no tendrá tantas opciones como el gentle-pi" (the idea was for it to be more accessible but without as many options as gentle-pi), and asked whether that was right or whether it would be full-featured. This is second-hand evidence of the maintainer's leaning; he did not answer in the thread **[open question]** (Discord, DanielOtero31, 2026-09-26).
+
 ## What sets it apart
-<!-- Versus Codex desktop, t3 and other agent chat apps. -->
+
+The sources say little about other apps. This section stays within what they say.
+
+- **Codex desktop and t3.** A community member asked what would keep Gentle Desktop from being "una  app mas tipo  codex desktop o t3" (one more app like Codex desktop or t3) **[community]** (Discord, gc, 2026-09-29; context brief §2). One member said he was waiting for "t3 code con pi" **[community]** (Discord, vudumstead, 2026-09-27). No source describes how those apps work, so this page does not compare features with them.
+- **What the sources do name as distinctive** (`Inference:` drawn from the principles above, not from a comparison):
+  - The concept mockup surfaces gentle-shell's harness in the window: ODD (`gs-mockup.html:617-644`, `:822`), helpers (`:522`, `:545-549`), review state (`:643`, `:822`) and the active profile (`:819`) **[maintainer]** (mockup intent). gentle-shell names ODD, subagents and native review in its package description (`gentle-shell@1162ce9:package.json:4`) and profiles in its README (`gentle-shell@1162ce9:README.md:167`) **[gentle-shell]**.
+  - Helpers stay tied to their chat **[maintainer]** (P4).
+  - It sits on the user's own pi setup without editing it **[maintainer]**, **[gentle-shell]** (P3).
+
+## Open questions for the maintainer
+
+Decisions the corpus found unrecorded that change what the product is. The architecture-level detail is in [ADR "Undecided / not recorded"](03-architecture/adr/README.md#undecided--not-recorded) and the [audit](03-architecture/audit.md).
+
+| # | Question | Why it matters | Evidence |
+|---|---|---|---|
+| Q1 | Accessible with fewer options, or full-featured like gentle-pi? | Sets the scope of every screen and the inventory's targets. | Discord, DanielOtero31, 2026-09-26: second-hand report of the maintainer's stream ("más accesible pero que no tendrá tantas opciones como el gentle-pi"); unanswered in the thread |
+| Q2 | Does the app ship its own runtime, or require an installed `gentle-shell`? | The mockup says "the app runs its own copy of pi, so nothing else has to be installed" (`gs-mockup.html:687`); the README requires a global install (`gentle-shell-desktop@5ab4a00:README.md:12-17`); the maintainer told a tester the app syncs with pi, so pi must be set up with gentle-ai (Discord, Alan Buscaglia, 2026-09-26 22:31). | [ADR not recorded: bundled vs external runtime](03-architecture/adr/README.md#undecided--not-recorded) |
+| Q3 | Several chats at once: one child process per chat, or a shared host? | The mockup shows concurrent chats; the code holds one session. | [Audit A3](03-architecture/audit.md#a3-single-session-host-with-positional-message-ids); [audit: risks for scaling the UI](03-architecture/audit.md#risks-for-scaling-the-ui) |
+| Q4 | Should the app reach pi only through gentle-shell RPC, or also import pi in-process? | Decides version coupling and how providers and extensions screens are built. | [ADR not recorded: RPC-only vs mixed](03-architecture/adr/README.md#undecided--not-recorded); [audit A1](03-architecture/audit.md#a1-two-data-paths-to-pi-and-a-global-pi_coding_agent_dir-mutation) |
+| Q5 | A prompt sent while the agent works: queue, steer or decline? | Shapes how the user directs a running agent (P6). | [Audit A7](03-architecture/audit.md#a7-prompts-declined-while-working-despite-steer-and-follow-up) |
+| Q6 | What versions of gentle-shell and pi does the app support, and what happens below the minimum? | Users on older setups get silent failures today. | [Audit A8](03-architecture/audit.md#a8-no-version-handshake) |
+| Q7 | Should the first-run home choice be shared with gentle-shell's own setting? | Two saved choices can disagree, against P3. | [Audit A19](03-architecture/audit.md#a19-two-persisted-home-choices) |
+| Q8 | How do profiles appear in the app? | Profiles are first-class in gentle-shell (`gentle-shell@1162ce9:README.md:167`); the mockup shows them only in the status bar and the default model (`gs-mockup.html:731`, `:819`). | context brief §3 |
+| Q9 | Are "beyond the terminal" ideas (P10) in scope, and is mobile or remote access in scope? | Decides whether P9 and P10 become principles. | context brief §2; Discord, Rafael The Hutt, 2026-09-27 |
+| Q10 | What is the product called? | The corpus says "Gentle Desktop", the Discord thread's title. The maintainer's documents say "Gentle Shell Desktop" and "the Gentle Shell desktop app" (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:1`; `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m2-helpers.md:1`; `gentle-shell-desktop@5ab4a00:README.md:3`). The mockup window is labelled "Gentle Shell desktop" (`gs-mockup.html:465`), and the mockup and the built app show "gentle shell" (`gs-mockup.html:468`, `:654`; `gentle-shell-desktop@5ab4a00:README.md:55`). The repo is `gentle-shell-desktop`. | — |
+| Q11 | Do you accept P1 to P10 as written? | This page is a draft until validated. | — |
 
 ## Sources
-<!-- Maintainer statements, streams, concept mockup, README. -->
+
+**Maintainer**
+- Discord thread "Gentle Desktop", Alan Buscaglia, 2026-09-26 (mockup link, repo link, setup reply, "muy en pañales") and 2026-09-27 (contribution process). Saved copy: `~/bitacoras/gs-desktop/discord-thread.md` (not in the repo).
+- Concept mockup: https://claude.ai/artifact/CCpKaRTkrnDrWoErY27KEL; saved DOM `gs-mockup.html`, product markup lines 459-909.
+- `gentle-shell-desktop@5ab4a00:README.md`
+- `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md`
+- `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m2-helpers.md`
+
+**gentle-shell**
+- `gentle-shell@1162ce9:README.md`
+- `gentle-shell@1162ce9:docs/readme-reference.md`
+- `gentle-shell@1162ce9:package.json`
+- GitHub repository description of `Gentleman-Programming/gentle-shell`, via `gh repo view --json description` on 2026-10-01.
+
+**Community**
+- Context brief §2 and §3 (Matrak), the corpus working brief (not in the repo).
+- Discord thread, members other than the maintainer: memoTux (2026-09-26, 2026-09-30), DanielOtero31 (2026-09-26), vudumstead (2026-09-27), Rafael The Hutt (2026-09-27), gc (2026-09-29).
+
+**Corpus**
+- [Capability inventory](05-capability-inventory.md), [architecture audit](03-architecture/audit.md), [ADR index](03-architecture/adr/README.md).
