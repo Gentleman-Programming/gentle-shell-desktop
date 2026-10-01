@@ -31,7 +31,7 @@ English artifacts; the concept mockup is intent, not spec; maintainer vision (`0
 - [x] C5 Capability inventory (`05-capability-inventory.md`). Route: delegated in two sequential writers (C5a pi core, C5b gentle-shell + gentle-ai) → independent fact-check (PASS-WITH-FIXES: 1 wrong, 2 missing, 11 imprecise) → one bounded correction (14/14 applied, #12 partially after re-verification).
 - [x] C6 Vision draft (`00-vision.md`) for maintainer validation, provenance-tagged. Route: delegated writer → independent fact-check (PASS-WITH-FIXES: 1 wrong, 16 defects) → one bounded correction (17/17 applied). Awaiting human and maintainer review.
 - [x] C7 UX (`06-ux/`: 12 principles, 19 screens, design system) and proposals (`07-proposals/` 0001–0003, status proposed). Route: delegated writer → independent fact-check (PASS-WITH-FIXES: 1 wrong (ID collisions), 13 defects) → one bounded correction (13/13 applied; corpus ID convention adopted; inventory-to-screen coverage diff 0 missing).
-- [ ] C8 Team areas and governance (`08-team.md`). Route: inline draft + human review.
+- [x] C8 Team areas and governance (`08-team.md`), community draft. Route: delegated writer → independent fact-check (PASS-WITH-FIXES: 1 wrong, 2 overstated, 14 minor) → one bounded correction (17/17 applied). Awaiting group and maintainer review; human decides whether to keep the "Interest expressed in the thread" table.
 - [ ] C9 Roadmap (`09-roadmap.md`) derived from C3–C5. Route: delegated writer.
 - [ ] C10 `CONTRIBUTING.md`. Route: inline.
 
@@ -49,3 +49,4 @@ English artifacts; the concept mockup is intent, not spec; maintainer vision (`0
 - C3: `docs/03-architecture/{current,audit}.md` + `adr/0001-0012` (19 audit findings; 6 decisions listed as not recorded). Verifier: ~115 items, ~130 citations re-opened. Parent spot-checks: retention merge `chatReducer.ts:225-240`, esbuild via `@earendil-works/chord@0.85.1` (`pnpm-lock.yaml:3196-3198,3237-3239`), A14 citation fixed to `renderMarkdown.ts:58-72`.
 - C2 + C6: `docs/00-vision.md`, `01-glossary.md`, `02-ecosystem.md`. Verifiers re-opened 60+ and all quotes/citations of 00. Parent spot-check: `gh repo view Gentleman-Programming/gentle-shell --json description` matches the quote in `00-vision.md:35` verbatim.
 - C7: `docs/06-ux/*`, `docs/07-proposals/*`. Verifier re-opened 70+ citations. Parent spot-check: `src/renderer/shared/theme/theme.test.ts:2-3` imports only the JSON and `theme.ts` (tokens.css untested), status lines present in all 7 files. Corpus ID convention recorded (qualified IDs across documents).
+- C8: `docs/08-team.md` (7 areas, owners TBD, headcount ranges as community proposal, governance D1–D12 tagged). `has_discussions=false` on 2026-10-01 (gh api). Counts recounted mechanically by the corrector.
