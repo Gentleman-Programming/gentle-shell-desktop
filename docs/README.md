@@ -19,7 +19,7 @@ Shared ground for everyone working on Gentle Desktop: what we are building, why,
 | [03-architecture/current.md](03-architecture/current.md) | Architecture as it is today | skeleton |
 | [03-architecture/audit.md](03-architecture/audit.md) | Findings, risks and recommendations | skeleton |
 | [03-architecture/adr/](03-architecture/adr/) | Architecture decision records | skeleton |
-| [04-rpc-contract.md](04-rpc-contract.md) | The desktop ↔ gentle-shell contract and its gaps | skeleton |
+| [04-rpc-contract.md](04-rpc-contract.md) | The desktop ↔ gentle-shell contract and its gaps | draft |
 | [05-capability-inventory.md](05-capability-inventory.md) | Every gentle-shell capability and its desktop surface | skeleton |
 | [06-ux/](06-ux/) | Principles, screens and design system | skeleton |
 | [07-proposals/](07-proposals/) | Community proposals beyond parity | skeleton |

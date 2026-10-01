@@ -27,7 +27,7 @@ English artifacts; the concept mockup is intent, not spec; maintainer vision (`0
 - [x] C1 Corpus skeleton (index + section headings). Route: inline (mechanical, headings only). Checks: structural readback.
 - [ ] C2 Glossary (`01-glossary.md`) and ecosystem map (`02-ecosystem.md`). Route: delegated (needs reading across the pi / gentle-pi / gentle-shell repos).
 - [ ] C3 Architecture as-is (`03-architecture/current.md`) and audit (`03-architecture/audit.md`). Route: delegated explorer + writer.
-- [ ] C4 RPC contract (`04-rpc-contract.md`). Route: delegated.
+- [x] C4 RPC contract (`04-rpc-contract.md`). Route: delegated writer → independent fact-check (PASS-WITH-FIXES: 1 wrong, 4 missing, 8 imprecise) → one bounded correction (13/13 applied after re-verification).
 - [ ] C5 Capability inventory (`05-capability-inventory.md`). Route: delegated; largest document.
 - [ ] C6 Vision draft (`00-vision.md`) for maintainer validation. Route: inline draft + human review.
 - [ ] C7 UX (`06-ux/`) and proposals (`07-proposals/`). Route: delegated writer.
@@ -43,4 +43,5 @@ English artifacts; the concept mockup is intent, not spec; maintainer vision (`0
 
 ## Progress and evidence
 
-- C1: skeleton created on `docs/corpus`.
+- C1: skeleton created on `docs/corpus`, commit `7f4d0f7` (17 files). Check: structural readback of `docs/` tree. RDD assess: `passive`, review not due.
+- C4: `docs/04-rpc-contract.md` (322 lines, ~211 citations). Writer spot-check 5/5; independent verifier checked ~131 rows / ~115 citations → PASS-WITH-FIXES; correction applied 13/13 after re-verification; parent spot-check `pi@d86654a:agent-session.ts:2401-2404` and `helpersActivity.ts:21,139-141` confirmed. Side findings (desktop bugs, out of corpus scope): helper status `completed`/`timed_out` vs `done`, and missing `callId` on tool items.
