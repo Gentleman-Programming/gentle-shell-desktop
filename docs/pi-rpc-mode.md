@@ -4,10 +4,11 @@ A project-agnostic reference for pi's `--mode rpc` JSON-line protocol: what it
 is, how to launch it, which records cross the wire, and which client mistakes
 break integrations.
 
-This page describes **pi**, not this app. The two application-specific
+This page describes **pi**, not this app. The application-specific
 projections of the same protocol live in
-[`architecture.md`](./architecture.md) (static structure) and
-[`system-design.md`](./system-design.md) (dynamic behaviour). Read this first
+[`architecture.md`](./architecture.md) (static structure and implemented
+behaviour) and [`system-design.md`](./system-design.md)
+(target-state integration design). Read this first
 when the question is "what does pi actually support?", and those when the
 question is "what does *this app* use?".
 

@@ -251,4 +251,5 @@ Resolve these questions in product design before they become accidental behavior
 - [`pi-rpc-mode.md`](./pi-rpc-mode.md) remains authoritative for pi RPC protocol details and version-specific behavior.
 - [`electron-system-design.md`](./electron-system-design.md) remains the project-agnostic reference for Electron process roles, IPC, security, debugging, and testing.
 - This document is the integration decision: one main-owned supervisor and one RPC child per active app conversation, with a narrow preload API and application-specific projections of the protocol.
-- [`architecture.md`](./architecture.md) and [`system-design.md`](./system-design.md), if maintained for the application, should link here rather than duplicate the full generic guidance.
+- [`architecture.md`](./architecture.md), when maintained for the application,
+  should link here rather than duplicate the full generic guidance.

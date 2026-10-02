@@ -1,8 +1,12 @@
 # Architecture
 
 This document describes the **static structure** of `gentle-shell-desktop`: what
-the parts are, which layers exist, and where the boundaries sit. Runtime flows,
-protocols and lifecycle behaviour live in [`system-design.md`](./system-design.md).
+the parts are, which layers exist, and where the boundaries sit. It is the
+record of what is implemented today. Runtime flows, protocols, lifecycle
+behaviour, and the consolidated target-state design live in
+[`system-design.md`](./system-design.md), whose target-state
+notes mark exactly where implemented behaviour generalizes (multi-session
+conversation registry, Providers/Extensions screens, durable entry cursor).
 
 ## 1. What the application is
 
