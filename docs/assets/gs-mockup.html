@@ -1,0 +1,911 @@
+<html><head><!-- Snapshot of the rendered DOM of the maintainer's concept mockup (https://claude.ai/artifact/CCpKaRTkrnDrWoErY27KEL), saved 2026-10-01. The claude.ai frame-runtime script that stood here was removed; every other line is unchanged, so line numbers match the corpus citations. See README.md in this folder. --><meta charset="utf8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Gentle Shell Desktop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+  :root {
+    --bg: #060407;
+    --panel: #100a0f;
+    --raised: #180e15;
+    --line: #2a1720;
+    --line-strong: #563040;
+    --text: #f6eff3;
+    --text-2: #d2cbd0;
+    --muted: #a78e9b;
+    --gold: #f095c8;
+    --blue: #a9c7ee;
+    --green: #b4e7c7;
+    --amber: #f2b86d;
+    --red: #ff718f;
+    --purple: #c96aa2;
+    --heading: #e0c27a;
+    --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+    --r: 10px;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+    padding-inline: 16px;
+    padding-block: 16px;
+  }
+  .gs-frame {
+    max-width: 1320px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .gs-note {
+    color: var(--muted);
+    font-size: 12px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+  .gs-note strong { color: var(--text-2); font-weight: 500; }
+
+  /* Window */
+  .gs-window {
+    background: var(--bg);
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: min(820px, calc(100vh - 80px));
+    min-height: 560px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+  }
+  .gs-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  .gs-lights { display: flex; gap: 7px; }
+  .gs-lights i { width: 11px; height: 11px; border-radius: 50%; background: var(--line-strong); display: block; }
+  .gs-brand {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: .01em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .gs-brand .gs-flower { color: var(--gold); }
+  .gs-titlebar .gs-spacer { flex: 1; }
+  .gs-bell {
+    position: relative;
+    color: var(--text-2);
+    font-size: 13px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .gs-bell .gs-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 0 3px rgba(240,149,200,.18);
+  }
+
+  .gs-body {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr) 300px;
+    min-height: 0;
+  }
+  .gs-col { min-height: 0; overflow: auto; }
+
+  /* Sidebar */
+  .gs-side {
+    border-right: 1px solid var(--line);
+    background: var(--panel);
+    padding: 14px 10px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .gs-new-chat {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    border: 1px solid var(--line-strong);
+    background: var(--raised);
+    color: var(--text);
+    font: 500 13px var(--font-body);
+    padding: 9px 12px;
+    border-radius: var(--r);
+    cursor: pointer;
+  }
+  .gs-new-chat:hover { border-color: var(--blue); }
+  .gs-new-chat:focus-visible, .gs-chat:focus-visible, button:focus-visible, textarea:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .gs-new-chat b { color: var(--blue); font-weight: 600; }
+  .gs-group-label {
+    font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); padding: 8px 8px 0;
+  }
+  .gs-chat {
+    display: grid; grid-template-columns: 1fr auto; gap: 4px 8px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: none; color: inherit; text-align: left; font: inherit;
+    width: 100%;
+  }
+  .gs-chat:hover { background: var(--raised); }
+  .gs-chat[aria-current="true"] { background: var(--raised); border-color: var(--line-strong); }
+  .gs-chat .gs-t { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gs-chat .gs-p { grid-column: 1 / -1; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gs-chat .gs-s { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .gs-chat .gs-s.gs-live { color: var(--green); }
+  .gs-chat .gs-s.gs-live::before { content: "●"; margin-right: 4px; font-size: 9px; }
+  .gs-chat .gs-s.gs-wait { color: var(--gold); }
+  .gs-side .gs-footer { margin-top: auto; padding: 8px; color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 8px; }
+  .gs-avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue)); }
+
+  /* Chat column */
+  .gs-main { display: grid; grid-template-rows: auto 1fr auto; min-height: 0; }
+  .gs-main-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px; border-bottom: 1px solid var(--line);
+  }
+  .gs-main-head h1 { font: 600 16px var(--font-display); margin: 0; }
+  .gs-pill {
+    font-size: 11px; padding: 3px 9px; border-radius: 999px;
+    border: 1px solid var(--line-strong); color: var(--text-2);
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .gs-pill.gs-working { color: var(--gold); border-color: rgba(240,149,200,.4); }
+  .gs-pill.gs-working i { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100%{opacity:.35} 50%{opacity:1} }
+  @media (prefers-reduced-motion: reduce) { .gs-pill.gs-working i { animation: none; } }
+
+  .gs-thread {
+    overflow: auto; padding: 22px 20px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .gs-msg { display: block; max-width: 62ch; width: fit-content; }
+  .gs-msg.gs-user { margin-left: auto; }
+  .gs-who { display: flex; }
+  .gs-bubble { display: block; }
+  
+  .gs-msg .gs-who {
+    font-size: 11px; color: var(--muted); margin-bottom: 4px; letter-spacing: .04em;
+    display: flex; gap: 8px; align-items: baseline;
+  }
+  .gs-msg.gs-user .gs-who { justify-content: flex-end; }
+  .gs-bubble {
+    padding: 11px 14px; border-radius: 12px; line-height: 1.55;
+  }
+  .gs-msg.gs-user .gs-bubble { background: var(--raised); border: 1px solid var(--line-strong); border-bottom-right-radius: 4px; }
+  .gs-msg.gs-agent .gs-bubble { background: var(--panel); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .gs-bubble p { margin: 0 0 8px; }
+  .gs-bubble p:last-child { margin: 0; }
+  .gs-bubble .gs-mark { color: var(--blue); }
+
+  /* Subagents attached under a message */
+  .gs-agents {
+    margin-top: 8px; margin-left: 14px;
+    border-left: 2px solid var(--line-strong);
+    padding-left: 12px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .gs-agents .gs-lbl { font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .gs-helper {
+    display: grid; grid-template-columns: 8px 1fr auto; gap: 10px; align-items: center;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px 10px; font-size: 13px;
+  }
+  .gs-helper .gs-st { width: 8px; height: 8px; border-radius: 50%; }
+  .gs-helper.gs-running .gs-st { background: var(--gold); box-shadow: 0 0 0 3px rgba(240,149,200,.15); }
+  .gs-helper.gs-done .gs-st { background: var(--green); }
+  .gs-helper.gs-waiting .gs-st { background: var(--blue); box-shadow: 0 0 0 3px rgba(169,199,238,.15); }
+  .gs-helper .gs-n { font-weight: 500; }
+  .gs-helper .gs-n small { color: var(--muted); font-weight: 400; margin-left: 6px; }
+  .gs-helper .gs-r { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .gs-helper.gs-done .gs-r { color: var(--green); }
+  .gs-helper.gs-waiting .gs-r { color: var(--blue); }
+
+  /* Question card (extension_ui_request → select) */
+  .gs-ask {
+    max-width: 62ch;
+    border: 1px solid rgba(169,199,238,.45); border-radius: 12px;
+    background: var(--panel); padding: 12px 14px;
+  }
+  .gs-ask .gs-q { font-weight: 500; margin-bottom: 8px; }
+  .gs-ask .gs-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .gs-ask button {
+    background: var(--raised); color: var(--text); border: 1px solid var(--line-strong);
+    padding: 7px 12px; border-radius: 8px; font: 500 13px var(--font-body); cursor: pointer;
+  }
+  .gs-ask button:hover { border-color: var(--blue); }
+  .gs-ask button.gs-primary { border-color: var(--blue); color: var(--blue); }
+
+  .gs-composer { padding: 12px 20px 14px; border-top: 1px solid var(--line); }
+  .gs-box {
+    display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end;
+    border: 1px solid var(--line-strong); border-radius: 12px; background: var(--panel); padding: 10px 10px 10px 14px;
+  }
+  .gs-box textarea {
+    resize: none; border: 0; background: transparent; color: var(--text);
+    font: 14px/1.5 var(--font-body); min-height: 24px; max-height: 120px; width: 100%;
+  }
+  .gs-box textarea::placeholder { color: var(--muted); }
+  .gs-send {
+    background: var(--blue); color: var(--bg); border: 0; border-radius: 8px;
+    font: 600 13px var(--font-body); padding: 8px 14px; cursor: pointer;
+  }
+  .gs-hint { color: var(--muted); font-size: 11px; margin-top: 6px; display: flex; gap: 14px; }
+
+  /* Right panel: ODD state */
+  .gs-odd {
+    border-left: 1px solid var(--line); background: var(--panel);
+    padding: 16px 16px; display: flex; flex-direction: column; gap: 16px;
+  }
+  .gs-odd h2 {
+    margin: 0; font: 600 12px var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+  }
+  .gs-feature { font: 600 15px var(--font-display); color: var(--text); }
+  .gs-feature small { display: block; color: var(--muted); font: 12px var(--font-body); margin-top: 2px; }
+
+  .gs-steps { display: flex; flex-direction: column; gap: 0; }
+  .gs-step {
+    display: grid; grid-template-columns: 18px 1fr auto; gap: 10px; align-items: center;
+    padding: 6px 0; position: relative;
+  }
+  .gs-step + .gs-step::before {
+    content: ""; position: absolute; left: 8px; top: -8px; height: 14px; width: 2px; background: var(--line-strong);
+  }
+  .gs-step .gs-k { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line-strong); display: grid; place-items: center; font-size: 10px; }
+  .gs-step.gs-done .gs-k { border-color: var(--green); background: var(--green); color: var(--bg); }
+  .gs-step.gs-now .gs-k { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(240,149,200,.15); }
+  .gs-step.gs-now .gs-k::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  .gs-step .gs-nm { font-weight: 500; }
+  .gs-step.gs-todo .gs-nm { color: var(--muted); font-weight: 400; }
+  .gs-step .gs-meta { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .gs-step.gs-now .gs-meta { color: var(--gold); }
+
+  .gs-tasks { display: flex; flex-direction: column; gap: 6px; }
+  .gs-task {
+    display: grid; grid-template-columns: 16px 1fr; gap: 10px; align-items: start;
+    padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg);
+    font-size: 13px;
+  }
+  .gs-task .gs-cb { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--line-strong); margin-top: 2px; display: grid; place-items: center; font-size: 10px; }
+  .gs-task.gs-done .gs-cb { background: var(--green); border-color: var(--green); color: var(--bg); }
+  .gs-task.gs-done .gs-tx { color: var(--text-2); text-decoration: line-through; text-decoration-color: var(--line-strong); }
+  .gs-task.gs-now { border-color: rgba(240,149,200,.45); }
+  .gs-task.gs-now .gs-cb { border-color: var(--gold); }
+  .gs-task.gs-now .gs-cb::after { content: ""; width: 8px; height: 8px; background: var(--gold); border-radius: 2px; }
+  .gs-task.gs-todo .gs-tx { color: var(--muted); }
+  .gs-task .gs-ev { display: block; font: 11px var(--font-mono); color: var(--muted); margin-top: 3px; }
+  .gs-task.gs-done .gs-ev { color: var(--green); }
+  .gs-task.gs-now .gs-ev { color: var(--gold); }
+
+  .gs-checks { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; font-size: 12px; }
+  .gs-checks dt { color: var(--text-2); }
+  .gs-checks dd { margin: 0; text-align: right; font-family: var(--font-mono); font-size: 11px; }
+  .gs-ok { color: var(--green); } .gs-warn { color: var(--amber); } .gs-pend { color: var(--muted); }
+
+  /* Shell bar */
+  .gs-shellbar {
+    display: flex; gap: 0; align-items: center; overflow-x: auto;
+    border-top: 1px solid var(--line); background: var(--panel);
+    font: 12px var(--font-mono); color: var(--text-2); padding: 0 14px; height: 30px;
+  }
+  .gs-shellbar span { padding: 0 10px; white-space: nowrap; border-right: 1px solid var(--line); }
+  .gs-shellbar span:last-child { border: 0; }
+  .gs-shellbar .gs-b { color: var(--gold); font-weight: 500; padding-left: 0; }
+  .gs-shellbar .gs-g { color: var(--green); }
+  .gs-shellbar .gs-a { color: var(--amber); }
+  .gs-shellbar .gs-bl { color: var(--blue); }
+  .gs-shellbar .gs-push { margin-left: auto; border: 0; }
+
+  /* Toast notifications */
+  .gs-toasts {
+    position: absolute; right: 16px; top: 52px; display: flex; flex-direction: column; gap: 8px; z-index: 5;
+    width: min(340px, calc(100% - 32px));
+  }
+  .gs-toast {
+    background: var(--raised); border: 1px solid var(--line-strong); border-radius: 10px;
+    padding: 10px 12px; display: grid; grid-template-columns: 8px 1fr auto; gap: 10px; align-items: start;
+    box-shadow: 0 10px 30px rgba(0,0,0,.5); font-size: 13px;
+  }
+  .gs-toast .gs-st { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; }
+  .gs-toast.gs-ok .gs-st { background: var(--green); }
+  .gs-toast.gs-ask .gs-st { background: var(--gold); }
+  .gs-toast .gs-tt { font-weight: 500; }
+  .gs-toast .gs-sub { color: var(--muted); font-size: 12px; }
+  .gs-toast .gs-x { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 2px; }
+  .gs-window { position: relative; }
+
+  /* Sidebar nav + secondary views */
+  .gs-nav { display: flex; flex-direction: column; gap: 2px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); }
+  .gs-nav button { display: flex; align-items: center; gap: 9px; background: none; border: 1px solid transparent; color: var(--text-2); font: 500 13px var(--font-body); padding: 8px 10px; border-radius: 8px; cursor: pointer; text-align: left; width: 100%; }
+  .gs-nav button:hover { background: var(--raised); }
+  .gs-nav button[aria-current="true"] { background: var(--raised); border-color: var(--line-strong); color: var(--text); }
+  .gs-nav .gs-ic { width: 16px; text-align: center; color: var(--gold); font-size: 13px; }
+  .gs-nav .gs-cnt { margin-left: auto; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .gs-account { display: flex; align-items: center; gap: 8px; padding: 10px 8px 2px; color: var(--muted); font-size: 12px; }
+  .gs-view { grid-column: 2 / -1; overflow: auto; padding: 22px 24px 28px; display: flex; flex-direction: column; gap: 22px; }
+  .gs-view-head h1 { font: 600 18px var(--font-display); margin: 0 0 4px; }
+  .gs-view-head p { margin: 0; color: var(--muted); max-width: 70ch; }
+  .gs-section h2 { font: 600 12px var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+  .gs-list { display: flex; flex-direction: column; gap: 8px; }
+  .gs-row { display: grid; grid-template-columns: 34px minmax(0,1fr) auto; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .gs-row.gs-off { opacity: .6; }
+  .gs-logo { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; font: 600 12px var(--font-display); background: var(--raised); border: 1px solid var(--line-strong); color: var(--text-2); }
+  .gs-logo.gs-pink { color: var(--gold); }
+  .gs-row .gs-name { font-weight: 500; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .gs-row .gs-desc { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gs-row .gs-desc code { font-family: var(--font-mono); font-size: 11px; }
+  .gs-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; font-weight: 400; }
+  .gs-badge.gs-on { color: var(--green); border-color: rgba(180,231,199,.4); }
+  .gs-badge.gs-upd { color: var(--amber); border-color: rgba(242,184,109,.4); }
+  .gs-badge.gs-local { color: var(--blue); border-color: rgba(169,199,238,.4); }
+  .gs-actions { display: flex; gap: 6px; align-items: center; }
+  .gs-btn { background: var(--raised); color: var(--text); border: 1px solid var(--line-strong); padding: 6px 11px; border-radius: 8px; font: 500 12px var(--font-body); cursor: pointer; white-space: nowrap; }
+  .gs-btn:hover { border-color: var(--blue); }
+  .gs-btn.gs-primary { background: var(--blue); color: var(--bg); border-color: var(--blue); }
+  .gs-btn.gs-quiet { color: var(--muted); background: none; border-color: transparent; }
+  .gs-btn.gs-quiet:hover { color: var(--red); border-color: transparent; }
+  .gs-switch { width: 34px; height: 20px; border-radius: 999px; background: var(--line-strong); border: 0; position: relative; cursor: pointer; padding: 0; flex: none; }
+  .gs-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--text-2); transition: left .15s; }
+  .gs-switch[aria-checked="true"] { background: var(--gold); }
+  .gs-switch[aria-checked="true"]::after { left: 17px; background: var(--bg); }
+  @media (prefers-reduced-motion: reduce) { .gs-switch::after { transition: none; } }
+  .gs-add { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 8px; }
+  .gs-add input { background: var(--panel); border: 1px solid var(--line-strong); color: var(--text); border-radius: 8px; padding: 9px 12px; font: 13px var(--font-mono); min-width: 0; }
+  .gs-add input::placeholder { color: var(--muted); }
+  .gs-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; align-items: start; }
+  .gs-kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 13px; margin: 0; }
+  .gs-kv dt { color: var(--muted); } .gs-kv dd { margin: 0; font-family: var(--font-mono); font-size: 12px; }
+  .gs-res { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 9px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  .gs-res .gs-name { font-weight: 500; }
+  .gs-res .gs-desc { color: var(--muted); font-size: 12px; }
+
+  .gs-welcome { grid-column: 1 / -1; display: grid; place-items: center; padding: 32px 24px; overflow: auto; }
+  .gs-welcome-card { width: min(640px, 100%); display: flex; flex-direction: column; gap: 22px; }
+  .gs-welcome-card h1 { font: 600 24px var(--font-display); margin: 0; text-wrap: balance; }
+  .gs-welcome-card .gs-lead { color: var(--muted); margin: 6px 0 0; }
+  .gs-found { display: grid; grid-template-columns: 8px 1fr; gap: 12px; align-items: start; background: var(--panel); border: 1px solid rgba(180,231,199,.35); border-radius: 10px; padding: 12px 14px; }
+  .gs-found .gs-st { width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-top: 7px; }
+  .gs-found .gs-desc { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .gs-found code { font-family: var(--font-mono); font-size: 11px; }
+  .gs-choice { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .gs-option { text-align: left; background: var(--panel); border: 1px solid var(--line-strong); border-radius: 12px; padding: 16px; color: inherit; font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
+  .gs-option:hover { border-color: var(--blue); }
+  .gs-option.gs-rec { border-color: var(--gold); }
+  .gs-option .gs-name { font: 600 15px var(--font-display); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .gs-option .gs-badge.gs-rec { color: var(--gold); border-color: rgba(240,149,200,.4); }
+  .gs-option ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
+  .gs-option .gs-path { font: 11px var(--font-mono); color: var(--muted); }
+  .gs-fine { color: var(--muted); font-size: 12px; }
+  .gs-note a { color: var(--blue); text-decoration: none; }
+  .gs-note a:hover { text-decoration: underline; }
+
+  /* Helpers view: list + thread, mirrors the Gentle Shell agents overlay */
+  .gs-tabs { margin-left: auto; display: flex; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+  .gs-tabs button { background: none; border: 0; color: var(--muted); font: 500 12px var(--font-body); padding: 5px 12px; border-radius: 999px; cursor: pointer; display: flex; gap: 6px; align-items: center; }
+  .gs-tabs button[aria-selected="true"] { background: var(--raised); color: var(--text); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .gs-tabcnt { color: var(--gold); font-size: 11px; }
+  .gs-chat-helpers { grid-row: 2 / span 2; display: grid; grid-template-columns: 250px minmax(0,1fr); min-height: 0; }
+  .gs-hhead h2 { font: 600 16px var(--font-display); margin: 0; }
+  .gs-hlist { border-right: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 14px 10px; display: flex; flex-direction: column; gap: 6px; }
+  .gs-hlist .gs-sum { display: flex; gap: 10px; padding: 4px 8px 10px; font-size: 12px; color: var(--muted); }
+  .gs-hlist .gs-sum b { color: var(--text); font-weight: 500; }
+  .gs-hitem { display: grid; grid-template-columns: 8px minmax(0,1fr); gap: 4px 10px; align-items: center; padding: 9px 10px; border-radius: 8px; border: 1px solid transparent; background: none; color: inherit; font: inherit; text-align: left; width: 100%; cursor: pointer; }
+  .gs-hitem:hover { background: var(--raised); }
+  .gs-hitem[aria-current="true"] { background: var(--raised); border-color: var(--line-strong); }
+  .gs-hitem .gs-st { width: 8px; height: 8px; border-radius: 50%; grid-row: 1 / span 2; }
+  .gs-hitem.gs-running .gs-st { background: var(--gold); box-shadow: 0 0 0 3px rgba(240,149,200,.15); }
+  .gs-hitem.gs-waiting .gs-st { background: var(--blue); box-shadow: 0 0 0 3px rgba(169,199,238,.15); }
+  .gs-hitem.gs-done .gs-st { background: var(--green); }
+  .gs-hitem.gs-queued .gs-st { background: var(--line-strong); }
+  .gs-hitem.gs-failed .gs-st { background: var(--red); }
+  .gs-hitem .gs-n { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gs-hitem .gs-m { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+  .gs-hitem.gs-running .gs-m { color: var(--gold); }
+  .gs-hitem.gs-waiting .gs-m { color: var(--blue); }
+  .gs-hthread { display: grid; grid-template-rows: auto 1fr auto; min-height: 0; }
+  .gs-hhead { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .gs-hhead h1 { font: 600 16px var(--font-display); margin: 0; }
+  .gs-hhead .gs-from { color: var(--muted); font-size: 12px; }
+  .gs-hhead .gs-from a { color: var(--blue); text-decoration: none; }
+  .gs-hbody { overflow: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .gs-item { display: grid; grid-template-columns: 64px minmax(0,1fr); gap: 12px; align-items: start; }
+  .gs-item .gs-k { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+  .gs-item.gs-text .gs-v { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; max-width: 62ch; }
+  .gs-item.gs-tool .gs-v { color: var(--text-2); font-size: 13px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .gs-item.gs-tool .gs-v code { font: 11px var(--font-mono); color: var(--muted); }
+  .gs-item.gs-tool .gs-v .gs-live { color: var(--gold); }
+  .gs-item.gs-tool .gs-v .gs-okc { color: var(--green); }
+  .gs-item.gs-note .gs-v { color: var(--amber); font-size: 13px; }
+  .gs-item.gs-note .gs-k { color: var(--amber); }
+  .gs-item.gs-thinking .gs-v { color: var(--muted); font-size: 13px; font-style: italic; }
+  .gs-hfoot { display: flex; gap: 8px; align-items: center; padding: 10px 20px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+  .gs-hfoot .gs-spacer { flex: 1; }
+  .gs-hfoot label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+  .gs-hfoot input[type="checkbox"] { accent-color: var(--gold); }
+  .gs-helper { cursor: pointer; }
+  .gs-helper:hover { border-color: var(--blue); }
+
+  @media (max-width: 1100px) {
+    .gs-body { grid-template-columns: 220px minmax(0,1fr); }
+    .gs-odd { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); }
+    .gs-body { grid-template-rows: 1fr auto; }
+    .gs-window { height: auto; }
+    .gs-thread { max-height: 420px; }
+  }
+  @media (max-width: 640px) {
+    .gs-body { grid-template-columns: 1fr; }
+    .gs-side { border-right: 0; border-bottom: 1px solid var(--line); }
+    .gs-side .gs-chat:not([aria-current="true"]) { display: none; }
+    .gs-view { grid-column: 1 / -1; }
+    .gs-chat-helpers { grid-template-columns: 1fr; }
+    .gs-hlist { border-right: 0; border-bottom: 1px solid var(--line); max-height: 220px; }
+    .gs-nav { flex-direction: row; flex-wrap: wrap; }
+    .gs-nav .gs-cnt { display: none; }
+    .gs-group-label, .gs-account { display: none; }
+    .gs-msg { max-width: 100%; }
+    .gs-toasts { top: auto; bottom: 44px; }
+  }
+</style>
+
+<div class="gs-frame">
+  <div class="gs-note">
+    <strong>Concept mockup</strong>
+    <span>Content is example data.</span><span>Screens: <a href="#" data-go="chat">Chats</a> · <a href="#" data-go="providers">Providers</a> · <a href="#" data-go="extensions">Extensions</a> · <a href="#" data-go="welcome">First run</a></span>
+  </div>
+
+  <div class="gs-window" role="application" aria-label="Gentle Shell desktop">
+    <div class="gs-titlebar">
+      <div class="gs-lights" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="gs-brand"><span class="gs-flower">✿</span> gentle shell</div>
+      <div class="gs-spacer"></div>
+      <div class="gs-bell" title="2 notifications"><span class="gs-dot"></span> Notifications</div>
+    </div>
+
+    <div class="gs-body">
+      <!-- Chats -->
+      <nav class="gs-col gs-side" aria-label="Chats">
+        <button class="gs-new-chat" id="new-chat" type="button"><b>+</b> New chat</button>
+
+        <div class="gs-group-label">Today</div>
+        <button class="gs-chat" type="button" aria-current="true">
+          <span class="gs-t">Add login with magic link</span>
+          <span class="gs-s gs-live">working</span>
+          <span class="gs-p">Implementing task 3 of 5 · 2 agents running</span>
+        </button>
+        <button class="gs-chat" type="button">
+          <span class="gs-t">Fix checkout total rounding</span>
+          <span class="gs-s gs-wait">needs you</span>
+          <span class="gs-p">Which rounding rule should apply to…</span>
+        </button>
+        <button class="gs-chat" type="button">
+          <span class="gs-t">Landing page copy for pricing</span>
+          <span class="gs-s">10:12</span>
+          <span class="gs-p">Done. Three variants written, the shortest…</span>
+        </button>
+
+        <div class="gs-group-label">Yesterday</div>
+        <button class="gs-chat" type="button">
+          <span class="gs-t">Export orders to CSV</span>
+          <span class="gs-s">Yesterday</span>
+          <span class="gs-p">Shipped on branch feat/orders-export</span>
+        </button>
+        <button class="gs-chat" type="button">
+          <span class="gs-t">Why is the dashboard slow?</span>
+          <span class="gs-s">Yesterday</span>
+          <span class="gs-p">Found it: the chart reloads all rows on…</span>
+        </button>
+
+        <nav class="gs-nav" aria-label="App sections">
+          <button type="button" data-go="chat" aria-current="true"><span class="gs-ic">✿</span> Chats <span class="gs-cnt">5</span></button>
+          <button type="button" data-go="providers"><span class="gs-ic">◉</span> Providers <span class="gs-cnt">2 connected</span></button>
+          <button type="button" data-go="extensions"><span class="gs-ic">▣</span> Extensions <span class="gs-cnt">1 update</span></button>
+        </nav>
+        <div class="gs-account"><span class="gs-avatar" aria-hidden="true"></span> Alan · Claude Pro/Max</div>
+      </nav>
+
+      <!-- Conversation -->
+      <section class="gs-col gs-main" aria-label="Conversation" data-view="chat">
+        <div class="gs-main-head">
+          <h1>Add login with magic link</h1>
+          <span class="gs-pill gs-working"><i></i> Working on task 3</span>
+          <div class="gs-tabs" role="tablist" aria-label="Chat sections">
+            <button type="button" role="tab" data-pane="chat" aria-selected="true">Chat</button>
+            <button type="button" role="tab" data-pane="helpers" aria-selected="false">Helpers <span class="gs-tabcnt">2 running</span></button>
+          </div>
+        </div>
+
+        <div class="gs-thread" id="thread" data-pane="chat">
+          <div class="gs-msg gs-user">
+            <div class="gs-who">You · 14:02</div>
+            <div class="gs-bubble"><p>I want users to log in with a magic link by email instead of a password. Keep the current Google login.</p></div>
+          </div>
+
+          <div class="gs-msg gs-agent">
+            <div class="gs-who">Gentle · 14:02</div>
+            <div class="gs-bubble">
+              <p>Got it. I looked at how login works today: Google sign-in goes through the auth service and sessions live in cookies. Magic links fit there without touching Google.</p>
+              <p>I split this into 5 steps and started. You will see progress on the right.</p>
+            </div>
+          </div>
+
+          <div class="gs-msg gs-agent">
+            <div class="gs-who">Gentle · 14:09</div>
+            <div class="gs-bubble">
+              <p>Steps 1 and 2 are done: the link is generated and expires after 15 minutes. Now I am wiring the email. I handed two pieces to helpers so this goes faster.</p>
+            </div>
+            <div class="gs-agents" aria-label="Subagents started by this message">
+              <div class="gs-lbl">Helpers</div>
+              <div class="gs-helper gs-running" data-pane-go="helpers" role="button" tabindex="0"><span class="gs-st"></span><span class="gs-n">Write the login email <small>template + copy</small></span><span class="gs-r">running · 1m 40s</span></div>
+              <div class="gs-helper gs-running" data-pane-go="helpers" role="button" tabindex="0"><span class="gs-st"></span><span class="gs-n">Test the expiry rules <small>unit tests</small></span><span class="gs-r">running · 52s</span></div>
+              <div class="gs-helper gs-done" data-pane-go="helpers" role="button" tabindex="0"><span class="gs-st"></span><span class="gs-n">Check how Google login stores sessions <small>research</small></span><span class="gs-r">done</span></div>
+            </div>
+          </div>
+
+          <div class="gs-ask" role="group" aria-label="Question from Gentle">
+            <div class="gs-q">Should the magic link also work on a different device than the one that requested it?</div>
+            <div class="gs-opts">
+              <button type="button" class="gs-primary">Yes, any device</button>
+              <button type="button">Same device only</button>
+              <button type="button">Let me explain</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="gs-composer" data-pane="chat">
+          <div class="gs-box">
+            <textarea id="composer-input" rows="1" placeholder="Tell Gentle what you need…" aria-label="Message"></textarea>
+            <button class="gs-send" id="send" type="button">Send</button>
+          </div>
+          <div class="gs-hint"><span>Enter to send</span><span>Shift+Enter for a new line</span><span>Esc to stop the agent</span></div>
+        </div>
+
+        <div class="gs-chat-helpers" data-pane="helpers" hidden="">
+          <nav class="gs-hlist" aria-label="Helpers in this chat">
+            <div class="gs-sum"><span><b>2</b> running</span><span><b>1</b> queued</span><span><b>1</b> done</span></div>
+            <button class="gs-hitem gs-running" type="button" aria-current="true"><span class="gs-st"></span><span class="gs-n">Write the login email</span><span class="gs-m">running · 1m 40s · 6 steps</span></button>
+            <button class="gs-hitem gs-running" type="button"><span class="gs-st"></span><span class="gs-n">Test the expiry rules</span><span class="gs-m">running · 52s · 3 steps</span></button>
+            <button class="gs-hitem gs-queued" type="button"><span class="gs-st"></span><span class="gs-n">Add "Email me a link" to the login page</span><span class="gs-m">queued · starts after task 3</span></button>
+            <button class="gs-hitem gs-done" type="button"><span class="gs-st"></span><span class="gs-n">Check how Google login stores sessions</span><span class="gs-m">done · 2m 05s</span></button>
+          </nav>
+
+          <div class="gs-hthread">
+            <div class="gs-hhead">
+              <h2>Write the login email</h2>
+              <span class="gs-pill gs-working"><i></i> Running · 1m 40s</span>
+              <span class="gs-from">started from the message at 14:09 · claude-sonnet-5</span>
+            </div>
+
+            <div class="gs-hbody" aria-live="polite">
+              <div class="gs-item gs-text"><span class="gs-k">Task</span><div class="gs-v">Write the email that carries the magic link: subject, plain-text and HTML body, using the existing transactional template. Keep the tone of the welcome email.</div></div>
+              <div class="gs-item gs-thinking"><span class="gs-k">Plan</span><div class="gs-v">Reuse the welcome email layout, add one button, keep a text fallback for clients that block HTML.</div></div>
+              <div class="gs-item gs-tool"><span class="gs-k">Step 1</span><div class="gs-v"><span class="gs-okc">✓</span> Read 3 files <code>emails/welcome.tsx · emails/layout.tsx · lib/mailer.ts</code></div></div>
+              <div class="gs-item gs-tool"><span class="gs-k">Step 2</span><div class="gs-v"><span class="gs-okc">✓</span> Created <code>emails/magic-link.tsx</code></div></div>
+              <div class="gs-item gs-text"><span class="gs-k">Update</span><div class="gs-v">The template is in place. The subject is "Your sign-in link for Shop" and the button says "Sign in". The link expires in 15 minutes, so I added that line under the button.</div></div>
+              <div class="gs-item gs-tool"><span class="gs-k">Step 3</span><div class="gs-v"><span class="gs-okc">✓</span> Ran tests <code>emails · 8 passed</code></div></div>
+              <div class="gs-item gs-note"><span class="gs-k">Note</span><div class="gs-v">The mailer has no preview text field; I am adding one so inboxes show the first line instead of raw HTML.</div></div>
+              <div class="gs-item gs-tool"><span class="gs-k">Step 4</span><div class="gs-v"><span class="gs-live">●</span> Editing <code>lib/mailer.ts</code></div></div>
+            </div>
+
+            <div class="gs-hfoot">
+              <label><input id="follow-helper" type="checkbox" checked=""> Follow live</label>
+              <label><input id="show-details" type="checkbox"> Show tool details</label>
+              <span class="gs-spacer"></span>
+              <button class="gs-btn" type="button" data-pane-go="chat">Back to chat</button>
+              <button class="gs-btn gs-quiet" type="button">Stop</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ODD state -->
+      <aside class="gs-col gs-odd" aria-label="Work progress" data-view="chat">
+        <div>
+          <h2>Working on</h2>
+          <div class="gs-feature" style="margin-top:6px">Login with magic link<small>odd/tasks/magic-link-login.md · branch feat/magic-link-login</small></div>
+        </div>
+
+        <div>
+          <h2>Where we are</h2>
+          <div class="gs-steps" style="margin-top:8px">
+            <div class="gs-step gs-done"><span class="gs-k">✓</span><span class="gs-nm">Explore</span><span class="gs-meta">14:02</span></div>
+            <div class="gs-step gs-done"><span class="gs-k">✓</span><span class="gs-nm">Plan</span><span class="gs-meta">5 tasks</span></div>
+            <div class="gs-step gs-now"><span class="gs-k"></span><span class="gs-nm">Build</span><span class="gs-meta">task 3 of 5</span></div>
+            <div class="gs-step gs-todo"><span class="gs-k"></span><span class="gs-nm">Verify</span><span class="gs-meta">tests · review</span></div>
+            <div class="gs-step gs-todo"><span class="gs-k"></span><span class="gs-nm">Deliver</span><span class="gs-meta">pull request</span></div>
+          </div>
+        </div>
+
+        <div>
+          <h2>Tasks</h2>
+          <div class="gs-tasks" style="margin-top:8px">
+            <div class="gs-task gs-done"><span class="gs-cb">✓</span><span class="gs-tx">Generate a one-time link that expires<span class="gs-ev">commit 3f1c2a9 · tests green</span></span></div>
+            <div class="gs-task gs-done"><span class="gs-cb">✓</span><span class="gs-tx">Verify the link and open a session<span class="gs-ev">commit 8b0e7d1 · tests green</span></span></div>
+            <div class="gs-task gs-now"><span class="gs-cb"></span><span class="gs-tx">Send the login email<span class="gs-ev">in progress · 2 helpers</span></span></div>
+            <div class="gs-task gs-todo"><span class="gs-cb"></span><span class="gs-tx">Add "Email me a link" to the login page</span></div>
+            <div class="gs-task gs-todo"><span class="gs-cb"></span><span class="gs-tx">Run all checks and open the pull request</span></div>
+          </div>
+        </div>
+
+        <div>
+          <h2>Checks</h2>
+          <dl class="gs-checks" style="margin:8px 0 0">
+            <dt>Tests</dt><dd class="gs-ok">42 passed</dd>
+            <dt>Types</dt><dd class="gs-ok">clean</dd>
+            <dt>Review</dt><dd class="gs-pend">after task 5</dd>
+            <dt>Changed lines</dt><dd class="gs-warn">212 / 400</dd>
+          </dl>
+        </div>
+      </aside>
+
+
+      <!-- First run -->
+      <section class="gs-welcome" data-view="welcome" hidden="" aria-label="First run">
+        <div class="gs-welcome-card">
+          <div>
+            <h1>Welcome to gentle shell</h1>
+            <p class="gs-lead">Everything you need is already inside this app. One question before you start.</p>
+          </div>
+
+          <div class="gs-found">
+            <span class="gs-st"></span>
+            <div>
+              <div class="gs-name">We found pi on this machine</div>
+              <div class="gs-desc"><code>~/.pi/agent</code> · signed in to Claude Pro/Max · 2 local models · 14 chats · 3 packages</div>
+            </div>
+          </div>
+
+          <div class="gs-choice">
+            <button class="gs-option gs-rec" type="button">
+              <span class="gs-name">Use my pi setup <span class="gs-badge gs-rec">recommended</span></span>
+              <ul>
+                <li>Your sign-ins, local models and chats appear here</li>
+                <li>Chats you start here also show up in your terminal</li>
+                <li>Your pi settings are never edited</li>
+              </ul>
+              <span class="gs-path">links to ~/.pi/agent</span>
+            </button>
+            <button class="gs-option" type="button">
+              <span class="gs-name">Keep it separate</span>
+              <ul>
+                <li>A clean space with its own sign-ins and chats</li>
+                <li>Nothing on this machine is touched</li>
+                <li>You can link to pi later from Providers</li>
+              </ul>
+              <span class="gs-path">creates ~/.gentle-shell/agent</span>
+            </button>
+          </div>
+
+          <p class="gs-fine">No pi on the machine? This screen is skipped and gentle shell starts in its own space. Either way the app runs its own copy of pi, so nothing else has to be installed.</p>
+        </div>
+      </section>
+
+      <!-- Providers -->
+      <section class="gs-col gs-view" data-view="providers" hidden="" aria-label="Providers">
+        <div class="gs-view-head">
+          <h1>Providers</h1>
+          <p>Sign in with a subscription you already pay for, or add an API key. Local models need no account and never leave your machine.</p>
+        </div>
+
+        <div class="gs-section">
+          <h2>Connected</h2>
+          <div class="gs-list">
+            <div class="gs-row">
+              <span class="gs-logo gs-pink">C</span>
+              <div><div class="gs-name">Claude Pro/Max <span class="gs-badge gs-on">signed in</span></div><div class="gs-desc">Subscription · alan@… · claude-sonnet-5, claude-opus-5</div></div>
+              <div class="gs-actions"><button class="gs-btn gs-quiet" type="button">Sign out</button></div>
+            </div>
+            <div class="gs-row">
+              <span class="gs-logo">OL</span>
+              <div><div class="gs-name">Ollama <span class="gs-badge gs-local">local</span></div><div class="gs-desc"><code>http://localhost:11434</code> · 3 models: qwen3-coder, llama4, gemma4</div></div>
+              <div class="gs-actions"><button class="gs-btn" type="button">Manage</button></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gs-section">
+          <h2>Add a provider</h2>
+          <div class="gs-list">
+            <div class="gs-row"><span class="gs-logo">OA</span><div><div class="gs-name">OpenAI Codex</div><div class="gs-desc">ChatGPT Plus/Pro subscription</div></div><div class="gs-actions"><button class="gs-btn gs-primary" type="button">Sign in</button></div></div>
+            <div class="gs-row"><span class="gs-logo">GH</span><div><div class="gs-name">GitHub Copilot</div><div class="gs-desc">Copilot subscription</div></div><div class="gs-actions"><button class="gs-btn gs-primary" type="button">Sign in</button></div></div>
+            <div class="gs-row"><span class="gs-logo">OR</span><div><div class="gs-name">OpenRouter</div><div class="gs-desc">One account, many models, billed from credits</div></div><div class="gs-actions"><button class="gs-btn gs-primary" type="button">Sign in</button></div></div>
+            <div class="gs-row"><span class="gs-logo">X</span><div><div class="gs-name">xAI</div><div class="gs-desc">Grok with an X subscription, or an API key</div></div><div class="gs-actions"><button class="gs-btn gs-primary" type="button">Sign in</button><button class="gs-btn" type="button">Add key</button></div></div>
+            <div class="gs-row"><span class="gs-logo">A</span><div><div class="gs-name">Anthropic</div><div class="gs-desc">Pay as you go with an API key</div></div><div class="gs-actions"><button class="gs-btn" type="button">Add key</button></div></div>
+            <div class="gs-row"><span class="gs-logo">G</span><div><div class="gs-name">Google Gemini</div><div class="gs-desc">API key</div></div><div class="gs-actions"><button class="gs-btn" type="button">Add key</button></div></div>
+            <div class="gs-row"><span class="gs-logo">AW</span><div><div class="gs-name">Amazon Bedrock</div><div class="gs-desc">API key or your AWS credentials</div></div><div class="gs-actions"><button class="gs-btn" type="button">Add key</button></div></div>
+            <div class="gs-row"><span class="gs-logo">LM</span><div><div class="gs-name">LM Studio <span class="gs-badge gs-local">local</span></div><div class="gs-desc">Any OpenAI-compatible server on your machine</div></div><div class="gs-actions"><button class="gs-btn" type="button">Add server</button></div></div>
+          </div>
+        </div>
+
+        <div class="gs-two">
+          <div class="gs-section">
+            <h2>Default for new chats</h2>
+            <div class="gs-res"><div><div class="gs-name">claude-sonnet-5</div><div class="gs-desc">Claude Pro/Max · thinking medium · profile balanced</div></div><button class="gs-btn" type="button">Change</button></div>
+          </div>
+          <div class="gs-section">
+            <h2>Where this lives</h2>
+            <dl class="gs-kv">
+              <dt>Sign-ins</dt><dd>~/.gentle-shell/agent/auth.json</dd>
+              <dt>Local servers</dt><dd>~/.gentle-shell/agent/models.json</dd>
+              <dt>Your vanilla pi</dt><dd>untouched</dd>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <!-- Extensions -->
+      <section class="gs-col gs-view" data-view="extensions" hidden="" aria-label="Extensions">
+        <div class="gs-view-head">
+          <h1>Extensions</h1>
+          <p>Packages add commands, helpers, themes and skills. Changes apply to new chats.</p>
+        </div>
+
+        <div class="gs-section">
+          <h2>Add</h2>
+          <div class="gs-add">
+            <input id="ext-source" type="text" placeholder="npm:package, git:github.com/user/repo, or a folder on disk" aria-label="Package source">
+            <button class="gs-btn gs-primary" type="button">Install</button>
+            <button class="gs-btn" type="button">Update all</button>
+          </div>
+        </div>
+
+        <div class="gs-section">
+          <h2>Installed</h2>
+          <div class="gs-list">
+            <div class="gs-row">
+              <span class="gs-logo gs-pink">✿</span>
+              <div><div class="gs-name">gentle-pi <span class="gs-badge">3.3.0</span><span class="gs-badge gs-upd">3.4.0 available</span></div><div class="gs-desc"><code>npm:gentle-pi</code> · ODD, review, helpers, 3 themes, 12 skills</div></div>
+              <div class="gs-actions"><button class="gs-btn gs-primary" type="button">Update</button><button class="gs-switch" type="button" role="switch" aria-checked="true" aria-label="Enable gentle-pi"></button></div>
+            </div>
+            <div class="gs-row">
+              <span class="gs-logo">EN</span>
+              <div><div class="gs-name">gentle-engram <span class="gs-badge">1.15.3</span></div><div class="gs-desc"><code>npm:gentle-engram</code> · memory that survives between chats</div></div>
+              <div class="gs-actions"><button class="gs-btn gs-quiet" type="button">Remove</button><button class="gs-switch" type="button" role="switch" aria-checked="true" aria-label="Enable gentle-engram"></button></div>
+            </div>
+            <div class="gs-row">
+              <span class="gs-logo">IC</span>
+              <div><div class="gs-name">pi-intercom <span class="gs-badge">0.9.2</span></div><div class="gs-desc"><code>npm:pi-intercom</code> · lets helpers talk to each other</div></div>
+              <div class="gs-actions"><button class="gs-btn gs-quiet" type="button">Remove</button><button class="gs-switch" type="button" role="switch" aria-checked="true" aria-label="Enable pi-intercom"></button></div>
+            </div>
+            <div class="gs-row">
+              <span class="gs-logo">WW</span>
+              <div><div class="gs-name">pi-web-access <span class="gs-badge">2.1.0</span></div><div class="gs-desc"><code>npm:pi-web-access</code> · search and read the web</div></div>
+              <div class="gs-actions"><button class="gs-btn gs-quiet" type="button">Remove</button><button class="gs-switch" type="button" role="switch" aria-checked="true" aria-label="Enable pi-web-access"></button></div>
+            </div>
+            <div class="gs-row gs-off">
+              <span class="gs-logo">LN</span>
+              <div><div class="gs-name">pi-lens <span class="gs-badge">0.4.0</span><span class="gs-badge">disabled</span></div><div class="gs-desc"><code>git:github.com/…/pi-lens@v0.4.0</code> · pinned to a git tag</div></div>
+              <div class="gs-actions"><button class="gs-btn gs-quiet" type="button">Remove</button><button class="gs-switch" type="button" role="switch" aria-checked="false" aria-label="Enable pi-lens"></button></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gs-two">
+          <div class="gs-section">
+            <h2>Inside gentle-pi</h2>
+            <div class="gs-list">
+              <div class="gs-res"><div><div class="gs-name">Commands and helpers</div><div class="gs-desc">13 extensions</div></div><button class="gs-switch" type="button" role="switch" aria-checked="true" aria-label="Enable extensions"></button></div>
+              <div class="gs-res"><div><div class="gs-name">Themes</div><div class="gs-desc">Gentle · Gentleman-Cute (active) · Gentleman-Sexy</div></div><button class="gs-btn" type="button">Choose</button></div>
+              <div class="gs-res"><div><div class="gs-name">Skills</div><div class="gs-desc">12 skills, loaded when the task matches</div></div><button class="gs-switch" type="button" role="switch" aria-checked="true" aria-label="Enable skills"></button></div>
+              <div class="gs-res"><div><div class="gs-name">Prompts</div><div class="gs-desc">7 prompt templates</div></div><button class="gs-switch" type="button" role="switch" aria-checked="true" aria-label="Enable prompts"></button></div>
+            </div>
+          </div>
+          <div class="gs-section">
+            <h2>Scope</h2>
+            <dl class="gs-kv">
+              <dt>Applies to</dt><dd>all projects</dd>
+              <dt>Settings</dt><dd>~/.gentle-shell/agent/settings.json</dd>
+              <dt>Per project</dt><dd>.pi/settings.json (shared with your team)</dd>
+            </dl>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="gs-shellbar" aria-label="Status bar">
+      <span class="gs-b">✿ gentle shell</span>
+      <span>~/work/shop-web</span>
+      <span class="gs-g">feat/magic-link-login *</span>
+      <span class="gs-bl">claude-sonnet-5</span>
+      <span>effort medium</span>
+      <span>profile balanced</span>
+      <span class="gs-a">ctx 38%</span>
+      <span>$0.84</span>
+      <span class="gs-push">ODD · RDD on</span>
+    </div>
+
+    <div class="gs-toasts" aria-live="polite">
+      <div class="gs-toast gs-ok">
+        <span class="gs-st"></span>
+        <div><div class="gs-tt">Helper finished</div><div class="gs-sub">Check how Google login stores sessions · Add login with magic link</div></div>
+        <button class="gs-x" type="button" aria-label="Dismiss">×</button>
+      </div>
+      <div class="gs-toast gs-ask">
+        <span class="gs-st"></span>
+        <div><div class="gs-tt">Gentle needs a decision</div><div class="gs-sub">Fix checkout total rounding · waiting 4 min</div></div>
+        <button class="gs-x" type="button" aria-label="Dismiss">×</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.gs-toast .gs-x').forEach(function (b) {
+    b.addEventListener('click', function () { b.closest('.gs-toast').remove(); });
+  });
+  document.querySelectorAll('.gs-chat').forEach(function (c) {
+    c.addEventListener('click', function () {
+      document.querySelectorAll('.gs-chat').forEach(function (o) { o.removeAttribute('aria-current'); });
+      c.setAttribute('aria-current', 'true');
+    });
+  });
+  document.querySelectorAll('.gs-ask button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var ask = b.closest('.gs-ask');
+      var msg = document.createElement('div');
+      msg.className = 'gs-msg gs-user';
+      msg.innerHTML = '<div class="gs-who">You · now</div><div class="gs-bubble"><p></p></div>';
+      msg.querySelector('p').textContent = b.textContent;
+      ask.replaceWith(msg);
+      document.getElementById('thread').scrollTop = 1e6;
+    });
+  });
+  function send() {
+    var input = document.getElementById('composer-input');
+    var text = input.value.trim();
+    if (!text) return;
+    var msg = document.createElement('div');
+    msg.className = 'gs-msg gs-user';
+    msg.innerHTML = '<div class="gs-who">You · now</div><div class="gs-bubble"><p></p></div>';
+    msg.querySelector('p').textContent = text;
+    var thread = document.getElementById('thread');
+    thread.appendChild(msg);
+    input.value = '';
+    thread.scrollTop = 1e6;
+  }
+  document.getElementById('send').addEventListener('click', send);
+  document.getElementById('composer-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+  document.querySelectorAll('[data-go]').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault();
+      var target = b.getAttribute('data-go');
+      document.querySelector('.gs-side').hidden = target === 'welcome';
+      document.querySelectorAll('.gs-nav [data-go]').forEach(function (o) { if (o.getAttribute('data-go') === target) o.setAttribute('aria-current', 'true'); else o.removeAttribute('aria-current'); });
+      document.querySelectorAll('[data-view]').forEach(function (v) { v.hidden = v.getAttribute('data-view') !== target; });
+    });
+  });
+  document.querySelectorAll('.gs-switch').forEach(function (sw) {
+    sw.addEventListener('click', function () {
+      var on = sw.getAttribute('aria-checked') !== 'true';
+      sw.setAttribute('aria-checked', on ? 'true' : 'false');
+      var row = sw.closest('.gs-row'); if (row) row.classList.toggle('gs-off', !on);
+    });
+  });
+  document.querySelectorAll('.gs-hitem').forEach(function (c) {
+    c.addEventListener('click', function () {
+      document.querySelectorAll('.gs-hitem').forEach(function (o) { o.removeAttribute('aria-current'); });
+      c.setAttribute('aria-current', 'true');
+    });
+  });
+  function showPane(name) {
+    document.querySelectorAll('.gs-main [data-pane]').forEach(function (el) { el.hidden = el.getAttribute('data-pane') !== name; });
+    document.querySelectorAll('.gs-tabs [data-pane]').forEach(function (t) { t.hidden = false; t.setAttribute('aria-selected', t.getAttribute('data-pane') === name ? 'true' : 'false'); });
+  }
+  document.querySelectorAll('.gs-tabs [data-pane]').forEach(function (t) { t.addEventListener('click', function () { showPane(t.getAttribute('data-pane')); }); });
+  document.querySelectorAll('[data-pane-go]').forEach(function (b) {
+    b.addEventListener('click', function () { showPane(b.getAttribute('data-pane-go')); });
+    b.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showPane(b.getAttribute('data-pane-go')); } });
+  });
+</script>
+
+</body></html>
