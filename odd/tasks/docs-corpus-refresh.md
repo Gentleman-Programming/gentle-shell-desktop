@@ -26,9 +26,9 @@ Same as the corpus feature: English artifacts, evidence for every claim (`repo@s
 
 ## Tasks
 
-- [ ] R1 Impact map: pi 0.99.1 → 1.0.0, gentle-shell 3.7.0 → 4.0.0, gentle-ai v3.7.0 → v4.0.0, desktop open PRs. Route: three parallel read-only mappers.
+- [x] R1 Impact map: pi 0.99.1 → 1.0.0, gentle-shell 3.7.0 → 4.0.0, gentle-ai v3.7.0 → v4.0.0, desktop open PRs. Route: three parallel read-only mappers.
 - [x] R2 Vision corrections from the human review (P10 = finished helper; audience: terminal friction + support narrowing as vision Q12; teams-sharing as vision Q13; differentiator: teaching, auditable, customizable). Route: delegated writer → independent verifier (PASS-WITH-FIXES: 0 wrong, 5 minor) → one correction (5/5 applied).
-- [ ] R3 Multi-platform document `docs/10-platforms.md`. Route: delegated research writer + verifier.
+- [x] R3 Multi-platform document `docs/10-platforms.md` (support matrix, per-platform requirements, WSL topologies A/B/C, risks PLAT-01…PLAT-11, open questions). Route: delegated research writer → independent verifier (PASS-WITH-FIXES: 2 wrong, 12 minor) → one correction (15/15 applied incl. pin precision).
 - [ ] R4 Version sweep of 01, 02, 03, 04, 05, 06, 08, 09, CONTRIBUTING per the impact map. Route: delegated writers (sequential) + verifiers.
 - [ ] R5 Consistency pass, index and link check. Route: delegated writer + scripted checks.
 - [ ] R6 Spanish translation update of every changed file. Route: translators + fidelity verifiers + scripted structure/link checks.
@@ -44,3 +44,4 @@ Same as the corpus feature: English artifacts, evidence for every claim (`repo@s
 ## Progress and evidence
 - R1: three impact maps (pi 1.0.0: RPC byte-identical, 4 behaviour changes, counts unchanged; gentle-shell 4.0.0: no RPC-facing file changed, +1 command/entry point/shortcut, bash no longer re-registered, helper wake via user-role message; gentle-ai v4.0.0: pi-mcp-adapter retired; desktop PRs #26/#27 open). Stored in the session scratchpad as working notes.
 - R2: `docs/00-vision.md` corrected; reviewer opinions tagged [community], helper facts cited at gentle-shell@ac67159 and pi@a13d35a.
+- R3: `docs/10-platforms.md` + index entry. No pinned source states "WSL recommended" (only gentle-ai draft PRD 2026-02-27 ranks WSL 2 P1); recorded as [community] + UNVERIFIED. Pin precision verified: gentle-shell `ac67159` = main, 19 commits after release commit `1f35ab1`.
