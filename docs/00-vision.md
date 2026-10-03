@@ -11,11 +11,11 @@
 | Tag | Source | Weight |
 |---|---|---|
 | **[maintainer]** | Alan Buscaglia's Discord messages, the maintainer-authored desktop repo documents (`README.md`, `odd/tasks/desktop-m1-*.md`, `odd/tasks/desktop-m2-*.md`), and his concept mockup | Intent. The mockup is **intent, not spec**: its example data never becomes a requirement. |
-| **[gentle-shell]** | gentle-shell's own README and docs at `gentle-shell@1162ce9` | What the product the desktop sits on says about itself. |
-| **[community]** | Framing from community members (Matrak's framing in the context brief §2; Discord messages from members other than the maintainer) | Proposed for maintainer validation. Not decided. |
+| **[gentle-shell]** | gentle-shell's own README and docs at `gentle-shell@1162ce9` (3.7.0), and at `gentle-shell@ac67159` (4.0.0) for facts added on 2026-10-03 | What the product the desktop sits on says about itself. |
+| **[community]** | Framing from community members (Matrak's framing in the context brief §2 and his review of this page on 2026-10-03; Discord messages from members other than the maintainer) | Proposed for maintainer validation. Not decided. |
 | **[open question]** | Raised, not answered | Needs a maintainer decision. |
 
-**Citation keys.** `gentle-shell-desktop@5ab4a00:` is the desktop repo `main`. `gentle-shell@1162ce9:` is gentle-shell (npm package `gentle-pi` 3.7.0). `gs-mockup.html:<line>` is the saved DOM of the concept mockup at https://claude.ai/artifact/CCpKaRTkrnDrWoErY27KEL. Discord dates are converted from the thread's `d/m/yy` format.
+**Citation keys.** `gentle-shell-desktop@5ab4a00:` is the desktop repo `main`. `gentle-shell@1162ce9:` is gentle-shell (npm package `gentle-pi` 3.7.0). `gs-mockup.html:<line>` is the saved DOM of the concept mockup at https://claude.ai/artifact/CCpKaRTkrnDrWoErY27KEL. Facts added on 2026-10-03 cite the refreshed pins: `gentle-shell@ac67159:` is gentle-shell 4.0.0 (npm package `gentle-pi` 4.0.0), `pi@a13d35a:` is pi 1.0.0, and `gentle-ai@ff77164:` is gentle-ai v4.0.0. Discord dates are converted from the thread's `d/m/yy` format.
 
 **The maintainer pointed to the mockup when asked for his vision.** When a member asked him for "un vaciado de tus ideas, objetivos y límites" (a dump of your ideas, goals and limits; Discord, memoTux, 2026-09-26), he replied "No necesitan jejeje" (you don't need it), linked the mockup, wrote "En un rato lo pongo público el repo" (I will make the repo public shortly), then "Pero sería esto" (but it would be this) **[maintainer]** (Discord, Alan Buscaglia, 2026-09-26). `Inference:` "esto" (this) most likely refers to the mockup he had just linked; given the message order, it may also include the repository. He also called the current app "muy en pañales pero anda al menos" (very early-stage, but at least it works) **[maintainer]** (Discord, Alan Buscaglia, 2026-09-26).
 
@@ -78,14 +78,26 @@ Each principle cites its sources. A principle tagged only **[community]** is **p
 | P7 | **Make the workflow and its evidence visible.** Progress is shown as steps, tasks with commits and tests, and checks. | **[maintainer]** (mockup intent), **[gentle-shell]** | `gs-mockup.html:617-644`; `gentle-shell@1162ce9:README.md:35` ("A workflow you can inspect."), `:127` |
 | P8 | **Manage the setup in the app.** Sign-ins, models and packages are handled in the window, not only in the terminal. | **[maintainer]** (mockup intent and planned M4) | `gs-mockup.html:694-806`; `gentle-shell-desktop@5ab4a00:README.md:63` |
 | P9 | **Guide and teach.** The app helps the user learn while working, as gentle-shell's persona does. | **[community]**, supported by **[gentle-shell]** for the persona | context brief §2; `gentle-shell@1162ce9:docs/readme-reference.md:103` ("senior architect and teacher") |
-| P10 | **Go further where a GUI beats a terminal.** Examples proposed: an agent/subagent graph view, interacting with a running node, asking a finished agent why it did something. | **[community]** | context brief §2; ideas belong in [07-proposals](07-proposals/README.md) until accepted |
+| P10 | **Go further where a GUI beats a terminal.** Examples proposed: an agent/subagent graph view, interacting with a running node, and asking a finished **helper** why it did something. The reviewer clarified that P10 means a finished helper (a subagent the main agent delegated to), not the main session (context brief §8). See "Asking a finished helper" below. | **[community]** | context brief §2 and §8 (Matrak, review of 2026-10-03); [proposal 0003](07-proposals/0003-post-hoc-audit-by-questions.md); ideas belong in [07-proposals](07-proposals/README.md) until accepted |
+
+**Asking a finished helper (vision P10).** What gentle-shell 4.0.0 and pi 1.0.0 provide today, from their code and docs (only the quotes from gentle-shell's docs carry **[gentle-shell]**):
+
+- **Each helper is its own pi session.** gentle-shell spawns a separate pi process per helper with `--mode rpc --session-dir <dir>` (`gentle-shell@ac67159:lib/agents-runner.ts:258-259`, `:501-502`). That directory is `<agent home>/gentle-agents/sessions` (`gentle-shell@ac67159:extensions/gentle-agents.ts:124-127`, `:1266`). The docs say: "Child sessions live under `~/.pi/agent/gentle-agents/sessions/`" **[gentle-shell]** (`gentle-shell@ac67159:docs/gentle-shell.md:233`).
+- **The main agent can reopen a finished helper.** The `subagent_continue` tool is described as "Resume a finished subagent task in its own session with a follow-up prompt." (`gentle-shell@ac67159:extensions/gentle-agents.ts:1615`). It refuses a task that is not finished or has no session path (`:1622`). Otherwise it relaunches the helper with `--session <sessionPath>` (`:1631`; `gentle-shell@ac67159:lib/agents-runner.ts:261`). This is a model tool: the main agent calls it, not the user. It is registered with `pi.registerTool` under the `subagent_` prefix (`gentle-shell@ac67159:extensions/gentle-agents.ts:62`, `:1402-1404`), and helper processes, which gentle-shell spawns with `GENTLE_PI_AGENTS_CHILD=1` (`gentle-shell@ac67159:lib/agents-runner.ts:216`, `:473`), do not register it (`gentle-shell@ac67159:extensions/gentle-agents.ts:152`, `:338-345`).
+- **The TUI does not resume a helper for the user.** In the agents overlay, "Open writes a markdown transcript for `$EDITOR`, not a resumed child session." **[gentle-shell]** (`gentle-shell@ac67159:docs/gentle-shell.md:227`).
+- **pi can open a session file by path.** `--session <path|id>` "Opens by file path, exact ID, or partial ID" (`pi@a13d35a:packages/coding-agent/docs/cli.md:90-91`). By default pi stores sessions under `~/.pi/agent/sessions/`, grouped by working directory (`pi@a13d35a:packages/coding-agent/docs/sessions.md:50`).
+
+`UNVERIFIED:` whether a user can reopen a helper session with `pi --session <helper session file>`. Checked: the docs above. Not run. `Inference:` (code read, not run) pi's `/resume` picker in the parent session does not list helpers. With the default session directory, the picker lists the current folder's sessions and `SessionManager.listAll()` (`pi@a13d35a:packages/coding-agent/src/modes/interactive/interactive-mode.ts:5636-5645`), and `listAll()` scans only the subdirectories of `<agent dir>/sessions` (`pi@a13d35a:packages/coding-agent/src/config.ts:607-608`; `pi@a13d35a:packages/coding-agent/src/core/session-manager.ts:1945-1956`). Helper sessions live in `<agent home>/gentle-agents/sessions` (above), outside that directory. The reviewer's reading, that a helper is a normal pi session the user could resume, is kept as **[community]** framing (context brief §8, Matrak, review of 2026-10-03). [Proposal 0003](07-proposals/0003-post-hoc-audit-by-questions.md) works out the requirements for an "Ask why" action, including a read-only run.
 
 ## Who it is for
 
 - **People who want to get work done without a terminal** **[maintainer]** (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:11`).
 - **Existing pi users**, who can reuse their sign-ins, models and chats; the mockup marks "Use my pi setup" as recommended **[maintainer]** (`gentle-shell-desktop@5ab4a00:README.md:25`; `gs-mockup.html:668-674`).
 - **People without pi, or who want a separate space** **[maintainer]** (`gentle-shell-desktop@5ab4a00:README.md:26`; `gs-mockup.html:677-687`).
-- **Teams sharing project settings?** Not established as an audience. The only source is example data on the mockup's Extensions screen, ".pi/settings.json (shared with your team)" (`gs-mockup.html:806`), and the mockup states "Content is example data." (`gs-mockup.html:462`) **[open question]**.
+- **People who use gentle-ai through other agents because the terminal holds them back** **[community]** (Matrak, review of 2026-10-03). The reviewer's argument: many people feel friction and lack confidence with the terminal. They use gentle-ai through other editors and agents instead; he names Cursor, Codex and Antigravity. The factual part is sourced: gentle-ai lists 17 integrations, including Pi, Codex, Cursor and Antigravity (`gentle-ai@ff77164:README.md:89-109`). The reviewer expects two benefits:
+  1. A better experience for this profile, and a way to attract people who do not adopt gentle-shell because of terminal friction.
+  2. A step toward eventually narrowing support to pi plus the two or three main agents, instead of keeping residual CLI agents. This is the reviewer's opinion, not maintainer intent. It implies a support-policy decision for gentle-ai, so it is listed as vision Q12.
+- **Teams that share project settings through the repository?** The mockup's Extensions screen shows two settings scopes: global, and "Per project … .pi/settings.json (shared with your team)" (`gs-mockup.html:802-806`). In pi, `.pi/settings.json` is the project-level settings file (`pi@a13d35a:packages/coding-agent/docs/configuration.md:30`). `Inference:` because it sits inside the project folder, it can be committed and shared with everyone who works on the repo. The mockup states "Content is example data." (`gs-mockup.html:462`), so this line does not establish teams as an audience. Open question, listed as vision Q13: is team-shared project configuration a target use case for the app? **[open question]**
 - **How accessible versus how complete** is unresolved. DanielOtero31 recalled the maintainer saying on a stream the day before that "la idea es que fuera más accesible pero que no tendrá tantas opciones como el gentle-pi" (the idea was for it to be more accessible but without as many options as gentle-pi), and asked whether that was right or whether it would be full-featured. This is second-hand evidence of the maintainer's leaning; he did not answer in the thread **[open question]** (Discord, DanielOtero31, 2026-09-26).
 
 ## What sets it apart
@@ -97,6 +109,14 @@ The sources say little about other apps. This section stays within what they say
   - The concept mockup surfaces gentle-shell's harness in the window: ODD (`gs-mockup.html:617-644`, `:822`), helpers (`:522`, `:545-549`), review state (`:643`, `:822`) and the active profile (`:819`) **[maintainer]** (mockup intent). gentle-shell names ODD, subagents and native review in its package description (`gentle-shell@1162ce9:package.json:4`) and profiles in its README (`gentle-shell@1162ce9:README.md:167`) **[gentle-shell]**.
   - Helpers stay tied to their chat **[maintainer]** (P4).
   - It sits on the user's own pi setup without editing it **[maintainer]**, **[gentle-shell]** (P3).
+- **A workflow that teaches, can be audited and can be customized** **[community]** (Matrak, review of 2026-10-03). The reviewer's argument: the user can see what runs under a request (ODD, RDD, strict TDD), audit it and customize it. The sources say these parts exist in gentle-shell 4.0.0 **[gentle-shell]**:
+  - **Teaching:** the el Gentleman persona "Makes Pi behave like a senior architect and teacher, not a generic chatbot." (`gentle-shell@ac67159:docs/readme-reference.md:103`).
+  - **A visible workflow:** "A workflow you can inspect." (`gentle-shell@ac67159:README.md:35`). ODD is "the everyday path"; substantial work gets one feature document so "progress, evidence, and the next step survive an interruption" (`gentle-shell@ac67159:README.md:127`).
+  - **Review:** native review "returns risk-scoped evidence" and "You still decide what happens next in your repository." (`gentle-shell@ac67159:README.md:137`). RDD is opt-in, through `/gentle:review-mode enable` (`gentle-shell@ac67159:README.md:291`).
+  - **Strict TDD:** "Enabled TDD requires observed evidence; a test command alone does not enable it." (`gentle-shell@ac67159:docs/readme-reference.md:107`).
+  - **Customization:** named profiles route models and effort, and a repository can pin its profile (`gentle-shell@ac67159:README.md:163-167`). `/gentle:models` finds project and user agent definitions (`gentle-shell@ac67159:docs/readme-reference.md:712-718`).
+
+  `Inference:` P7 (visible evidence), P9 (teaching) and P10 (asking a finished helper why) are where the desktop could show this. The reviewer contrasts this with Codex, where in his view the user does not know what runs under a request. That is his opinion: no source in the corpus describes how Codex works, so this page makes no feature comparison.
 
 ## Open questions for the maintainer
 
@@ -115,6 +135,8 @@ Decisions the corpus found unrecorded that change what the product is. The archi
 | Q9 | Are "beyond the terminal" ideas (P10) in scope, and is mobile or remote access in scope? | Decides whether P9 and P10 become principles. | context brief §2; Discord, Rafael The Hutt, 2026-09-27 |
 | Q10 | What is the product called? | The corpus says "Gentle Desktop", the Discord thread's title. The maintainer's documents say "Gentle Shell Desktop" and "the Gentle Shell desktop app" (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:1`; `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m2-helpers.md:1`; `gentle-shell-desktop@5ab4a00:README.md:3`). The mockup window is labelled "Gentle Shell desktop" (`gs-mockup.html:465`), and the mockup and the built app show "gentle shell" (`gs-mockup.html:468`, `:654`; `gentle-shell-desktop@5ab4a00:README.md:55`). The repo is `gentle-shell-desktop`. | — |
 | Q11 | Do you accept P1 to P10 as written? | This page is a draft until validated. | — |
+| Q12 | Is the desktop meant to serve people who use gentle-ai through other agents because of terminal friction, and is it a step toward narrowing gentle-ai's support to pi plus two or three main agents? | The second part is a support-policy decision for gentle-ai, which lists 17 integrations today. | Matrak, review of 2026-10-03 **[community]**; `gentle-ai@ff77164:README.md:89-109` |
+| Q13 | Is team-shared project configuration (`.pi/settings.json` in the repository) a target use case? | Decides whether the settings and extensions screens must show which changes reach teammates. | `gs-mockup.html:802-806` (example data); `pi@a13d35a:packages/coding-agent/docs/configuration.md:30` |
 
 ## Sources
 
@@ -130,9 +152,15 @@ Decisions the corpus found unrecorded that change what the product is. The archi
 - `gentle-shell@1162ce9:docs/readme-reference.md`
 - `gentle-shell@1162ce9:package.json`
 - GitHub repository description of `Gentleman-Programming/gentle-shell`, via `gh repo view --json description` on 2026-10-01.
+- gentle-shell 4.0.0 (added 2026-10-03): `gentle-shell@ac67159:README.md`, `gentle-shell@ac67159:docs/readme-reference.md`, `gentle-shell@ac67159:docs/gentle-shell.md`, `gentle-shell@ac67159:extensions/gentle-agents.ts`, `gentle-shell@ac67159:lib/agents-runner.ts`
+
+**pi and gentle-ai** (added 2026-10-03)
+- `pi@a13d35a:packages/coding-agent/docs/cli.md`, `pi@a13d35a:packages/coding-agent/docs/sessions.md`, `pi@a13d35a:packages/coding-agent/docs/configuration.md`
+- `gentle-ai@ff77164:README.md`
 
 **Community**
 - Context brief §2 and §3 (Matrak), the corpus working brief (not in the repo).
+- Matrak's review of this page, 2026-10-03 (context brief §8): P10 means a finished helper; the audience of people who use gentle-ai through other agents; the "teaches, auditable, customizable" differentiator.
 - Discord thread, members other than the maintainer: memoTux (2026-09-26, 2026-09-30), DanielOtero31 (2026-09-26), vudumstead (2026-09-27), Rafael The Hutt (2026-09-27), gc (2026-09-29).
 
 **Corpus**
