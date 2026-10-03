@@ -32,7 +32,7 @@ Same as the corpus feature: English artifacts, evidence for every claim (`repo@s
 - [x] R4 Version sweep of 01, 02, 03, 04, 05, 06, 08, 09, CONTRIBUTING per the impact map. Route: delegated writers (sequential) + verifiers.
 - [x] R5 Consistency pass, index and link check. Route: delegated writer + scripted checks.
 - [x] R6 Spanish translation update of every changed file. Route: translators + fidelity verifiers + scripted structure/link checks.
-- [x] R7 Concept mockup v2 check against the refreshed corpus (the concept mockup v2, community concept; to be added under `docs/assets/mockup-v2/`). Route: delegated checker, then corrections if needed.
+- [x] R7 Concept mockup v2 check against the refreshed corpus (the concept mockup v2, community concept; added later under `docs/assets/mockup-v2/`). Route: delegated checker, then corrections if needed.
 
 ## Acceptance criteria
 
@@ -52,5 +52,5 @@ Same as the corpus feature: English artifacts, evidence for every claim (`repo@s
 - R4 closed: R4b correction 6/6 + optional (issue #23 versions re-checked on GitHub by the parent); R4c verifier PASS-WITH-FIXES (0 wrong, counts verified), fixes applied together with R5.
 - R5: consistency pass over 32 files — 75 intra-corpus line citations checked (2 stale fixed), 548 links 0 broken (parent re-ran the link script), old pins only in comparisons/legends (vision current-fact citations moved to ac67159 after a quote-identity script), index statuses match, qualified IDs; no line count changed.
 - R6: docs-es updated incrementally (Spanish line N+2 ↔ English line N at 1dadd17; diff hunks applied bottom-up) in three sequential parts plus full translation of `10-platforms.md`; part 1 verifier PASS-WITH-FIXES (1 term fixed), part 2 PASS (316 lines, 0 defects), part 3 verifier running; link remap 146 targets → 548 links resolved, 0 unresolved; parity script 32/32 pairs = English + 2 lines. docs-es is not versioned.
-- R7: the concept mockup v2 (community concept; to be added under `docs/assets/mockup-v2/`; not versioned yet) — impact check: 322 citations, none broken, 39 moved, 32 changed meaningfully; 16/17 content items applied (V19 history drawing left as a gap); independent verifier PASS-WITH-FIXES (0 wrong/invented/stale; 4 minor fixed by the parent); `:root` byte-identical, 19 SCR reachable, 659 citations 0 bad, headless Chromium without page errors.
+- R7: the concept mockup v2 (community concept; added later under `docs/assets/mockup-v2/`) — impact check: 322 citations, none broken, 39 moved, 32 changed meaningfully; 16/17 content items applied (V19 history drawing left as a gap); independent verifier PASS-WITH-FIXES (0 wrong/invented/stale; 4 minor fixed by the parent); `:root` byte-identical, 19 SCR reachable, 659 citations 0 bad, headless Chromium without page errors.
 - Pending commit (2): R4c files — "docs: refresh UX, proposals, team and roadmap to the new pins". Pending commit (3): this feature document.

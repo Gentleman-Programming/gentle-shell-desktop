@@ -419,7 +419,7 @@ Within each group, the order is the suggested sequence.
 
 ## Findings added after the refresh
 
-Added on 2026-10-03, after the concept mockup v2 scrollbar work in a community session exposed them. They are appended here so that line citations into the sections above stay valid; they belong to the Hygiene group of [Recommendations and order](#recommendations-and-order).
+Added on 2026-10-03, after the [concept mockup v2](../assets/mockup-v2/gs-mockup-corpus.html) scrollbar work in a community session exposed them. They are appended here so that line citations into the sections above stay valid; they belong to the Hygiene group of [Recommendations and order](#recommendations-and-order).
 
 ### A20. Chromium ignores the WebKit scrollbar rules
 
