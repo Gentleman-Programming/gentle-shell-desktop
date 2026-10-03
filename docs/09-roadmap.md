@@ -297,7 +297,7 @@ A quick win here is a change that is **desktop-only** (no upstream change), **ne
 
 ### QW-11. Issue forms and CONTRIBUTING
 
-- **Files.** `gentle-shell-desktop@5ab4a00:.github/ISSUE_TEMPLATE/bug_report.yml:2`, `:30`, `:57` and `feature_request.yml:2` still name gentle-pi. `CONTRIBUTING.md` does not exist on `main`; a skeleton was added on the corpus branch (commit `7f4d0f7`) and is corpus task C10 (`odd/tasks/docs-corpus.md:36`).
+- **Files.** `gentle-shell-desktop@5ab4a00:.github/ISSUE_TEMPLATE/bug_report.yml:2`, `:30`, `:57` and `feature_request.yml:2` still name gentle-pi. `CONTRIBUTING.md` does not exist on `main`; a skeleton was added on the corpus branch (commit `3ba60c0`) and is corpus task C10 (`odd/tasks/docs-corpus.md:36`).
 - **Why no decision.** The forms' names and descriptions call the product gentle-pi; the "gentle-pi version" field (`.github/ISSUE_TEMPLATE/bug_report.yml:57`) stays useful, because the launcher ships with gentle-pi 3.7.0 or newer (`gentle-shell-desktop@5ab4a00:README.md:12`). `Inference:` the forms also need a field for the desktop app's version, which they lack today. CONTRIBUTING can record the practice the maintainer's documents already record ([08 §Contribution flow](08-team.md#contribution-flow)) and the dev commands in the README (`gentle-shell-desktop@5ab4a00:README.md:95-116`). The open governance questions (who merges, strict TDD for contributors, RDD for community PRs; `08-team.md:316-318`) stay listed as open, not answered.
 - **Test-first.** Not applicable (documentation). Structural readback; the forms render in GitHub's issue chooser.
 
