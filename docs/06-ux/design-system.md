@@ -4,7 +4,7 @@
 
 The desktop has one hardcoded theme, Gentleman-Cute, as 16 color tokens and 3 font tokens in CSS (`D:renderer/shared/theme/tokens.css:8-29`). The mockup uses the same 15 colors under partly different names, plus a radius token. gentle-shell ships three themes; the desktop cannot switch between them today. Shared UI components are three atoms: Button, Pill and TextField.
 
-**Citation keys.** `D:` is `gentle-shell-desktop@5ab4a00:src/`. `GS:` is `gentle-shell@1162ce9:`. `gs-mockup.html:<line>` is the saved DOM of the concept mockup (intent, not spec). Every value below was copied from the cited line.
+**Citation keys.** `D:` is `gentle-shell-desktop@5ab4a00:src/`. `GS:` is `gentle-shell@ac67159:` (gentle-shell `main`, package version 4.0.0; `themes/` and the cited `package.json` lines are unchanged since `1162ce9`, 3.7.0). `gs-mockup.html:<line>` is the saved DOM of the concept mockup (intent, not spec). Every value below was copied from the cited line.
 
 ## Tokens
 
@@ -56,7 +56,7 @@ Fonts load from Google Fonts in both. Desktop: Space Grotesk 500, 600, 700; Inte
 | D2 | Heading color name | `--champagne`, unused in any desktop CSS file (0 `var(--champagne)` hits in `D:renderer/`) | `--heading` (`gs-mockup.html:20`) | Same value. |
 | D3 | Active accent | `--accent-active` for primary button hover (`D:renderer/shared/ui/atoms/Button.css:17-19`) | not in the mockup; `activePink` in the theme | Desktop adds a token from the theme. |
 | D4 | `--raised` source | `#180e15` | equals the mockup (`gs-mockup.html:8`); not in any `GS:themes/*.json` (searched `180e15`, 0 hits) | `Inference:` the desktop took this value from the mockup, not from the theme, although `tokens.css:4` says values are copied from the theme. |
-| D5 | Fixture drift | `gentleman-cute.json` maps `colors.userMessageBg` to `bgElement` and has no `userMessageBg` var | `GS:themes/Gentleman-Cute.json` adds var `userMessageBg: "#2A1523"` and maps the color to it | The desktop copy is not identical to the theme at `1162ce9` (compared with `jq -S` and `diff`; only these two lines differ). |
+| D5 | Fixture drift | `gentleman-cute.json` maps `colors.userMessageBg` to `bgElement` and has no `userMessageBg` var | `GS:themes/Gentleman-Cute.json` adds var `userMessageBg: "#2A1523"` and maps the color to it | The desktop copy is not identical to the theme at `ac67159` (compared with `jq -S` and `diff`; only these two lines differ). |
 | D6 | Font fallbacks | `Segoe UI` second; `Consolas` for mono | `Inter` second for display, `-apple-system` for body, `Menlo` for mono | Different fallback on systems without the web fonts. |
 | D7 | Base font size | none set (`tokens.css` and `App.css` set only `font-family`); sizes are `rem` | `body { font-size: 14px; line-height: 1.5 }` (`gs-mockup.html:35-36`) | `Inference:` desktop text renders against Chromium's 16px default, so it is larger than the mockup. |
 | D8 | Working state color | Pill `working` is amber (`D:renderer/shared/ui/atoms/Pill.css:18-21`), used both in the sidebar chat list (`D:renderer/features/chats/components/ChatListItem.tsx:7`, `:39`) and in the chat header (`D:renderer/features/conversation/components/ConversationHeader.tsx:27`) | Chat header pill is gold/pink (`.gs-pill.gs-working`, `gs-mockup.html:162-163`, used at `:519`); sidebar "working" is green text with a dot (`.gs-s.gs-live`, `:144-145`, used at `:481`) | Same state, different colors: one amber pill in the desktop, two treatments in the mockup. |
@@ -149,4 +149,4 @@ pi also has built-in `system`, `dark` and `light` themes ([inventory E6](../05-c
 
 ## Sources read
 
-`gentle-shell-desktop@5ab4a00`: `src/renderer/shared/theme/{tokens.css,theme.ts,theme.test.ts,gentleman-cute.json}`, `src/renderer/shared/ui/atoms/*`, `src/renderer/index.html`, `src/renderer/main.tsx`, `src/renderer/app/App.css`, component CSS cited above; `gs-mockup.html` L2–457; `gentle-shell@1162ce9:themes/*.json`, `package.json`.
+`gentle-shell-desktop@5ab4a00`: `src/renderer/shared/theme/{tokens.css,theme.ts,theme.test.ts,gentleman-cute.json}`, `src/renderer/shared/ui/atoms/*`, `src/renderer/index.html`, `src/renderer/main.tsx`, `src/renderer/app/App.css`, component CSS cited above; `gs-mockup.html` L2–457; `gentle-shell@ac67159:themes/*.json`, `package.json` (re-checked 2026-10-03: `git diff 1162ce9 ac67159 -- themes` is empty).

@@ -43,18 +43,18 @@ The seven areas come from this page's skeleton. Matrak's message named "UX, acce
 
 ### How inventory rows are allocated
 
-**[community proposal]** The [capability inventory](05-capability-inventory.md#coverage-summary) has 156 rows (81 pi core, 75 gentle-shell and gentle-ai). Its "Exposed over RPC" column decides who leads a row:
+**[community proposal]** The [capability inventory](05-capability-inventory.md#coverage-summary) has 158 rows (81 pi core, 77 gentle-shell and gentle-ai; recounted after the 2026-10-03 refresh, which added inventory V19 and Y6). Its "Exposed over RPC" column decides who leads a row:
 
 | "Exposed over RPC" | Rows | Lead | Partner |
 |---|---|---|---|
-| yes | 42 | Core (wire the data) | Frontend (surface) |
+| yes | 43 | Core (wire the data) | Frontend (surface) |
 | partial | 38 | Core | Upstream integration (missing part), Frontend |
-| no | 46 | Upstream integration | Core, Frontend once the upstream change lands |
+| no | 47 | Upstream integration | Core, Frontend once the upstream change lands |
 | host-side | 9 | Frontend | Core |
 | spawn | 13 | Core (spawn arguments) | Platform |
 | n/a | 8 | none for seven terminal-mechanics rows (inventory C16, U1, U3, U6, L10, L11, Y3; [screens §Rows with no screen](06-ux/screens.md#rows-with-no-screen)); inventory U7 folds into SCR-09, so Frontend surfaces it | — |
 
-Counts are the totals of the [coverage summary](05-capability-inventory.md#coverage-summary). Separately, 56 of the 156 rows have an "Upstream dependency" cell that does not start with "none". Counting rule for this page: split each row on unescaped `|`, take the sixth cell, test whether it starts with "none". One more row, inventory V1 ("none (queue); G2 (phase)"), names an upstream gap for part of the row, so a reading that counts any named dependency gives 57. Recount when the inventory changes.
+Counts are the totals of the [coverage summary](05-capability-inventory.md#coverage-summary). Separately, 56 of the 158 rows have an "Upstream dependency" cell that does not start with "none". Counting rule for this page: split each row on unescaped `|`, take the sixth cell, test whether it starts with "none". Five rows whose cell starts with "none" also name a gap: inventory V1 ("none (queue); G2 (phase)") depends on gap G2 for part of the row, and inventory S7, K3, K4 ("none (G7)", "none (see G7)") and L3 ("none (G10)") point at a gap. Counting inventory V1 as well gives 57; counting every cell that names a gap gives 61. Recount when the inventory changes.
 
 ### Core and RPC contract
 
@@ -74,27 +74,27 @@ Counts are the totals of the [coverage summary](05-capability-inventory.md#cover
 
 **Owner:** `TBD`.
 
-**Headcount: 2–3** **[community proposal]**. Rationale: 14 audit findings are in this scope (audit A1, A2, A3, A5, A6, A7, A8, A10, A11, A12, A13, A14, A17 in part, A19; counting rule: every finding named in the scope above, shared and partial ones included, as in the other areas), including the only High finding that blocks several surfaces (audit A3 is a main blocker of SCR-01 and SCR-06 in [screens §At a glance](06-ux/screens.md#at-a-glance); [audit §Risks](03-architecture/audit.md#risks-for-scaling-the-ui) ties it to several chats at once and the ODD panel), plus 93 inventory rows marked yes, partial or spawn. `Inference:` the multi-chat sequence is serial (audit A3, then A11, then A1), so more than three people would wait on each other.
+**Headcount: 2–3** **[community proposal]**. Rationale: 14 audit findings are in this scope (audit A1, A2, A3, A5, A6, A7, A8, A10, A11, A12, A13, A14, A17 in part, A19; counting rule: every finding named in the scope above, shared and partial ones included, as in the other areas), including the only High finding that blocks several surfaces (audit A3 is a main blocker of SCR-01 and SCR-06 in [screens §At a glance](06-ux/screens.md#at-a-glance); [audit §Risks](03-architecture/audit.md#risks-for-scaling-the-ui) ties it to several chats at once and the ODD panel), plus 94 inventory rows marked yes, partial or spawn. `Inference:` the multi-chat sequence is serial (audit A3, then A11, then A1), so more than three people would wait on each other.
 
 **Interfaces**
 - Frontend: the preload bridge types (`src/shared/bridge-types.ts`, ADR 0002) are the contract between the two.
 - Upstream integration: version handshake (gap G10, audit A8), real helper statuses (audit A5).
 - QA: fixtures and contract tests for the parser.
 
-**Skills:** Electron main process and IPC; strict TypeScript; Node child processes and line-delimited JSON; hexagonal architecture; vitest in the Node environment (`gentle-shell-desktop@5ab4a00:package.json:15`, `:39`; `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:26-27`); reading pi's RPC types (`pi@d86654a:packages/coding-agent/src/modes/rpc/rpc-types.ts`).
+**Skills:** Electron main process and IPC; strict TypeScript; Node child processes and line-delimited JSON; hexagonal architecture; vitest in the Node environment (`gentle-shell-desktop@5ab4a00:package.json:15`, `:39`; `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:26-27`); reading pi's RPC types (`pi@a13d35a:packages/coding-agent/src/modes/rpc/rpc-types.ts`, pi 1.0.0).
 
 ### Upstream integration (pi / gentle-shell / gentle-ai)
 
-gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`; [02-ecosystem](02-ecosystem.md)), so this area is titled by repository: pi, gentle-shell (package `gentle-pi`) and gentle-ai.
+gentle-pi and gentle-shell are one package (`gentle-shell@ac67159:package.json`, gentle-shell `main`, package version 4.0.0; [02-ecosystem](02-ecosystem.md)), so this area is titled by repository: pi, gentle-shell (package `gentle-pi`) and gentle-ai.
 
 **Scope**
 - **RPC gaps that need an upstream change.** Gaps G1–G8 and G10. `Inference` (from [02 §Where each change belongs](02-ecosystem.md#where-each-change-belongs), itself labelled `Inference`): gaps G3, G4, G5 and G10 belong in pi; gaps G2, G6, G7 and G8 in gentle-shell; gap G1 in gentle-shell plus an inbound channel that may also need pi.
 - **gentle-shell commands that fail under RPC.** Inventory P1, P3, Y4, R3 ([02 §Where each change belongs](02-ecosystem.md#where-each-change-belongs)).
 - **Launcher behavior.** Machine-readable setup progress for audit A9 (inventory L5), home semantics for audit A19.
 - **gentle-ai outside the session.** Inventory GA1–GA5 ([05](05-capability-inventory.md#gentle-ai-outside-the-session)).
-- **Inventory.** The 46 rows marked "no" over RPC ([allocation table](#how-inventory-rows-are-allocated)).
+- **Inventory.** The 47 rows marked "no" over RPC ([allocation table](#how-inventory-rows-are-allocated)).
 - **Pending prerequisites.** "Real data requires gentle-pi with `rpc-interactive-host` (gentle-shell #1328, #1329, P3 pending)" **[maintainer]** (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m2-helpers.md:59`). "P3" there is a gentle-pi work item the M2 document does not define further (`:69` names "the P3 branch"); it is not inventory P3.
-- **Following each repository's process.** pi needs prior maintainer approval before a PR, through a Contribution Proposal issue **[upstream]** (`pi@d86654a:CONTRIBUTING.md:31-34`, `:58`; [04 §How to propose contract changes upstream](04-rpc-contract.md#how-to-propose-contract-changes-upstream)). gentle-shell has no `CONTRIBUTING.md` at `1162ce9` and uses a feature-request form ([04](04-rpc-contract.md#gentle-shell-gentleman-programminggentle-shell-package-gentle-pi-owns-the-extension-level-additions)).
+- **Following each repository's process.** pi needs prior maintainer approval before a PR, through a Contribution Proposal issue **[upstream]** (`pi@a13d35a:CONTRIBUTING.md:31-34`, `:58`; [04 §How to propose contract changes upstream](04-rpc-contract.md#how-to-propose-contract-changes-upstream)). gentle-shell has no `CONTRIBUTING.md` at `ac67159` and uses a feature-request form ([04](04-rpc-contract.md#gentle-shell-gentleman-programminggentle-shell-package-gentle-pi-owns-the-extension-level-additions)).
 
 **Out of scope**
 - Consuming a new upstream capability in the desktop: Core and Frontend.
@@ -103,14 +103,14 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 
 **Owner:** `TBD`.
 
-**Headcount: 2–3** **[community proposal]**. Rationale: 9 upstream gaps across two repositories with different contribution rules, 46 inventory rows marked "no", and one Go codebase (gentle-ai) next to two TypeScript ones. `Inference:` throughput is gated by upstream review (pi auto-closes PRs from new contributors by default, `pi@d86654a:CONTRIBUTING.md:23`), so extra people would not speed this area up.
+**Headcount: 2–3** **[community proposal]**. Rationale: 9 upstream gaps across two repositories with different contribution rules, 47 inventory rows marked "no", and one Go codebase (gentle-ai) next to two TypeScript ones. `Inference:` throughput is gated by upstream review (pi auto-closes PRs from new contributors by default, `pi@a13d35a:CONTRIBUTING.md:23`), so extra people would not speed this area up.
 
 **Interfaces**
 - Core: agrees each new command, event or payload shape before it is proposed upstream.
 - Docs and community: links upstream issues from the roadmap.
 - QA: contract tests against published upstream schemas (for example `gentle-agents.activity/v1`, [04 §Versioning](04-rpc-contract.md#versioning-and-compatibility)).
 
-**Skills:** TypeScript in pi (`packages/coding-agent`) and in gentle-shell extensions; Go for gentle-ai (the inventory cites Go sources under its `GAI:` key, `gentle-ai@b388eb3:internal/...`, [05 §Method (gentle-shell part)](05-capability-inventory.md#method-gentle-shell-part); [02 §Versions](02-ecosystem.md#versions-and-compatibility)); pi's RPC mode and extension UI; writing short, well-evidenced upstream issues.
+**Skills:** TypeScript in pi (`packages/coding-agent`) and in gentle-shell extensions; Go for gentle-ai (the inventory cites Go sources under its `GAI:` key, `gentle-ai@ff77164:internal/...`, gentle-ai v4.0.0, [05 §Method (gentle-shell part)](05-capability-inventory.md#method-gentle-shell-part); [02 §Versions](02-ecosystem.md#versions-and-compatibility)); pi's RPC mode and extension UI; writing short, well-evidenced upstream issues.
 
 ### Frontend
 
@@ -165,7 +165,7 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 **Scope**
 - **Audit A16.** No CI, fixtures not taken from real output, no tests for the composition root, the Windows launcher paths and `HelpersSummary`, and no automated run against a real gentle-shell ([audit A16](03-architecture/audit.md#a16-test-coverage-and-ci-gaps)).
 - **Real fixtures and contract tests.** Record fixtures from a real gentle-shell run; add a contract test against the published activity example (audit A16 recommendation; ties to audit A5).
-- **Reproductions.** Reproduce audit A4 on Windows before any fix (audit recommendation [§3 Platform](03-architecture/audit.md#3-platform)); the root cause is likely, not reproduced (context brief §5).
+- **Reproductions.** Reproduce audit A4 on Windows before any fix (audit recommendation [§3 Platform](03-architecture/audit.md#3-platform)); desktop issue #23 reports the failure with reproduction steps, but the corpus authors have not reproduced it (audit A4).
 - **Smoke and browser checks.** `pnpm smoke:electron` launches the packaged main entry through Playwright (`gentle-shell-desktop@5ab4a00:README.md:107`); browser verification of UI work with screenshots as evidence **[maintainer]** (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:29`).
 
 **Out of scope**
@@ -186,7 +186,7 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 ### Platform and distribution
 
 **Scope**
-- **Audit findings.** Audit A4 (High: Windows `.cmd` spawn), audit A9 (first-run provisioning progress; with Upstream integration), audit A18 (launcher discovery and platform coverage), audit A15 (mock bridge in packaged builds; with Frontend).
+- **Audit findings and platform risks.** Audit A4 (High: Windows `.cmd` spawn), audit A9 (first-run provisioning progress; with Upstream integration), audit A18 (launcher discovery and platform coverage), audit A15 (mock bridge in packaged builds; with Frontend); the support matrix, WSL topologies and risks PLAT-01 to PLAT-11 in [10-platforms.md](10-platforms.md#risks). Two open upstream PRs are external contributions in this scope, not merged as of 2026-10-03: #26 (Windows spawner, audit A4; it leaves paths unquoted, PLAT-02) and #27 (cross-platform `dev:local-pi`, audit A18). Reviewing them belongs here; contributing a PR does not make anyone the area's owner.
 - **CI infrastructure.** The workflow audit A16 recommends, with a Windows job once audit A4 lands ([audit §3 Platform](03-architecture/audit.md#3-platform)).
 - **Packaging.** `electron-builder` targets for macOS, Windows and Linux (`gentle-shell-desktop@5ab4a00:package.json:18-21`). Only macOS (Apple silicon) is tested, and there are no signed builds (`gentle-shell-desktop@5ab4a00:README.md:7`).
 - **Runtime shipping.** Prepares evidence for the undecided "bundled vs external runtime" question (vision Q2, [ADR not recorded](03-architecture/adr/README.md#undecided--not-recorded)). The maintainer decides it.
@@ -197,7 +197,7 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 
 **Owner:** `TBD`.
 
-**Headcount: 1–2** **[community proposal]**. Rationale: four audit findings (one High), three OS targets with one tested, and no CI. `Inference:` access to Windows and Linux machines matters more than headcount.
+**Headcount: 1–2** **[community proposal]**. Rationale: four audit findings (one High), 11 platform risks (PLAT-01 to PLAT-11; three rated High, two of those only for one audience or topology), three OS targets with one tested, and no CI. `Inference:` access to Windows and Linux machines matters more than headcount.
 
 **Interfaces**
 - QA: CI jobs.
@@ -209,9 +209,9 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 ### Docs and community
 
 **Scope**
-- **This corpus.** `docs/00` to `docs/09`, the ADR index and the proposals index. Keeping the inventory current ([05 §How to keep this current](05-capability-inventory.md#how-to-keep-this-current)).
+- **This corpus.** `docs/00` to `docs/10`, the ADR index and the proposals index. Keeping the inventory current ([05 §How to keep this current](05-capability-inventory.md#how-to-keep-this-current)).
 - **Roadmap upkeep.** [09-roadmap](09-roadmap.md) is derived from the other pages (context brief §1). Presenting it is step 1 of the maintainer's process **[maintainer]** (Discord, Alan Buscaglia, 2026-09-27).
-- **Contributor infrastructure.** There is no `CONTRIBUTING` file (context brief §5). The issue forms still name gentle-pi (`gentle-shell-desktop@5ab4a00:.github/ISSUE_TEMPLATE/bug_report.yml:2`, `feature_request.yml:2`).
+- **Contributor infrastructure.** There is no `CONTRIBUTING` file on `main` (context brief §5). The issue forms still name gentle-pi (`gentle-shell-desktop@5ab4a00:.github/ISSUE_TEMPLATE/bug_report.yml:2`, `feature_request.yml:2`).
 - **Channels.** Keeping the [communication channels](#communication-channels) current, including the Discussions request.
 - **The proposals log.** The [index and the "mentioned, not proposed" list](07-proposals/README.md#mentioned-in-the-community-not-proposed).
 
@@ -221,9 +221,9 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 
 **Owner:** `TBD`.
 
-**Headcount: 1–2** **[community proposal]**. Rationale: eight top-level Markdown files (seven numbered pages and the index `README.md`) and three folders (`03-architecture`, `06-ux`, `07-proposals`) holding five more pages, 12 ADRs, three proposals and two indexes already exist; the open work is upkeep, contributor docs and two stale issue forms.
+**Headcount: 1–2** **[community proposal]**. Rationale: nine top-level Markdown files (eight numbered pages and the index `README.md`) and three folders (`03-architecture`, `06-ux`, `07-proposals`) holding five more pages, 12 ADRs, three proposals and two indexes already exist; the open work is upkeep, contributor docs and two stale issue forms.
 
-**Interfaces:** every area (each page has a home area: 03 and 04 with Core, 05 with Core and Upstream integration, 06 with UX). Maintainer: validation of the vision and the roadmap.
+**Interfaces:** every area (each page has a home area: 03 and 04 with Core, 05 with Core and Upstream integration, 06 with UX, 10 with Platform and distribution). Maintainer: validation of the vision and the roadmap.
 
 **Skills:** technical writing in English, neutral register **[maintainer]** (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:28`); citation discipline (context brief §6); Markdown and Mermaid; GitHub issue forms.
 
@@ -267,7 +267,7 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 | D7 | Ideas beyond parity are written as proposals; only the maintainer moves a proposal to `accepted` or `declined`. | **[community proposal]** | [07-proposals §Process](07-proposals/README.md#process); vision P10 |
 | D8 | Architecture questions the repo leaves open get an ADR only after a maintainer decision. | **[community proposal]** | [ADR "Undecided / not recorded"](03-architecture/adr/README.md#undecided--not-recorded) |
 | D9 | A change that belongs upstream goes to that repository through its own process: RPC protocol changes to pi, extension-level data and RPC fixes to gentle-shell, the managed companion stack to gentle-ai. | **[community proposal]**; the routing is `Inference:` as in its source | [02 §Where each change belongs](02-ecosystem.md#where-each-change-belongs) |
-| D10 | pi PRs need prior maintainer approval (`lgtm`). Separately, under "Where can I learn about plans?", the file says Earendil uses RFCs to discuss larger changes; that describes upstream practice, not a contributor rule. | **[upstream]** | `pi@d86654a:CONTRIBUTING.md:31-34`, `:58`; `:99-102` |
+| D10 | pi PRs need prior maintainer approval (`lgtm`). Separately, under "Where can I learn about plans?", the file says Earendil uses RFCs to discuss larger changes; that describes upstream practice, not a contributor rule. | **[upstream]** | `pi@a13d35a:CONTRIBUTING.md:31-34`, `:58`; `:99-102` |
 | D11 | Each area owner decides within the area's scope; anything that changes the vision, a screen's purpose, an ADR or another area's interface goes to the group, then to the maintainer. | **[community proposal]** | This page |
 | D12 | Owners self-nominate; the group confirms; the maintainer can veto. | **[community proposal]** | This page; owners are `TBD` |
 
@@ -279,8 +279,8 @@ gentle-pi and gentle-shell are one package (`gentle-shell@1162ce9:package.json`;
 | Puts the roadmap in the repo once the group presents it. | **[maintainer]** | Discord, Alan Buscaglia, 2026-09-27 |
 | Had his own M1 chain merged into the tracker and then `main` on his instruction. Review and merge of community PRs is an [open question](#open-questions). | **[maintainer]** (recorded practice, his own chain) | `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:71`, `:75` |
 | Gave instructions on verification and code structure for M1 (browser checks, React and structure rules). | **[maintainer]** | `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:29` |
-| Validates the vision, answers vision Q1–Q11, decides open ADR candidates, accepts or declines proposals. | **[community proposal]** | `00-vision.md:3-5`; [07-proposals §Process](07-proposals/README.md#process) |
-| gentle-shell "is built by Alan Buscaglia"; gentle-ai is "Built by Alan Buscaglia (Gentleman Programming)" and lists him under "Maintainer" in CONTRIBUTORS. | **[upstream]** for authorship | `gentle-shell@1162ce9:README.md:350`; `gentle-ai@6dee8f8:README.md:259`, `CONTRIBUTORS.md:5-9`; [02 §Ownership](02-ecosystem.md#ownership) |
+| Validates the vision, answers vision Q1–Q13, decides open ADR candidates, accepts or declines proposals. | **[community proposal]** | `00-vision.md:3-5`; [07-proposals §Process](07-proposals/README.md#process) |
+| gentle-shell "is built by Alan Buscaglia"; gentle-ai is "Built by Alan Buscaglia (Gentleman Programming)" and lists him under "Maintainer" in CONTRIBUTORS. | **[upstream]** for authorship | `gentle-shell@ac67159:README.md:351`; `gentle-ai@ff77164:README.md:306`, `CONTRIBUTORS.md:5-9`; [02 §Ownership](02-ecosystem.md#ownership) |
 
 `Inference:` because the maintainer also builds gentle-shell, the Upstream integration area will often be talking to him in a second role.
 
@@ -309,7 +309,7 @@ The maintainer's M1 and M2 documents record how the existing code was built **[m
 | Live voice room on Discord | **Proposed** for a group introduction meeting; no date is set in the thread. Two members already talked in a live channel. | Discord, Matrak, 2026-09-26 and 2026-09-27 ("lo que estuvimos hablando @memoTux y yo en un canal en vivo") |
 | GitHub Discussions on `Gentleman-Programming/gentle-shell-desktop` | **Requested, not enabled.** memoTux asked the maintainer to enable Discussions so the roadmap conversation lives there (Discord, memoTux, 2026-09-29). `gh api repos/Gentleman-Programming/gentle-shell-desktop --jq .has_discussions` returned `false` on 2026-10-01. | Discord, memoTux, 2026-09-29; GitHub API, 2026-10-01 |
 | GitHub issues and PRs on the same repository | **In use.** Issues are enabled (`has_issues: true`, GitHub API, 2026-10-01); the M2 planning issue is #2; M1 and M2 shipped as PR chains. | `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m2-helpers.md:3`, `:59`; `odd/tasks/desktop-m1-chat-core.md:75` |
-| Upstream trackers (pi, gentle-shell) | For changes that belong upstream (rule D9). pi sends questions to Discord, not issues. | [04 §How to propose contract changes upstream](04-rpc-contract.md#how-to-propose-contract-changes-upstream); `pi@d86654a:.github/ISSUE_TEMPLATE/config.yml:1-5` |
+| Upstream trackers (pi, gentle-shell) | For changes that belong upstream (rule D9). pi sends questions to Discord, not issues. | [04 §How to propose contract changes upstream](04-rpc-contract.md#how-to-propose-contract-changes-upstream); `pi@a13d35a:.github/ISSUE_TEMPLATE/config.yml:1-5` |
 
 ## Open questions
 
@@ -325,4 +325,4 @@ The maintainer's M1 and M2 documents record how the existing code was built **[m
 
 ## Sources read
 
-`/home/acester/bitacoras/gs-desktop/context-brief.md`; `/home/acester/bitacoras/gs-desktop/discord-thread.md`; `docs/00-vision.md`; `docs/02-ecosystem.md`; `docs/03-architecture/audit.md`; `docs/03-architecture/adr/README.md`; `docs/04-rpc-contract.md`; `docs/05-capability-inventory.md` (coverage summary, columns, row IDs); `docs/06-ux/screens.md`; `docs/06-ux/principles.md` (headings and U10–U11); `docs/06-ux/design-system.md` (headings and D-rows); `docs/07-proposals/README.md`; `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md`, `odd/tasks/desktop-m2-helpers.md`, `README.md`, `package.json`, `.github/ISSUE_TEMPLATE/`; GitHub API for `Gentleman-Programming/gentle-shell-desktop` (read-only, 2026-10-01).
+`/home/acester/bitacoras/gs-desktop/context-brief.md`; `/home/acester/bitacoras/gs-desktop/discord-thread.md`; `docs/00-vision.md`; `docs/02-ecosystem.md`; `docs/03-architecture/audit.md`; `docs/03-architecture/adr/README.md`; `docs/04-rpc-contract.md`; `docs/05-capability-inventory.md` (coverage summary, columns, row IDs); `docs/06-ux/screens.md`; `docs/06-ux/principles.md` (headings and U10–U11); `docs/06-ux/design-system.md` (headings and D-rows); `docs/07-proposals/README.md`; `docs/10-platforms.md` (risks); refreshed 2026-10-03 against pi `a13d35a` (1.0.0), gentle-shell `main` at `ac67159` (package version 4.0.0), gentle-ai `ff77164` (v4.0.0) and desktop PRs #26 and #27 on GitHub; `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md`, `odd/tasks/desktop-m2-helpers.md`, `README.md`, `package.json`, `.github/ISSUE_TEMPLATE/`; GitHub API for `Gentleman-Programming/gentle-shell-desktop` (read-only, 2026-10-01).

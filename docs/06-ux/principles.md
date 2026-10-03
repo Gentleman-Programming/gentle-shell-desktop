@@ -64,7 +64,7 @@ These principles turn the [product principles](../00-vision.md#product-principle
 **Rule.** Every running agent has a visible way to stop it. The user answers questions in place, can always answer in their own words, and decides what ships.
 
 - **Serves:** vision P6 **[gentle-shell]**, **[maintainer]** (mockup intent).
-- **Evidence:** "Esc to stop the agent" (`gs-mockup.html:568`); helper Stop (`gs-mockup.html:603`); question card with "Let me explain" (`gs-mockup.html:553-558`); "You still decide what happens next in your repository." (`gentle-shell@1162ce9:README.md:137`).
+- **Evidence:** "Esc to stop the agent" (`gs-mockup.html:568`); helper Stop (`gs-mockup.html:603`); question card with "Let me explain" (`gs-mockup.html:553-558`); "You still decide what happens next in your repository." (`gentle-shell@ac67159:README.md:137`).
 - **Today:** Escape aborts the main run (inventory C3); dialog cards answer all four dialog kinds (inventory C19, `D:renderer/features/conversation/components/DialogCard.tsx:39-45`). Helper Stop is disabled (`D:renderer/features/helpers/components/HelpersFooter.tsx:36`). The composer is read-only while the agent works (`D:renderer/features/conversation/components/Composer.tsx:53`), so steering (inventory C4) is not possible.
 - **Blocked by:** gap G1 (helper stop); audit A7 (steer and follow-up exist over RPC but the desktop declines them). Whether a prompt sent while working should queue, steer or be declined is open ([vision Q5](../00-vision.md#open-questions-for-the-maintainer)).
 
@@ -72,7 +72,7 @@ These principles turn the [product principles](../00-vision.md#product-principle
 
 **Rule.** Show where the work is (phase), what is planned (tasks), what proves it (commits, tests, checks) and the review state. Evidence is a fact with a source, not a claim.
 
-- **Serves:** vision P7, P1 **[maintainer]** (mockup intent), **[gentle-shell]** ("A workflow you can inspect.", `gentle-shell@1162ce9:README.md:35`).
+- **Serves:** vision P7, P1 **[maintainer]** (mockup intent), **[gentle-shell]** ("A workflow you can inspect.", `gentle-shell@ac67159:README.md:35`).
 - **Evidence:** ODD panel (`gs-mockup.html:610-647`); `ODD · RDD on` (`gs-mockup.html:822`).
 - **Today:** no ODD panel, no RDD state (inventory O2–O4, R1; inventory Q29–Q32).
 - **Blocked by:** gap G2 (structured ODD state), gap G7 (status data).
@@ -98,7 +98,7 @@ These principles turn the [product principles](../00-vision.md#product-principle
 
 **Rule (proposed).** The app explains what the agent is doing and why, in short plain sentences, so the user learns the workflow by watching it.
 
-- **Serves:** vision P9 **[community]**, supported by **[gentle-shell]** for the persona ("senior architect and teacher", `gentle-shell@1162ce9:docs/readme-reference.md:103`).
+- **Serves:** vision P9 **[community]**, supported by **[gentle-shell]** for the persona ("senior architect and teacher", `gentle-shell@ac67159:docs/readme-reference.md:103`).
 - **Evidence in the mockup** (`Inference:` read as teaching, not stated as such): the agent narrates its plan (`gs-mockup.html:535-536`, `:543`); step metadata such as "5 tasks", "tests · review" (`gs-mockup.html:620`, `:622`).
 - **Status:** proposed. Not maintainer intent until validated ([vision Q9](../00-vision.md#open-questions-for-the-maintainer)).
 
@@ -107,7 +107,7 @@ These principles turn the [product principles](../00-vision.md#product-principle
 **Rule (proposed).** Frequent CLI actions have a desktop shortcut: send, new line, stop, and over time model and effort, command palette, helpers view, stop helpers.
 
 - **Serves:** vision P1, P6 **[community]**.
-- **Why:** gentle-shell's 8 shortcuts and pi's keybindings are terminal key bindings; none reach an RPC host, so "the desktop needs its own" ([inventory, command and shortcut coverage](../05-capability-inventory.md#command-and-shortcut-coverage)).
+- **Why:** gentle-shell's 9 shortcuts (one of them, for `/gentle:stats`, only when `GENTLE_PI_STATS_VIEW_KEY` is set) and pi's keybindings are terminal key bindings; none reach an RPC host, so "the desktop needs its own" ([inventory, command and shortcut coverage](../05-capability-inventory.md#command-and-shortcut-coverage)).
 - **Evidence:** the mockup shows three hints (`gs-mockup.html:568`); the desktop implements the same three (`D:renderer/features/conversation/components/Composer.tsx:30-37`, `:61`).
 - **Not parity of bindings.** `Inference:` matching the terminal's exact keys is not required; several (`ctrl+c`, `ctrl+d`, `ctrl+z`) mean other things in a desktop app. Which actions get shortcuts is a design decision for the team.
 
@@ -134,4 +134,4 @@ These principles turn the [product principles](../00-vision.md#product-principle
 
 ## Sources read
 
-`docs/00-vision.md`; `gs-mockup.html` L4–909; `gentle-shell-desktop@5ab4a00`: `odd/tasks/desktop-m1-chat-core.md`, `odd/tasks/desktop-m2-helpers.md`, `README.md`, `src/renderer/**`, `src/main/domain/session/sessionList.ts`; `gentle-shell@1162ce9:README.md`, `docs/readme-reference.md`; Discord thread (saved copy).
+`docs/00-vision.md`; `gs-mockup.html` L4–909; `gentle-shell-desktop@5ab4a00`: `odd/tasks/desktop-m1-chat-core.md`, `odd/tasks/desktop-m2-helpers.md`, `README.md`, `src/renderer/**`, `src/main/domain/session/sessionList.ts`; `gentle-shell@ac67159:README.md`, `docs/readme-reference.md` (gentle-shell `main` at `ac67159`, package version 4.0.0; refreshed 2026-10-03); `docs/05-capability-inventory.md` (command and shortcut coverage); Discord thread (saved copy).

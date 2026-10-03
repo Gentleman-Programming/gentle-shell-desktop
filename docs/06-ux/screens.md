@@ -97,7 +97,7 @@ Solid border: shown in the mockup. Dashed border: no mockup, derived from the in
 | Interactions | Send, new line, stop (Esc); answer select/confirm/input/editor cards; open the Helpers pane. `Inference:` steer or queue while working, attach images, `@` file references, copy a message, expand tool and thinking blocks (tool cards: inventory V15, I5), compact now with optional instructions (inventory K1). |
 | Today | Header with title, Working pill and Chat/Helpers tabs (`D:renderer/features/conversation/components/ConversationHeader.tsx:23-37`); error line (`D:renderer/features/conversation/components/StatusLine.tsx:10-17`); helpers strip (`D:renderer/features/conversation/components/HelpersStrip.tsx:17-27`); Markdown thread (inventory C21); dialog cards for four kinds (`D:renderer/features/conversation/components/DialogCard.tsx:39-45`); composer read-only while working, with Enter, Shift+Enter and Esc (`D:renderer/features/conversation/components/Composer.tsx:30-37`, `:53`, `:61`). |
 | Mockup intent | Title plus "Working on task 3" pill and tabs (`gs-mockup.html:517-523`); timestamped messages (`:527-544`); helpers under the message that started them (`:545-550`); question card with a primary option and "Let me explain" (`:553-558`); composer and three hints (`:563-568`). |
-| Blockers | Audit A7 / inventory C4 (steer and follow-up declined while working; open question [vision Q5](../00-vision.md#open-questions-for-the-maintainer)); audit A6 (non-assistant messages dropped, so inventory A7 results, R2 reminders and V17 cards never show); inventory C17, C18 (tool parts and thinking not rendered, so inventory V15 and I5 tool cards have nothing to show); inventory C20 (`notify` ignored, so most `/gentle:*` output is lost, inventory V18); inventory I10 (option descriptions lost over RPC); inventory K1 (`compact` exists over RPC; no desktop action, inventory Q4); audit A12 (dialog timeouts); audit A13 (previous thread stays visible while switching). Helpers cannot sit under their message: the activity payload has no message linkage (`D:renderer/features/conversation/components/HelpersStrip.tsx:9-16`). |
+| Blockers | Audit A7 / inventory C4 (steer and follow-up declined while working; open question [vision Q5](../00-vision.md#open-questions-for-the-maintainer)); audit A6 (non-assistant messages dropped, so inventory A7 results, R2 reminders and V17 cards never show; since gentle-shell 4.0.0 an idle parent is also woken by a user-role message, which `Inference:` (not run) is dropped live too, inventory A7); inventory C17, C18 (tool parts and thinking not rendered, so inventory V15 and I5 tool cards have nothing to show); inventory C20 (`notify` ignored, so most `/gentle:*` output is lost, inventory V18); inventory I10 (option descriptions lost over RPC); inventory K1 (`compact` exists over RPC; no desktop action, inventory Q4); audit A12 (dialog timeouts); audit A13 (previous thread stays visible while switching). Helpers cannot sit under their message: the activity payload has no message linkage (`D:renderer/features/conversation/components/HelpersStrip.tsx:9-16`). |
 
 ### SCR-03. Helpers pane
 
@@ -152,12 +152,12 @@ Solid border: shown in the mockup. Dashed border: no mockup, derived from the in
 | Aspect | Detail |
 |---|---|
 | Purpose | Sign in to subscriptions, add API keys and local models, choose the default model for new chats (UX U7, U8). |
-| Inventory rows | M1, M2, M4, M7, M8, M9, M10, M11, M12, I6, V4 |
-| States | Connected providers. Providers to add. Signing in (OAuth in progress). Error. Usage per subscription (inventory V4, not in the mockup). |
+| Inventory rows | M1, M2, M4, M7, M8, M9, M10, M11, M12, I6, V4, V19 |
+| States | Connected providers. Providers to add. Signing in (OAuth in progress). Error. Usage per subscription (inventory V4, not in the mockup). `Inference:` usage history across chats, per model (inventory V19, `/gentle:stats`, not in the mockup; it could also sit beside the chat statistics of SCR-12). |
 | Interactions | Sign in, sign out, add key, add local server, manage, change default model. `Inference:` mark models for cycling as favorites (inventory M4). |
 | Today | None. First run only checks that `auth.json` and `models.json` exist (inventory M7, M9). |
 | Mockup intent | Connected list with sign-out and manage (`gs-mockup.html:698-712`); "Add a provider" list (`:714-726`); default model with effort and profile (`:729-731`); "Where this lives" with file paths and "Your vanilla pi untouched" (`:733-739`). |
-| Blockers | Gap G3 (no sign-in command); gap G4 (no persisted default); inventory M4 (no RPC command sets the models used for cycling; `cycle_model` only reports `isScoped`); the RPC-only vs in-process choice ([vision Q4](../00-vision.md#open-questions-for-the-maintainer), audit A1, A2). |
+| Blockers | Gap G3 (no sign-in command; since pi 1.0.0 the interactive `/login` ends with "Sign in with Radius" and then offers to add the Radius MCP server, inventory M7, which is input for this screen, not a requirement); gap G4 (no persisted default); inventory V19 (the `/gentle:stats` panel is TUI-only and under RPC only sends a `notify`; `Inference:` the desktop could aggregate the session files the panel reads); inventory M4 (no RPC command sets the models used for cycling; `cycle_model` only reports `isScoped`); the RPC-only vs in-process choice ([vision Q4](../00-vision.md#open-questions-for-the-maintainer), audit A1, A2). |
 
 ### SCR-08. Extensions
 
@@ -181,7 +181,7 @@ Solid border: shown in the mockup. Dashed border: no mockup, derived from the in
 | Interactions | Use my pi setup; Keep it separate; Retry. |
 | Today | Title, lead, detection card, two options, fine print, Retry on error (`D:renderer/features/first-run/components/FirstRun.tsx:29-75`). The app chooses this screen from `setupStatus()` (`D:renderer/app/App.tsx:37-48`). |
 | Mockup intent | Same structure (`gs-mockup.html:651-689`). The mockup adds "the app runs its own copy of pi, so nothing else has to be installed" (`:687`), which the desktop omits (`D:renderer/features/first-run/components/FirstRun.tsx:73-75`); this is intent only ([vision Q2](../00-vision.md#open-questions-for-the-maintainer)). |
-| Blockers | Audit A9 / inventory L5 (the first chat in a new isolated home waits for provisioning with no progress); audit A19 and inventory L2 (two persisted home choices); inventory L1 caveat (`GENTLE_SHELL_HOME` handling); audit A4 (Windows likely fails to spawn the launcher at all). |
+| Blockers | Audit A9 / inventory L5 (the first chat in a new isolated home waits for provisioning with no progress); audit A19 and inventory L2 (two persisted home choices); inventory L1 caveat (`GENTLE_SHELL_HOME` handling); audit A4 (Windows fails to spawn the launcher, as a tester reports in desktop issue #23; open PR #26, not merged as of 2026-10-03, leaves paths unquoted, PLAT-02 in [10-platforms](../10-platforms.md#risks)). |
 
 ## Screens derived from the inventory
 
@@ -311,7 +311,7 @@ None of these has a mockup. They exist because the inventory lists capabilities 
 
 Every inventory row is either on a screen above or listed here (checked by diffing the row IDs of the [capability inventory](../05-capability-inventory.md) against this page).
 
-- Terminal mechanics with no GUI meaning, or work that happens inside gentle-shell: inventory C15 (window close covers it), C16, U1, U3, U6, L6, L8 (developer option at most), L10, L11, O1, Y3, E3 (spawn-only `--extension` flags; developer option at most), S18 (spawn-only `--session-id`; deep links at most), V11 (startup banner; splash at most).
+- Terminal mechanics with no GUI meaning, or work that happens inside gentle-shell: inventory C15 (window close covers it), C16, U1, U3, U6, L6, L8 (developer option at most), L10, L11, O1, Y3, Y6 (a prompt instruction, not enforced; `Inference:` shown as guidance at most), E3 (spawn-only `--extension` flags; developer option at most), S18 (spawn-only `--session-id`; deep links at most), V11 (startup banner; splash at most).
 - Covered by other rows: inventory GA4 (the gentle-ai skill-registry and CodeGraph CLI; the inventory notes it is covered by inventory I3, on SCR-08 and SCR-13, and inventory I5, on SCR-02).
 - Small additions to SCR-02: inventory C13, U2 and U5 (external editor, find in chat, shortcut sheet).
 - Folded into other screens: inventory L5 and U7 fold into SCR-09; inventory A10 and the inventory A9 consent fold into SCR-02 as dialog cards.
@@ -324,4 +324,4 @@ Every inventory row is either on a screen above or listed here (checked by diffi
 
 ## Sources read
 
-`gs-mockup.html` L459–909; `gentle-shell-desktop@5ab4a00:src/renderer/**`, `src/shared/bridge-types.ts`, `src/main/domain/session/sessionList.ts`, `src/main/domain/rpc/chatReducer.ts` (via 04); `docs/04-rpc-contract.md`, `docs/05-capability-inventory.md`, `docs/03-architecture/audit.md`, `docs/00-vision.md`.
+`gs-mockup.html` L459–909; `gentle-shell-desktop@5ab4a00:src/renderer/**`, `src/shared/bridge-types.ts`, `src/main/domain/session/sessionList.ts`, `src/main/domain/rpc/chatReducer.ts` (via 04); `docs/04-rpc-contract.md`, `docs/05-capability-inventory.md`, `docs/03-architecture/audit.md`, `docs/00-vision.md`, `docs/10-platforms.md` (refreshed to pi 1.0.0 and gentle-shell `main` at `ac67159`, package version 4.0.0, on 2026-10-03).
