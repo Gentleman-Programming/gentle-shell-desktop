@@ -1,6 +1,6 @@
 # Gentle Shell Desktop: documentation corpus refresh (2026-10-03)
 
-Feature document (ODD). Repository: Gentleman-Programming/gentle-shell-desktop (community fork `matraket/gentle-shell-desktop`). Branch: `docs/corpus` (continues the corpus feature, `odd/tasks/docs-corpus.md`). Locator: `odd/tasks/docs-corpus-refresh.md`. Engram mirror: `odd/docs-corpus-refresh/tasks` (project `gentle-shell-desktop`).
+Feature document (ODD). Repository: Gentleman-Programming/gentle-shell-desktop (community fork `matraket/gentle-shell-desktop`). Branch: `docs/corpus` (continues the corpus feature, `odd/tasks/docs-corpus.md`). Locator: `odd/tasks/docs-corpus-refresh.md`.
 
 ## Objective
 
@@ -22,7 +22,7 @@ Out of scope: source code changes, pushing, opening PRs.
 
 ## Constraints
 
-Same as the corpus feature: English artifacts, evidence for every claim (`repo@sha:path:line`), `Inference:`/`UNVERIFIED:` labels, qualified IDs, provenance tags, writer → independent verifier → one bounded correction → parent spot-check → commit. RDD: the human's standing decision is to decline consent envelopes for this docs work; RDD stays enabled.
+Same as the corpus feature: English artifacts, evidence for every claim (`repo@sha:path:line`), `Inference:`/`UNVERIFIED:` labels, qualified IDs, provenance tags, writer → independent verifier → one bounded correction → parent spot-check → commit. The optional native review (RDD) was assessed per commit; the author chose not to run the optional reviews for this documentation work.
 
 ## Tasks
 
@@ -32,7 +32,7 @@ Same as the corpus feature: English artifacts, evidence for every claim (`repo@s
 - [x] R4 Version sweep of 01, 02, 03, 04, 05, 06, 08, 09, CONTRIBUTING per the impact map. Route: delegated writers (sequential) + verifiers.
 - [x] R5 Consistency pass, index and link check. Route: delegated writer + scripted checks.
 - [x] R6 Spanish translation update of every changed file. Route: translators + fidelity verifiers + scripted structure/link checks.
-- [x] R7 Concept mockup v2 check against the refreshed corpus (`~/bitacoras/gs-desktop/mockup-v2/`). Route: delegated checker, then corrections if needed.
+- [x] R7 Concept mockup v2 check against the refreshed corpus (the concept mockup v2, community concept; to be added under `docs/assets/mockup-v2/`). Route: delegated checker, then corrections if needed.
 
 ## Acceptance criteria
 
@@ -42,7 +42,7 @@ Same as the corpus feature: English artifacts, evidence for every claim (`repo@s
 - The mockup traceability table points only to existing corpus lines.
 
 ## Progress and evidence
-- R1: three impact maps (pi 1.0.0: RPC byte-identical, 4 behaviour changes, counts unchanged; gentle-shell 4.0.0: no RPC-facing file changed, +1 command/entry point/shortcut, bash no longer re-registered, helper wake via user-role message; gentle-ai v4.0.0: pi-mcp-adapter retired; desktop PRs #26/#27 open). Stored in the session scratchpad as working notes.
+- R1: three impact maps (pi 1.0.0: RPC byte-identical, 4 behaviour changes, counts unchanged; gentle-shell 4.0.0: no RPC-facing file changed, +1 command/entry point/shortcut, bash no longer re-registered, helper wake via user-role message; gentle-ai v4.0.0: pi-mcp-adapter retired; desktop PRs #26/#27 open). Kept as local working notes (not versioned).
 - R2: `docs/00-vision.md` corrected; reviewer opinions tagged [community], helper facts cited at gentle-shell@ac67159 and pi@a13d35a.
 - R3: `docs/10-platforms.md` + index entry. No pinned source states "WSL recommended" (only gentle-ai draft PRD 2026-02-27 ranks WSL 2 P1); recorded as [community] + UNVERIFIED. Pin precision verified: gentle-shell `ac67159` = main, 19 commits after release commit `1f35ab1`.
 - R4a: `docs/04-rpc-contract.md` and `docs/05-capability-inventory.md` re-pinned to pi@a13d35a, gentle-shell@ac67159, gentle-ai@ff77164 (885 citations mapped, 47 re-opened by hand); new inventory rows V19 and Y6; coverage recounted (gentle-shell + gentle-ai 77 rows). Independent verifier PASS-WITH-FIXES (pin precision: four post-release items worded as 4.0.0); one correction 8/8 applied with line counts unchanged (04: 322, 05: 713). Committed as `75fe5da` (after human approval of the commit prompt).
@@ -52,5 +52,5 @@ Same as the corpus feature: English artifacts, evidence for every claim (`repo@s
 - R4 closed: R4b correction 6/6 + optional (issue #23 versions re-checked on GitHub by the parent); R4c verifier PASS-WITH-FIXES (0 wrong, counts verified), fixes applied together with R5.
 - R5: consistency pass over 32 files — 75 intra-corpus line citations checked (2 stale fixed), 548 links 0 broken (parent re-ran the link script), old pins only in comparisons/legends (vision current-fact citations moved to ac67159 after a quote-identity script), index statuses match, qualified IDs; no line count changed.
 - R6: docs-es updated incrementally (Spanish line N+2 ↔ English line N at 1dadd17; diff hunks applied bottom-up) in three sequential parts plus full translation of `10-platforms.md`; part 1 verifier PASS-WITH-FIXES (1 term fixed), part 2 PASS (316 lines, 0 defects), part 3 verifier running; link remap 146 targets → 548 links resolved, 0 unresolved; parity script 32/32 pairs = English + 2 lines. docs-es is not versioned.
-- R7: mockup v2 (`~/bitacoras/gs-desktop/mockup-v2/`, not versioned) — impact check: 322 citations, none broken, 39 moved, 32 changed meaningfully; 16/17 content items applied (V19 history drawing left as a gap); independent verifier PASS-WITH-FIXES (0 wrong/invented/stale; 4 minor fixed by the parent); `:root` byte-identical, 19 SCR reachable, 659 citations 0 bad, headless Chromium without page errors.
+- R7: the concept mockup v2 (community concept; to be added under `docs/assets/mockup-v2/`; not versioned yet) — impact check: 322 citations, none broken, 39 moved, 32 changed meaningfully; 16/17 content items applied (V19 history drawing left as a gap); independent verifier PASS-WITH-FIXES (0 wrong/invented/stale; 4 minor fixed by the parent); `:root` byte-identical, 19 SCR reachable, 659 citations 0 bad, headless Chromium without page errors.
 - Pending commit (2): R4c files — "docs: refresh UX, proposals, team and roadmap to the new pins". Pending commit (3): this feature document.

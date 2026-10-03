@@ -1,6 +1,6 @@
 # Gentle Shell Desktop: documentation corpus
 
-Feature document (ODD). Repository: Gentleman-Programming/gentle-shell-desktop (community fork `matraket/gentle-shell-desktop`). Base: `main` (`5ab4a00`). Branch: `docs/corpus`, delivered as one draft PR to upstream. Locator: `odd/tasks/docs-corpus.md`. Engram mirror: `odd/docs-corpus/tasks` (project `gentle-shell-desktop`). Visual reference (concept mockup): https://claude.ai/artifact/CCpKaRTkrnDrWoErY27KEL
+Feature document (ODD). Repository: Gentleman-Programming/gentle-shell-desktop (community fork `matraket/gentle-shell-desktop`). Base: `main` (`5ab4a00`). Branch: `docs/corpus`, delivered as one draft PR to upstream. Locator: `odd/tasks/docs-corpus.md`. Visual reference (concept mockup): https://claude.ai/artifact/CCpKaRTkrnDrWoErY27KEL
 
 ## Objective
 

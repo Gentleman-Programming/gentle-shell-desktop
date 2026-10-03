@@ -1,6 +1,6 @@
 # Gentle Shell Desktop: host to gentle-shell channel question (2026-10-03)
 
-Feature document (ODD). Repository: Gentleman-Programming/gentle-shell-desktop (community fork `matraket/gentle-shell-desktop`). Branch: `docs/corpus`. Locator: `odd/tasks/docs-host-extension-channel.md`. Engram mirror: `odd/docs-host-extension-channel/tasks` (project `gentle-shell-desktop`).
+Feature document (ODD). Repository: Gentleman-Programming/gentle-shell-desktop (community fork `matraket/gentle-shell-desktop`). Branch: `docs/corpus`. Locator: `odd/tasks/docs-host-extension-channel.md`.
 
 ## Objective
 
@@ -21,14 +21,14 @@ Out of scope: source code changes, a decision on the question, pushing, opening 
 
 ## Constraints
 
-English artifacts; every claim cites `repo@sha:path:line`; `Inference:`/`UNVERIFIED:` labels; qualified IDs; no line shifts in files other documents cite by line unless every such citation is updated; references only from `~/git-projects/work-gh/gs-desktop-refs/{pi-v1.0.0,gentle-shell-4.0.0}` (never the user's working copies). Writer, independent verifier, one bounded correction, parent spot check, commit. RDD stays enabled; the human declines consent for this docs work.
+English artifacts; every claim cites `repo@sha:path:line`; `Inference:`/`UNVERIFIED:` labels; qualified IDs; no line shifts in files other documents cite by line unless every such citation is updated; references only from pinned reference checkouts (pi `a13d35a`, gentle-shell `ac67159`), never the author's local working copies (not used as sources). Writer, independent verifier, one bounded correction, parent spot check, commit. The optional native review (RDD) was assessed per commit; the author chose not to run the optional reviews for this documentation work.
 
 ## Tasks
 
 - [x] H1 Evidence map of host-extension channels in pi and gentle-shell. Route: delegated read-only explorer (mapping trigger: more than 5 sequential lookups across two repositories). Result: 5 corpus statements contradicted or incomplete (see Progress). Parent spot check passed: `pi@a13d35a:packages/coding-agent/src/modes/rpc/rpc-mode.ts:713-716`, `src/core/agent-session.ts:3359-3364`, `:1870-1888`.
 - [x] H2 English write: ADR README undecided row, cross-links, corrections from H1. Route: delegated writer (preparation trigger: reading that prepares the write). Result: 04 gains `### Host and extension channels` and `#### Alternatives for a host channel to gentle-shell features` after line 299 (322 → 376 lines; no citation points past `:299`); ADR README +1 row; in-place edits in 01, 02, 0002, 08, 09, CONTRIBUTING; inventory A4/A6 left as still accurate. Writer corrected 4 explorer citations while re-reading.
 - [x] H3 Independent verification of H2 against pi and gentle-shell. Route: delegated verifier, then one bounded correction. Verdict PASS-WITH-FIXES, 10 defects (2 wrong inbound-table claims: `compact` and `set_session_name` carry host text; missing outbound `sendUserMessage`/`setSessionName`; 2 missing custom message types; presence quote misattributed to the transport; 2 neutrality breaches; stale "six candidates" count in 08; 4 minor citation ranges). One correction round applied 10/10; 04 now 384 lines, other files keep their counts; citations into 04 stay at `:299` or earlier. Parent spot check passed (`pi@a13d35a:packages/coding-agent/src/modes/rpc/rpc-mode.ts:533-535` vs 04:321; ADR row wording neutral). EN links: 576 checked, 0 broken.
-- [x] H4 Spanish mirror in `docs-es/`, parity and link checks. Route: delegated writer plus parent checks (`parity.py`, `remap_links2.py`). Parity 32/32; ES links kept=576, unresolved=0; per-line code-span and label sets identical (writer's structural check). Parent fix: the ES self-reference to the "only formal interface" sentence now quotes the Spanish text at line 7.
+- [x] H4 Spanish mirror in `docs-es/`, parity and link checks. Route: delegated writer plus parent checks (a Spanish/English line-parity check and a relative-link remap and anchor check; local scripts, not versioned). Parity 32/32; ES links kept=576, unresolved=0; per-line code-span and label sets identical (writer's structural check). Parent fix: the ES self-reference to the "only formal interface" sentence now quotes the Spanish text at line 7.
 - [x] H5 Parent spot check, work-unit commit, RDD assess. EN links 576 checked, 0 broken. Commit: see Progress.
 
 ## Acceptance criteria
