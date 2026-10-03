@@ -11,7 +11,7 @@
 | **[maintainer]** | Stated in the maintainer's desktop repo (`README.md`, `electron-builder.yml`, `odd/tasks/`) or Discord messages. |
 | **[gentle-shell]** | gentle-shell's own README, docs, scripts and CI at gentle-shell `main` at `ac67159` (package version 4.0.0; 19 commits after the release commit `1f35ab1`). |
 | **[upstream]** | The own docs, release config and CI of pi (`pi@a13d35a`, 1.0.0), gentle-ai (`gentle-ai@ff77164`, v4.0.0) and engram (`engram@3951380`). |
-| **[community]** | Framing from community members (Matrak, context brief §8, 2026-10-03). |
+| **[community]** | Framing from community members (Matrak, [issue #28, "Author's framing: review of the vision (2026-10-03)"](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28)). |
 | `Inference:` | Reasoning from cited evidence, not a stated fact. |
 | `UNVERIFIED:` | Checked but not confirmed; the cell says what was checked. |
 
@@ -51,7 +51,7 @@ Each piece has four rows: what its **docs** say (a support statement, or only a 
 - **macOS and Linux** have release artifacts or a documented install for all four upstream pieces. CI is uneven: Linux CI exists for all four; macOS CI exists for gentle-shell and gentle-ai, only as a release-time binary smoke test for pi (`pi@a13d35a:.github/workflows/build-binaries.yml:3-7`, `:139`), and not at all for engram (its workflows use only `ubuntu-latest` and `windows-latest`). The desktop is the weak link: untested on Linux and Intel macOS.
 - **Windows native** is documented by pi, gentle-ai and engram, and provisioned and tested in CI by gentle-shell (support inferred, not stated in its README), with conditions the user must meet (Bash for pi, Go for gentle-shell's gentle-ai, antivirus friction for engram).
 - **WSL** is documented by pi and acknowledged by gentle-ai's `doctor` and file-mode errors. No project runs WSL in CI.
-- **[community]** Matrak's note says Windows is supported "native, or via WSL — recommended" (context brief §8). `UNVERIFIED:` no pinned source recommends WSL over native; the closest is gentle-ai's draft PRD priority table (`gentle-ai@ff77164:PRD.md:78-79`), a planning document dated 2026-02-27, whose open question 3 asks how much to invest in native Windows (`PRD.md:1363`).
+- **[community]** Matrak's note says Windows is supported "native, or via WSL — recommended" ([issue #28, "Author's framing: review of the vision (2026-10-03)"](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28), item 5). `UNVERIFIED:` no pinned source recommends WSL over native; the closest is gentle-ai's draft PRD priority table (`gentle-ai@ff77164:PRD.md:78-79`), a planning document dated 2026-02-27, whose open question 3 asks how much to invest in native Windows (`PRD.md:1363`).
 
 ## How each piece installs and runs
 
@@ -63,7 +63,7 @@ Each piece has four rows: what its **docs** say (a support statement, or only a 
 | **engram** | `go install …/v3/cmd/engram@latest`, or a downloaded zip added to `PATH` (`engram@3951380:docs/INSTALLATION.md:44-59`, `:99-105`). Data in `%USERPROFILE%\.engram` (`:130`). | Homebrew (stable v1.20.0 line) or release tarball (`README.md:136-142`; `docs/INSTALLATION.md:182-193`). | None at runtime; pure-Go SQLite (`docs/INSTALLATION.md:199-202`). |
 | **Desktop** | Run from source; `pnpm package` builds an unsigned package for the host OS (`gentle-shell-desktop@5ab4a00:README.md:7`, `:32-50`). | Same. | Node ≥ 22.19, pnpm 11, and `gentle-shell` on `PATH` or in `GENTLE_SHELL_BIN` (`README.md:11-17`; `src/main/adapters/launcherLocator.ts:19-23`). |
 
-`Inference:` a Windows desktop user must install, before the first chat: Node, Git for Windows (for pi's Bash), Go ≥ 1.25.10 (for gentle-shell's postinstall), then `npm i -g gentle-pi`. That is four terminal-driven prerequisites for an audience the desktop targets because of terminal friction (**[community]**, context brief §8).
+`Inference:` a Windows desktop user must install, before the first chat: Node, Git for Windows (for pi's Bash), Go ≥ 1.25.10 (for gentle-shell's postinstall), then `npm i -g gentle-pi`. That is four terminal-driven prerequisites for an audience the desktop targets because of terminal friction (**[community]**, [issue #28, "Author's framing: review of the vision (2026-10-03)"](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28), item 2).
 
 ## What the desktop must solve
 
@@ -102,7 +102,7 @@ Each piece has four rows: what its **docs** say (a support statement, or only a 
 
 - **The limitation.** gentle-ai reports that the clone-local review-mode path "cannot be made private" when "the filesystem hosting it does not persist POSIX permission modes (WSL DrvFS without the metadata option, exFAT, and SMB without POSIX extensions…)" (`gentle-ai@ff77164:internal/cli/review_mode.go:290-297`; repair text at `internal/reviewtransaction/rar_path_safety.go:70`). gentle-shell surfaces it as `candidate-owner-parent-chmod-ineffective` (`gentle-shell@ac67159:docs/readme-reference.md:528`).
 - **Default.** Microsoft documents DrvFS `metadata` as `disabled` by default ([wsl-config, automount options](https://learn.microsoft.com/en-us/windows/wsl/wsl-config)).
-- **Desktop impact.** `Inference:` a WSL user whose repository sits under `/mnt/c` cannot start an RDD review until they remount with `metadata` or move the repo. The mockup's status bar shows `ODD · RDD on` (context brief §3), so the desktop should show this error plainly, not as a generic failure. Microsoft also recommends keeping project files in the Linux file system when working from a Linux command line ([filesystems](https://learn.microsoft.com/en-us/windows/wsl/filesystems)).
+- **Desktop impact.** `Inference:` a WSL user whose repository sits under `/mnt/c` cannot start an RDD review until they remount with `metadata` or move the repo. The mockup's status bar shows `ODD · RDD on` (`gs-mockup.html:822`), so the desktop should show this error plainly, not as a generic failure. Microsoft also recommends keeping project files in the Linux file system when working from a Linux command line ([filesystems](https://learn.microsoft.com/en-us/windows/wsl/filesystems)).
 
 ### Packaging and signing
 
@@ -163,4 +163,4 @@ Each piece has four rows: what its **docs** say (a support statement, or only a 
 
 **Microsoft** (fetched 2026-10-03): [Working across file systems](https://learn.microsoft.com/en-us/windows/wsl/filesystems), [Advanced settings configuration](https://learn.microsoft.com/en-us/windows/wsl/wsl-config), [Basic commands](https://learn.microsoft.com/en-us/windows/wsl/basic-commands), [Run Linux GUI apps](https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps).
 
-**Corpus:** [ecosystem](02-ecosystem.md), [current architecture](03-architecture/current.md), [audit](03-architecture/audit.md) (A1, [A4](03-architecture/audit.md#a4-windows-cmd-launcher-spawned-without-a-shell), [A16](03-architecture/audit.md#a16-test-coverage-and-ci-gaps), [A18](03-architecture/audit.md#a18-launcher-discovery-and-platform-coverage)), [roadmap](09-roadmap.md) ([F2](09-roadmap.md#f2-platform-baseline-community-proposal), [QW-04](09-roadmap.md#qw-04-ci-workflow-audit-a16)), [team: Platform and distribution](08-team.md#platform-and-distribution), context brief §5, §7, §8.
+**Corpus:** [ecosystem](02-ecosystem.md), [current architecture](03-architecture/current.md), [audit](03-architecture/audit.md) (A1, [A4](03-architecture/audit.md#a4-windows-cmd-launcher-spawned-without-a-shell), [A16](03-architecture/audit.md#a16-test-coverage-and-ci-gaps), [A18](03-architecture/audit.md#a18-launcher-discovery-and-platform-coverage)), [roadmap](09-roadmap.md) ([F2](09-roadmap.md#f2-platform-baseline-community-proposal), [QW-04](09-roadmap.md#qw-04-ci-workflow-audit-a16)), [team: Platform and distribution](08-team.md#platform-and-distribution), [issue #28](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28), sections "Author's framing: facts checked before writing", "Pinned versions" and "Author's framing: review of the vision (2026-10-03)".

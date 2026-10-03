@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | Author | Matrak (community) |
-| Source | Conversation with Matrak, 2026-10-01; context brief §2 |
+| Source | Conversation with Matrak, 2026-10-01 (not published); [issue #28, "Author's framing: philosophy"](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28) |
 | Status | `proposed` (only the maintainer moves it to `accepted` or `declined`) |
 | Principles | vision P10 **[community]**; extends vision P6 **[gentle-shell]**, **[maintainer]** (mockup intent) |
 

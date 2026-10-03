@@ -233,7 +233,7 @@ A quick win here is a change that is **desktop-only** (no upstream change), **ne
 | QW-08 | Remove a dialog card when its timeout expires | audit A12 | Core, Frontend |
 | QW-09 | Close the maintainer's open follow-ups | M1 and M2 follow-ups | Core, Frontend |
 | QW-10 | Fix structure drift | audit A17 | Core, Frontend |
-| QW-11 | Issue forms and CONTRIBUTING | context brief §5; `08-team.md:214` | Docs and community |
+| QW-11 | Issue forms and CONTRIBUTING | [issue #28, "Author's framing: facts checked before writing"](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28); `08-team.md:214` | Docs and community |
 
 ### QW-01. Windows `.cmd` spawn (audit A4)
 
@@ -314,7 +314,7 @@ A quick win here is a change that is **desktop-only** (no upstream change), **ne
 
 ## Relation to the earlier community roadmap (roadmap.txt)
 
-memoTux wrote the first community roadmap, deduced from the README and the M1 and M2 documents (`roadmap.txt:3-7`). This page builds on it. Its claims were checked against the code and the maintainer's documents (context brief §5).
+memoTux wrote the first community roadmap, deduced from the README and the M1 and M2 documents (`roadmap.txt:3-7`). `roadmap.txt` is the file memoTux attached to the Discord thread "Gentle Desktop" (Gentleman Programming Discord) on 2026-09-29; every `roadmap.txt:<line>` citation in this page refers to that file. This page builds on it. Its claims were checked against the code and the maintainer's documents ([issue #28, "Author's framing: facts checked before writing"](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28)).
 
 | | What | Evidence |
 |---|---|---|
@@ -338,4 +338,4 @@ memoTux wrote the first community roadmap, deduced from the README and the M1 an
 
 ## Sources read
 
-`/home/acester/bitacoras/gs-desktop/context-brief.md`; `/home/acester/bitacoras/gs-desktop/roadmap/roadmap.txt`; `docs/README.md`, `docs/00-vision.md`, `docs/02-ecosystem.md`, `docs/03-architecture/audit.md`, `docs/03-architecture/adr/README.md`, `docs/04-rpc-contract.md` (gaps, upstream process), `docs/05-capability-inventory.md` (coverage summary, columns, row IDs and status cells), `docs/06-ux/screens.md`, `docs/06-ux/principles.md` and `design-system.md` (headings), `docs/07-proposals/` (index and headings), `docs/08-team.md`; `gentle-shell-desktop@5ab4a00:README.md`, `odd/tasks/desktop-m1-chat-core.md`, `odd/tasks/desktop-m2-helpers.md`, `package.json`, `.github/ISSUE_TEMPLATE/*.yml`, and the source files cited under [Quick wins](#quick-wins); `odd/tasks/docs-corpus.md` on `docs/corpus`; `gentle-shell@ac67159:lib/gentle-shell-launcher.ts:969-1019`, `tests/gentle-shell-launcher.test.ts` (search for `planSpawn`). Refresh of 2026-10-03: `docs/10-platforms.md` (risks, open questions), the refreshed `docs/00-vision.md`, `docs/02-ecosystem.md`, `docs/03-architecture/audit.md`, `docs/04-rpc-contract.md` and `docs/05-capability-inventory.md`; desktop PRs #26 and #27 and issues #23–#25 on GitHub; `pi@a13d35a:CONTRIBUTING.md`, `packages/coding-agent/src/core/session-manager.ts`.
+[issue #28](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28) ("Author's framing" sections); `roadmap.txt` (memoTux's attachment in the Discord thread "Gentle Desktop", 2026-09-29); `docs/README.md`, `docs/00-vision.md`, `docs/02-ecosystem.md`, `docs/03-architecture/audit.md`, `docs/03-architecture/adr/README.md`, `docs/04-rpc-contract.md` (gaps, upstream process), `docs/05-capability-inventory.md` (coverage summary, columns, row IDs and status cells), `docs/06-ux/screens.md`, `docs/06-ux/principles.md` and `design-system.md` (headings), `docs/07-proposals/` (index and headings), `docs/08-team.md`; `gentle-shell-desktop@5ab4a00:README.md`, `odd/tasks/desktop-m1-chat-core.md`, `odd/tasks/desktop-m2-helpers.md`, `package.json`, `.github/ISSUE_TEMPLATE/*.yml`, and the source files cited under [Quick wins](#quick-wins); `odd/tasks/docs-corpus.md` on `docs/corpus`; `gentle-shell@ac67159:lib/gentle-shell-launcher.ts:969-1019`, `tests/gentle-shell-launcher.test.ts` (search for `planSpawn`). Refresh of 2026-10-03: `docs/10-platforms.md` (risks, open questions), the refreshed `docs/00-vision.md`, `docs/02-ecosystem.md`, `docs/03-architecture/audit.md`, `docs/04-rpc-contract.md` and `docs/05-capability-inventory.md`; desktop PRs #26 and #27 and issues #23–#25 on GitHub; `pi@a13d35a:CONTRIBUTING.md`, `packages/coding-agent/src/core/session-manager.ts`.

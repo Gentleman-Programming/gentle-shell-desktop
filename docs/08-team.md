@@ -210,8 +210,8 @@ gentle-pi and gentle-shell are one package (`gentle-shell@ac67159:package.json`,
 
 **Scope**
 - **This corpus.** `docs/00` to `docs/10`, the ADR index and the proposals index. Keeping the inventory current ([05 §How to keep this current](05-capability-inventory.md#how-to-keep-this-current)).
-- **Roadmap upkeep.** [09-roadmap](09-roadmap.md) is derived from the other pages (context brief §1). Presenting it is step 1 of the maintainer's process **[maintainer]** (Discord, Alan Buscaglia, 2026-09-27).
-- **Contributor infrastructure.** There is no `CONTRIBUTING` file on `main` (context brief §5). The issue forms still name gentle-pi (`gentle-shell-desktop@5ab4a00:.github/ISSUE_TEMPLATE/bug_report.yml:2`, `feature_request.yml:2`).
+- **Roadmap upkeep.** [09-roadmap](09-roadmap.md) is derived from the other pages ([issue #28, "Author's framing: scope of the corpus"](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28)). Presenting it is step 1 of the maintainer's process **[maintainer]** (Discord, Alan Buscaglia, 2026-09-27).
+- **Contributor infrastructure.** There is no `CONTRIBUTING` file on `main` ([issue #28, "Author's framing: facts checked before writing"](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28)). The issue forms still name gentle-pi (`gentle-shell-desktop@5ab4a00:.github/ISSUE_TEMPLATE/bug_report.yml:2`, `feature_request.yml:2`).
 - **Channels.** Keeping the [communication channels](#communication-channels) current, including the Discussions request.
 - **The proposals log.** The [index and the "mentioned, not proposed" list](07-proposals/README.md#mentioned-in-the-community-not-proposed).
 
@@ -225,7 +225,7 @@ gentle-pi and gentle-shell are one package (`gentle-shell@ac67159:package.json`,
 
 **Interfaces:** every area (each page has a home area: 03 and 04 with Core, 05 with Core and Upstream integration, 06 with UX, 10 with Platform and distribution). Maintainer: validation of the vision and the roadmap.
 
-**Skills:** technical writing in English, neutral register **[maintainer]** (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:28`); citation discipline (context brief §6); Markdown and Mermaid; GitHub issue forms.
+**Skills:** technical writing in English, neutral register **[maintainer]** (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:28`); citation discipline ([issue #28, "Author's framing: corpus rules"](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28), rule 1); Markdown and Mermaid; GitHub issue forms.
 
 ### Cross-cutting concerns
 
@@ -299,7 +299,7 @@ The maintainer's M1 and M2 documents record how the existing code was built **[m
 | Receipt-driven development (RDD) on, with review consent pre-granted by the maintainer. `Inference:` the M1 and M2 documents cover only his own milestones, so the pre-granted consent is recorded for that work only | `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:31`; `odd/tasks/desktop-m2-helpers.md:26` |
 | Bugs reported through the bug report form | `gentle-shell-desktop@5ab4a00:README.md:66` |
 
-**Gaps in this flow today.** No CI runs these checks (audit A16), there is no contributor guide (context brief §5), and the strict TDD setting is recorded as coming from the maintainer's user-level agent configuration (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:27`), not from a repository policy. See [open questions](#open-questions).
+**Gaps in this flow today.** No CI runs these checks (audit A16), there is no contributor guide ([issue #28, "Author's framing: facts checked before writing"](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28)), and the strict TDD setting is recorded as coming from the maintainer's user-level agent configuration (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md:27`), not from a repository policy. See [open questions](#open-questions).
 
 ## Communication channels
 
@@ -325,4 +325,4 @@ The maintainer's M1 and M2 documents record how the existing code was built **[m
 
 ## Sources read
 
-`/home/acester/bitacoras/gs-desktop/context-brief.md`; `/home/acester/bitacoras/gs-desktop/discord-thread.md`; `docs/00-vision.md`; `docs/02-ecosystem.md`; `docs/03-architecture/audit.md`; `docs/03-architecture/adr/README.md`; `docs/04-rpc-contract.md`; `docs/05-capability-inventory.md` (coverage summary, columns, row IDs); `docs/06-ux/screens.md`; `docs/06-ux/principles.md` (headings and U10–U11); `docs/06-ux/design-system.md` (headings and D-rows); `docs/07-proposals/README.md`; `docs/10-platforms.md` (risks); refreshed 2026-10-03 against pi `a13d35a` (1.0.0), gentle-shell `main` at `ac67159` (package version 4.0.0), gentle-ai `ff77164` (v4.0.0) and desktop PRs #26 and #27 on GitHub; `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md`, `odd/tasks/desktop-m2-helpers.md`, `README.md`, `package.json`, `.github/ISSUE_TEMPLATE/`; GitHub API for `Gentleman-Programming/gentle-shell-desktop` (read-only, 2026-10-01).
+[issue #28](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28) ("Author's framing" sections); Discord thread "Gentle Desktop" (Gentleman Programming Discord); `docs/00-vision.md`; `docs/02-ecosystem.md`; `docs/03-architecture/audit.md`; `docs/03-architecture/adr/README.md`; `docs/04-rpc-contract.md`; `docs/05-capability-inventory.md` (coverage summary, columns, row IDs); `docs/06-ux/screens.md`; `docs/06-ux/principles.md` (headings and U10–U11); `docs/06-ux/design-system.md` (headings and D-rows); `docs/07-proposals/README.md`; `docs/10-platforms.md` (risks); refreshed 2026-10-03 against pi `a13d35a` (1.0.0), gentle-shell `main` at `ac67159` (package version 4.0.0), gentle-ai `ff77164` (v4.0.0) and desktop PRs #26 and #27 on GitHub; `gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m1-chat-core.md`, `odd/tasks/desktop-m2-helpers.md`, `README.md`, `package.json`, `.github/ISSUE_TEMPLATE/`; GitHub API for `Gentleman-Programming/gentle-shell-desktop` (read-only, 2026-10-01).

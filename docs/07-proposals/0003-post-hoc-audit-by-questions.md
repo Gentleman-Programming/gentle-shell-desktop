@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | Author | Matrak (community) |
-| Source | Conversation with Matrak, 2026-10-01; context brief §2 |
+| Source | Conversation with Matrak, 2026-10-01 (not published); [issue #28, "Author's framing: philosophy"](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28) |
 | Status | `proposed` (only the maintainer moves it to `accepted` or `declined`) |
 | Principles | vision P10 **[community]** (asking a finished helper why; P10 means a helper, not the main session, since the review of 2026-10-03); supports vision P7 **[maintainer]** (mockup intent), **[gentle-shell]** and vision P9 **[community]** |
 
@@ -21,7 +21,7 @@ When a helper (a subagent the main agent delegated to) finishes, the user sees t
 
 ## Proposal
 
-**Primary scope (vision P10):** on a finished helper, an **Ask why** action opens a side conversation. **Extension beyond vision P10 [community]:** the same action on a finished turn of the main agent. P10 leaves it out, because the main session can simply be asked (context brief §8); it is kept only as an optional variant, and its requirement row below is marked "Extension".
+**Primary scope (vision P10):** on a finished helper, an **Ask why** action opens a side conversation. **Extension beyond vision P10 [community]:** the same action on a finished turn of the main agent. P10 leaves it out, because the main session can simply be asked ([issue #28, "Author's framing: review of the vision (2026-10-03)"](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28), item 1); it is kept only as an optional variant, and its requirement row below is marked "Extension".
 
 1. It starts from that helper's own transcript (its task, steps, tool calls, result).
 2. The user asks questions; the helper answers from its transcript and cites the steps it refers to.

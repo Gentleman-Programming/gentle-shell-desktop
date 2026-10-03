@@ -125,7 +125,7 @@ These principles turn the [product principles](../00-vision.md#product-principle
 **Rule (proposed).** A feature with no gentle-shell or pi counterpart (for example a graph view) starts as a file in [07-proposals](../07-proposals/README.md). It reaches a screen only after the maintainer accepts it.
 
 - **Serves:** vision P10 **[community]**.
-- **Why:** keeps parity work (the inventory) separate from new ideas, and keeps maintainer intent separate from community framing (context brief §6, rule 5).
+- **Why:** keeps parity work (the inventory) separate from new ideas, and keeps maintainer intent separate from community framing ([issue #28, "Author's framing: corpus rules"](https://github.com/Gentleman-Programming/gentle-shell-desktop/issues/28), rule 5).
 
 ## Open questions
 
