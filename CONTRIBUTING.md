@@ -35,7 +35,7 @@ Not every change belongs in this repository. [02 §Where each change belongs](do
 |---|---|
 | Adds or changes an RPC command, event or response shape | pi (`earendil-works/pi`) |
 | Publishes new data from a gentle-shell feature, or makes a gentle-shell command work under RPC, or changes the launcher | gentle-shell |
-| Lets the host act on a gentle-shell feature | gentle-shell, plus an inbound channel; a new command type would also need pi (labelled `Inference:` in 02) |
+| Lets the host act on a gentle-shell feature | gentle-shell, over an inbound channel: pi already routes host text to extension commands and hooks, so only a new RPC command type would need pi (labelled `Inference:` in 02); which channel to use is an open question ([ADR: Undecided](docs/03-architecture/adr/README.md#undecided--not-recorded)) |
 | Changes which companion packages a home gets | gentle-ai, then a gentle-pi pin bump |
 | Renders or acts on data already on the wire, or changes the desktop process, IPC or packaging | This repository |
 

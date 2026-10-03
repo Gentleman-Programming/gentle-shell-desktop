@@ -65,7 +65,7 @@ Counts are the totals of the [coverage summary](05-capability-inventory.md#cover
 - **IPC hardening.** Audit A14 (see [security](#cross-cutting-concerns)).
 - **Structure rules in `src/main`.** The main-process part of audit A17 (`home.ts` imports, stale placeholder).
 - **Inventory.** Rows exposed over RPC as yes, partial or spawn ([allocation table](#how-inventory-rows-are-allocated)). They spread across 14 of the 17 inventory groups; the largest are Conversation and input (16), Shell experience (14), Sessions (13), Integrations, skills, memory and diagnostics (10) and Helpers (8) (yes + partial + spawn per group in the [coverage summary](05-capability-inventory.md#coverage-summary)).
-- **Undecided architecture.** Prepares the evidence for four of the six candidates in [ADR "Undecided / not recorded"](03-architecture/adr/README.md#undecided--not-recorded): one child per chat vs a shared host, RPC-only vs mixed, prompt while working, version compatibility policy (vision Q3–Q6). The maintainer decides them ([governance](#how-decisions-are-made)).
+- **Undecided architecture.** Prepares the evidence for five of the seven candidates in [ADR "Undecided / not recorded"](03-architecture/adr/README.md#undecided--not-recorded): one child per chat vs a shared host, RPC-only vs mixed, prompt while working, version compatibility policy (vision Q3–Q6), and the host channel to gentle-shell features (with Upstream integration, since every alternative changes pi or gentle-shell). The maintainer decides them ([governance](#how-decisions-are-made)).
 
 **Out of scope**
 - Rendering and visual design: Frontend and UX.
@@ -88,13 +88,13 @@ Counts are the totals of the [coverage summary](05-capability-inventory.md#cover
 gentle-pi and gentle-shell are one package (`gentle-shell@ac67159:package.json`, gentle-shell `main`, package version 4.0.0; [02-ecosystem](02-ecosystem.md)), so this area is titled by repository: pi, gentle-shell (package `gentle-pi`) and gentle-ai.
 
 **Scope**
-- **RPC gaps that need an upstream change.** Gaps G1–G8 and G10. `Inference` (from [02 §Where each change belongs](02-ecosystem.md#where-each-change-belongs), itself labelled `Inference`): gaps G3, G4, G5 and G10 belong in pi; gaps G2, G6, G7 and G8 in gentle-shell; gap G1 in gentle-shell plus an inbound channel that may also need pi.
+- **RPC gaps that need an upstream change.** Gaps G1–G8 and G10. `Inference` (from [02 §Where each change belongs](02-ecosystem.md#where-each-change-belongs), itself labelled `Inference`): gaps G3, G4, G5 and G10 belong in pi; gaps G2, G6, G7 and G8 in gentle-shell; gap G1 in gentle-shell; the channel (pi's existing extension inputs, a new pi command type, or a gentle-shell channel of its own) is open ([ADR: Undecided](03-architecture/adr/README.md#undecided--not-recorded)).
 - **gentle-shell commands that fail under RPC.** Inventory P1, P3, Y4, R3 ([02 §Where each change belongs](02-ecosystem.md#where-each-change-belongs)).
 - **Launcher behavior.** Machine-readable setup progress for audit A9 (inventory L5), home semantics for audit A19.
 - **gentle-ai outside the session.** Inventory GA1–GA5 ([05](05-capability-inventory.md#gentle-ai-outside-the-session)).
 - **Inventory.** The 47 rows marked "no" over RPC ([allocation table](#how-inventory-rows-are-allocated)).
 - **Pending prerequisites.** "Real data requires gentle-pi with `rpc-interactive-host` (gentle-shell #1328, #1329, P3 pending)" **[maintainer]** (`gentle-shell-desktop@5ab4a00:odd/tasks/desktop-m2-helpers.md:59`). "P3" there is a gentle-pi work item the M2 document does not define further (`:69` names "the P3 branch"); it is not inventory P3.
-- **Following each repository's process.** pi needs prior maintainer approval before a PR, through a Contribution Proposal issue **[upstream]** (`pi@a13d35a:CONTRIBUTING.md:31-34`, `:58`; [04 §How to propose contract changes upstream](04-rpc-contract.md#how-to-propose-contract-changes-upstream)). gentle-shell has no `CONTRIBUTING.md` at `ac67159` and uses a feature-request form ([04](04-rpc-contract.md#gentle-shell-gentleman-programminggentle-shell-package-gentle-pi-owns-the-extension-level-additions)).
+- **Following each repository's process.** pi needs prior maintainer approval before a PR, through a Contribution Proposal issue **[upstream]** (`pi@a13d35a:.github/ISSUE_TEMPLATE/contribution.yml:1`; `pi@a13d35a:CONTRIBUTING.md:31-34`, `:58`; [04 §How to propose contract changes upstream](04-rpc-contract.md#how-to-propose-contract-changes-upstream)). gentle-shell has no `CONTRIBUTING.md` at `ac67159` and uses a feature-request form ([04](04-rpc-contract.md#gentle-shell-gentleman-programminggentle-shell-package-gentle-pi-owns-the-extension-level-additions)).
 
 **Out of scope**
 - Consuming a new upstream capability in the desktop: Core and Frontend.

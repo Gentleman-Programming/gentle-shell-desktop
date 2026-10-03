@@ -86,7 +86,7 @@ Each milestone lists the same fields. Inventory rows refer to the [capability in
 | Inventory rows | inventory O2, O3, O4, R5 |
 | Screens | SCR-04 (links to SCR-14 and SCR-15 are `Inference:` navigation) |
 | Audit findings resolved | None directly. Depends on audit A3 and A8 through F1 (`03-architecture/audit.md:383`). |
-| Gaps and upstream owner | **gap G2** (structured ODD state): gentle-shell, as a `setWidget` payload with a documented schema (`Inference:`, `02-ecosystem.md:143`; `04-rpc-contract.md:299`). Today only explicit `gentle_odd_phase` tool calls reach the host (`04-rpc-contract.md:287`). |
+| Gaps and upstream owner | **gap G2** (structured ODD state): gentle-shell, as a `setWidget` payload, a custom message or a session entry with a documented schema; the channel is part of an open question ([ADR: Undecided](03-architecture/adr/README.md#undecided--not-recorded)) (`Inference:`, `02-ecosystem.md:143`; `04-rpc-contract.md:299`). Today only explicit `gentle_odd_phase` tool calls reach the host (`04-rpc-contract.md:287`). |
 | Lead areas | Upstream integration (gap G2); Frontend; UX and design. |
 | Exit criteria | 1. The repo checks pass. 2. With a gentle-shell that publishes structured ODD state, the panel of the open chat shows the feature, its phase, tasks with commit and test evidence, and checks, from a recorded real fixture (audit A16 asks for real fixtures). 3. With a gentle-shell that does not publish it, the panel shows an explicit "not available" state instead of staying empty (`Inference:` from audit A8's silent-degradation impact). |
 | Blocking open questions | The gap G2 format itself (upstream design). `Inference:` the mockup's five steps need a mapping from gentle-shell's eight phases (inventory O2). Screens open question: is the panel always visible, or only when a feature document exists (`06-ux/screens.md:322`)? |
@@ -99,7 +99,7 @@ Each milestone lists the same fields. Inventory rows refer to the [capability in
 | Inventory rows | inventory M1, M2, M4, M7, M8, M9, M10, M11, M12, I6, V4, V19 (SCR-07); inventory E1, E2, E4, E5, E6, E7, E8, E9, I1, I2, I3, A11, L4, L7, V10, H3 (SCR-08) |
 | Screens | SCR-07, SCR-08 |
 | Audit findings resolved | audit A2, once vision Q4 is decided (remove the in-process pi path, or pin it to gentle-shell's pi floor; audit A2). The risk table also ties M4 to audit A8 (`03-architecture/audit.md:385`); F1 covers only its version display, and the warning below a minimum waits on vision Q6. |
-| Gaps and upstream owner | **gap G3** (sign-in), **gap G4** (persisted default model), **gap G5** (packages): pi, through a Contribution Proposal issue; pi PRs need prior maintainer approval (`Inference:` for ownership, `02-ecosystem.md:142`; `pi@a13d35a:CONTRIBUTING.md:31-34`). Absence of these commands in pi 1.0.0 is verified (`04-rpc-contract.md:288-290`); pi 1.0.0 moves Radius sign-in to the top level of the interactive `/login`, with no RPC counterpart (gap G3; inventory M7). |
+| Gaps and upstream owner | **gap G3** (sign-in), **gap G4** (persisted default model), **gap G5** (packages): pi, through a Contribution Proposal issue (`pi@a13d35a:.github/ISSUE_TEMPLATE/contribution.yml:1`); pi PRs need prior maintainer approval (`Inference:` for ownership, `02-ecosystem.md:142`; `pi@a13d35a:CONTRIBUTING.md:31-34`). Absence of these commands in pi 1.0.0 is verified (`04-rpc-contract.md:288-290`); pi 1.0.0 moves Radius sign-in to the top level of the interactive `/login`, with no RPC counterpart (gap G3; inventory M7). |
 | Lead areas | Upstream integration (gap G3–G5); Core (data path per vision Q4); Frontend; UX and design. |
 | Exit criteria | 1. The repo checks pass. 2. A user signs in to a provider from the app without opening the terminal (gap G3). 3. A default model chosen in the app applies to the next new chat (gap G4). 4. A package is installed, disabled and removed from the app, and the change shows in the next new chat (gap G5; "Changes apply to new chats" is mockup intent, SCR-08). 5. The user's pi `settings.json` is never edited (vision P3; `00-vision.md:74`). |
 | Blocking open questions | **vision Q4** (RPC-only or mixed; "decides version coupling and how providers and extensions screens are built", `00-vision.md:130`; [ADR undecided](03-architecture/adr/README.md#undecided--not-recorded)). vision Q8 (how profiles appear; the mockup shows a profile next to the default model, SCR-07). vision Q1 (how complete these screens should be). |
@@ -136,7 +136,7 @@ Items the maintainer recorded with no milestone number.
 
 | Item | Source | Dependency | Owner of the dependency |
 |---|---|---|---|
-| **Helper Stop** (inventory A4, SCR-03) | Stop "is a no-op until gentle-agents exposes a stop command over RPC" (`desktop-m2-helpers.md:18`, `:22`; `gentle-shell-desktop@5ab4a00:README.md:62`) | gap G1; audit A5 first ("The desktop parser must be correct first", `03-architecture/audit.md:384`) | gentle-shell plus an inbound channel that may also need pi (`Inference:`, `02-ecosystem.md:144`) |
+| **Helper Stop** (inventory A4, SCR-03) | Stop "is a no-op until gentle-agents exposes a stop command over RPC" (`desktop-m2-helpers.md:18`, `:22`; `gentle-shell-desktop@5ab4a00:README.md:62`) | gap G1; audit A5 first ("The desktop parser must be correct first", `03-architecture/audit.md:384`) | gentle-shell; the channel (pi's existing extension inputs, a new pi command type, or a gentle-shell channel of its own) is open (`Inference:`, `02-ecosystem.md:144`; [ADR: Undecided](03-architecture/adr/README.md#undecided--not-recorded)) |
 | **Read the active pi theme** (inventory E6, V10) | Out of scope for M1: "reading the active pi theme (hardcode Gentleman-Cute tokens now)" (`desktop-m1-chat-core.md:22`; ADR 0009) | Theme data over RPC (inventory E6: pi), or reading the theme JSON files directly (`Inference:`, inventory V10) | pi, or none |
 
 ### Not scheduled [community proposal]
@@ -167,7 +167,7 @@ flowchart LR
   G2[/"gap G2<br/>gentle-shell"/]
   G67[/"gap G6, G7<br/>gentle-shell"/]
   G345[/"gap G3, G4, G5<br/>pi"/]
-  G1[/"gap G1<br/>gentle-shell + inbound channel"/]
+  G1[/"gap G1<br/>gentle-shell, channel open"/]
   QW -.->|DEP-01| F1
   Q3 -->|DEP-02| F1
   F1 -->|DEP-03 partial| M6
@@ -211,7 +211,7 @@ Hexagons are maintainer decisions, slanted boxes are upstream gaps (owners per 0
 
 1. **F1 is the hub for M3.** M3 depends on F1 in full (DEP-05); M6 depends on it for part of its exit criteria (DEP-03), and M4 only through the version display (DEP-07, `Inference:`). F1's only gate is one maintainer decision, vision Q3 (DEP-02). **Critical path: vision Q3 → F1 → M3, with gap G2 as M3's second gate (DEP-06).** Everything after the decision is in the desktop repository, except gap G2.
 2. **M3 waits on gap G2** in gentle-shell, which the desktop's maintainer also builds (`gentle-shell@ac67159:README.md:351`; `08-team.md:283`). Proposing the gap G2 format can start now, in parallel with F1.
-3. **M4 has the most external gates:** vision Q4 and three pi gaps (DEP-08, DEP-09); its F1 edge is partial and `Inference:`. pi auto-closes issues and PRs from new contributors by default and requires approval before a PR (`pi@a13d35a:CONTRIBUTING.md:23`, `:31-34`). Filing the Contribution Proposals early lets that review run in parallel with F1.
+3. **M4 has the most external gates:** vision Q4 and three pi gaps (DEP-08, DEP-09); its F1 edge is partial and `Inference:`. pi auto-closes issues and PRs from new contributors by default and requires approval before a PR (`pi@a13d35a:CONTRIBUTING.md:23`, `:31-34`). Filing the Contribution Proposals (`pi@a13d35a:.github/ISSUE_TEMPLATE/contribution.yml:1`) early lets that review run in parallel with F1.
 4. **M6 can start before F1.** `Inference:` its partial edges (DEP-03, DEP-04) leave exit criterion 3 free of both F1 and upstream work; the toasts about other chats and the selected-chat status bar wait on F1.
 5. **M5 is off the critical path.** Its only edges, F2 and vision Q2 (DEP-12, DEP-13), are both `Inference:`; memoTux's roadmap also called it orthogonal ("M5 is orthogonal", `roadmap.txt:89`).
 
