@@ -2,7 +2,7 @@
 
 > Status: draft.
 
-This audit covers 19 findings about `gentle-shell-desktop@5ab4a00`. The four that matter most are:
+This audit covers 21 findings about `gentle-shell-desktop@5ab4a00` (A20 and A21 were added on 2026-10-03, see [Findings added after the refresh](#findings-added-after-the-refresh)). The four that matter most are:
 
 - The single-session host blocks multi-chat (A3).
 - Windows cannot spawn the launcher at all, as a tester reports in desktop issue #23 (A4).
@@ -15,7 +15,7 @@ This audit covers 19 findings about `gentle-shell-desktop@5ab4a00`. The four tha
 
 - **Sources.** Desktop source and docs at `gentle-shell-desktop@5ab4a00` (source on `docs/corpus` is unchanged), `gentle-shell@ac67159` (gentle-shell `main`, package version 4.0.0), `pi@d981de1` (0.85.1) and `pi@a13d35a` (1.0.0); refreshed 2026-10-03, with desktop issues #23–#25 and open PRs #26 and #27 read on GitHub that day. `gentle-shell@1162ce9` (3.7.0) and `pi@d86654a` (0.99.1) appear only in version comparisons. Protocol findings defer to [04-rpc-contract.md](../04-rpc-contract.md). IDs from other pages are qualified (`gap G9`, `inventory C20`); unqualified M1–M6 are the maintainer's milestones, and T-numbers are tasks inside them.
 - **Method.** Static reading only. Nothing was built, run or installed. Behavior derived from reading code is labelled `Inference:` with "(not run)".
-- **Not covered.** Rendering performance, accessibility, packaged-app size, and a line-by-line comparison of pi 0.85.1 and 0.99.1 session parsing.
+- **Not covered.** Rendering performance, accessibility (except the scrollbar contrast in A21), packaged-app size, and a line-by-line comparison of pi 0.85.1 and 0.99.1 session parsing.
 
 ### Severity criteria
 
@@ -416,3 +416,34 @@ Within each group, the order is the suggested sequence.
 
 - **A14:** IPC argument validation, sandbox, CSP without `'unsafe-eval'`, bundled fonts, `will-navigate` guard.
 - **A17:** structure drift fixes.
+
+## Findings added after the refresh
+
+Added on 2026-10-03, after the concept mockup v2 scrollbar work in a community session exposed them. They are appended here so that line citations into the sections above stay valid; they belong to the Hygiene group of [Recommendations and order](#recommendations-and-order).
+
+### A20. Chromium ignores the WebKit scrollbar rules
+
+**Evidence**
+- The desktop sets the standard properties on every element: `scrollbar-width: thin` and `scrollbar-color: var(--line-strong) transparent` (`gentle-shell-desktop@5ab4a00:src/renderer/shared/theme/tokens.css:48-52`). The same file also styles `::-webkit-scrollbar` with an 8px size, a transparent track, a rounded thumb and a `--purple` hover (`:54-72`). Both came in commit `3456eef` (PR #20, "match scrollbars to dark theme").
+- MDN: "If an element's computed `scrollbar-color` and `scrollbar-width` values are anything other than `auto`, they will override `::-webkit-scrollbar-*` styling." (<https://developer.mozilla.org/en-US/docs/Web/CSS/::-webkit-scrollbar>, fetched 2026-10-03). Chrome supports both standard properties as of Chrome 121 (<https://developer.chrome.com/docs/css-ui/scrollbar-styling>).
+- The desktop locks Electron 44.4.3 (`gentle-shell-desktop@5ab4a00:pnpm-lock.yaml:1601`), whose release notes list Chromium `152.0.7977.54` (Electron v44.4.3 release notes on GitHub, read 2026-10-03).
+- A headless Chromium 149 probe in the community mockup session showed an element with both standard properties painting the standard thumb and ignoring the WebKit rules (session report, 2026-10-03).
+
+**Impact:** `Inference:` (not run in the desktop) in the packaged app the 8px rounded thumb and the `--purple` hover from `:54-72` never apply; only the thin standard scrollbar in `--line-strong` is drawn. The PR's intent is only partly met.
+
+**Severity:** Low (cosmetic effect).
+
+**Recommendation:** Keep one mechanism per engine: apply the `::-webkit-scrollbar` rules inside `@supports selector(::-webkit-scrollbar)` and the standard properties inside `@supports not selector(::-webkit-scrollbar)`, as the concept mockup v2 does. Verify in the packaged app.
+
+### A21. Scrollbar thumb below the 3:1 non-text contrast
+
+**Evidence**
+- The thumb colour is `--line-strong` `#563040` (`gentle-shell-desktop@5ab4a00:src/renderer/shared/theme/tokens.css:13`, used at `:51` and `:64`) over `--bg` `#060407`, `--panel` `#100a0f` and `--raised` `#180e15` (`:9-11`).
+- WCAG 2 contrast ratios computed with the WCAG relative-luminance formula: 1.84:1 on `--bg`, 1.76:1 on `--panel`, 1.70:1 on `--raised`. The hover colour `--purple` `#c96aa2` (`:23`) gives 5.45–5.90:1, but per A20 the hover rule does not apply in Chromium.
+- WCAG 2.2 success criterion 1.4.11 (Non-text Contrast) asks for at least 3:1 for the visual information needed to identify user-interface components (<https://www.w3.org/TR/WCAG22/#non-text-contrast>). The criterion exempts components whose appearance is left to the user agent; it applies here because the desktop styles the scrollbar itself.
+
+**Impact:** the thumb that shows scroll position is hard to see against every panel background, more so for users with low vision.
+
+**Severity:** Low under this audit's criteria, which do not rate accessibility (see Method and scope). `Inference:` an accessibility review would likely rate it higher.
+
+**Recommendation:** Use a token-only thumb colour of at least 3:1. The concept mockup v2 uses `color-mix(in srgb, var(--line-strong), var(--purple) 50%)`, which renders as `#904d71` and gives 3.39:1, 3.25:1 and 3.13:1 on the three backgrounds (computed with the same formula). Keep `--purple` for hover and focus.

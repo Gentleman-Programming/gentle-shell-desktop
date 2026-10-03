@@ -12,7 +12,7 @@ Community ideas that go beyond parity with gentle-shell. They live here, apart f
 | [0002](0002-interact-with-running-node.md) | Interact with a running node | Matrak (community) | `proposed` | gap G1, steering (inventory C4, A6) |
 | [0003](0003-post-hoc-audit-by-questions.md) | Post-hoc audit by questions (finished helpers) | Matrak (community) | `proposed` | gap G8, helper history (inventory A12) |
 
-IDs from other documents are qualified, because they collide (inventory A1–A12 and U1–U8, audit A1–A19, UX U1–U12): `gap G1` is from the [RPC contract](../04-rpc-contract.md#gaps-the-desktop-needs), `inventory C4` from the [capability inventory](../05-capability-inventory.md), `audit A5` from the [architecture audit](../03-architecture/audit.md#findings), `vision P10` and `vision Q5` from the [vision](../00-vision.md), `UX U2` from the [UX principles](../06-ux/principles.md). A qualifier covers the IDs listed after it (`inventory C4, A6`).
+IDs from other documents are qualified, because they collide (inventory A1–A12 and U1–U8, audit A1–A21, UX U1–U12): `gap G1` is from the [RPC contract](../04-rpc-contract.md#gaps-the-desktop-needs), `inventory C4` from the [capability inventory](../05-capability-inventory.md), `audit A5` from the [architecture audit](../03-architecture/audit.md#findings), `vision P10` and `vision Q5` from the [vision](../00-vision.md), `UX U2` from the [UX principles](../06-ux/principles.md). A qualifier covers the IDs listed after it (`inventory C4, A6`).
 
 ## Process
 
