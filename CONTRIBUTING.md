@@ -41,13 +41,13 @@ Not every change belongs in this repository. [02 §Where each change belongs](do
 
 Upstream repositories have their own rules **[upstream]**; follow them there, not here:
 
-- **pi:** issues and PRs from new contributors are auto-closed by default, and no PR is accepted without prior maintainer approval (`lgtm`) (`pi@d86654a:CONTRIBUTING.md:23`, `:31-34`, `:58`). Summary in [04 §How to propose contract changes upstream](docs/04-rpc-contract.md#how-to-propose-contract-changes-upstream).
-- **gentle-shell:** no `CONTRIBUTING.md` exists at `1162ce9`; it has bug and feature issue forms ([04 §How to propose contract changes upstream](docs/04-rpc-contract.md#how-to-propose-contract-changes-upstream)).
-- **gentle-ai:** "No PR without an issue. No exceptions." (`gentle-ai@b388eb3:CONTRIBUTING.md:24-26`). Work may begin only when the issue has `status:approved` (`:31`), and PRs not linked to an approved issue are automatically rejected by CI (`:35`).
+- **pi:** issues and PRs from new contributors are auto-closed by default, and no PR is accepted without prior maintainer approval (`lgtm`) (`pi@a13d35a:CONTRIBUTING.md:23`, `:31-34`, `:58`; pi 1.0.0). Summary in [04 §How to propose contract changes upstream](docs/04-rpc-contract.md#how-to-propose-contract-changes-upstream).
+- **gentle-shell:** no `CONTRIBUTING.md` exists at `ac67159` (`main`, package version 4.0.0); it has bug and feature issue forms ([04 §How to propose contract changes upstream](docs/04-rpc-contract.md#how-to-propose-contract-changes-upstream)).
+- **gentle-ai:** "No PR without an issue. No exceptions." (`gentle-ai@ff77164:CONTRIBUTING.md:24-26`; v4.0.0). Work may begin only when the issue has `status:approved` (`:31`), and PRs not linked to an approved issue are automatically rejected by CI (`:35`).
 
 ## Proposing ideas
 
-Ideas that go beyond parity with gentle-shell are written as proposals in [docs/07-proposals/](docs/07-proposals/README.md#process): one file per idea at status `proposed`, opened as a pull request and added to the index. Only the maintainer moves a proposal to `accepted` or `declined` (governance D7, **[community proposal]**). The maintainer's vision stays in [00-vision.md](docs/00-vision.md) and is not edited to carry community ideas (`docs/README.md:35`).
+Ideas that go beyond parity with gentle-shell are written as proposals in [docs/07-proposals/](docs/07-proposals/README.md#process): one file per idea at status `proposed`, opened as a pull request and added to the index. Only the maintainer moves a proposal to `accepted` or `declined` (governance D7, **[community proposal]**). The maintainer's vision stays in [00-vision.md](docs/00-vision.md) and is not edited to carry community ideas (`docs/README.md:37`).
 
 ## Workflow
 
@@ -84,7 +84,7 @@ Notes:
 
 - One quick win or one coherent change per PR, with its tests and docs in the same PR.
 - When to use a feature-branch chain is not decided: 08 asks whether the group adopts it for every milestone or only for large ones ([open questions](#open-questions); [08 §Open questions](docs/08-team.md#open-questions)).
-- Corpus changes go as a pull request against the document (`docs/README.md:33-35`).
+- Corpus changes go as a pull request against the document (`docs/README.md:35-37`).
 - Code documentation that belongs with a change (`src/README.md`, the README dev section) is written by the author of that change ([08 §Docs and community](docs/08-team.md#docs-and-community)).
 
 ## Development setup
@@ -92,7 +92,7 @@ Notes:
 **Requirements** (`README.md:9-19`):
 
 - Node.js 22.19 or newer and pnpm 11 (`README.md:11`). `package.json` declares no `engines` or `packageManager` field, so nothing enforces these versions.
-- The `gentle-shell` launcher, shipped with gentle-pi 3.7.0 or newer (`README.md:12-17`):
+- The `gentle-shell` launcher, shipped with gentle-pi 3.7.0 or newer (`README.md:12-17`); the current package version is 4.0.0 (`gentle-shell@ac67159:package.json:3`):
 
   ```sh
   npm install -g gentle-pi
@@ -115,7 +115,7 @@ pnpm dev
 |---|---|
 | `pnpm dev` | Run the Electron + React app |
 | `pnpm dev:web` | Run the renderer alone in a browser tab, http://localhost:5173, with a mock bridge (`odd/tasks/desktop-m1-chat-core.md:29`) |
-| `pnpm dev:local-pi` | Run the app against a local gentle-pi checkout (default `../gentle-pi-worktrees/desktop-integration`) |
+| `pnpm dev:local-pi` | Run the app against a local gentle-pi checkout (default `../gentle-pi-worktrees/desktop-integration`). It uses POSIX shell syntax (`package.json:23`); open PR #27 (not merged as of 2026-10-03) makes it cross-platform |
 | `pnpm test` / `pnpm test:watch` | Run the vitest suite once / in watch mode |
 | `pnpm typecheck` | Type-check main, preload and renderer |
 | `pnpm build` | Build main, preload and renderer |
@@ -131,7 +131,7 @@ pnpm dev
 | `GENTLE_SHELL_BIN` | Path to the launcher (a gentle-pi checkout's `bin/gentle-shell.mjs` or another gentle-shell executable); otherwise `gentle-shell` on `PATH` is used | `README.md:110`; `src/main/adapters/launcherLocator.ts` |
 | `GENTLE_SHELL_INTERACTIVE_HOST=1` | Set by the app on the pi process it spawns, so gentle-pi publishes helper activity and enables RPC dialogs; you do not set it yourself | `README.md:89-91`, `:112`; `odd/tasks/desktop-m2-helpers.md:11` |
 
-Only macOS (Apple silicon) is tested; Windows and Linux builds are configured but untested (`README.md:7`).
+Only macOS (Apple silicon) is tested; Windows and Linux builds are configured but untested (`README.md:7`). For platform setup of pi, gentle-shell, gentle-ai and engram, and the known Windows problems (audit A4, A18), see [docs/10-platforms.md](docs/10-platforms.md).
 
 ## Reporting bugs
 

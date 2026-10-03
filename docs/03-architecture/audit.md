@@ -5,7 +5,7 @@
 This audit covers 19 findings about `gentle-shell-desktop@5ab4a00`. The four that matter most are:
 
 - The single-session host blocks multi-chat (A3).
-- Windows probably cannot spawn the launcher at all (A4).
+- Windows cannot spawn the launcher at all, as a tester reports in desktop issue #23 (A4).
 - Real helper data does not match the desktop parser (A5).
 - The chat list runs on a different pi version than the chat itself (A1, A2).
 
@@ -13,7 +13,7 @@ This audit covers 19 findings about `gentle-shell-desktop@5ab4a00`. The four tha
 
 ## Method and scope
 
-- **Sources.** Desktop source and docs at `gentle-shell-desktop@5ab4a00` (source on `docs/corpus` is unchanged), `gentle-shell@1162ce9`, `pi@d981de1` (0.85.1) and `pi@d86654a` (0.99.1). Protocol findings defer to [04-rpc-contract.md](../04-rpc-contract.md). IDs from other pages are qualified (`gap G9`, `inventory C20`); unqualified M1–M6 are the maintainer's milestones, and T-numbers are tasks inside them.
+- **Sources.** Desktop source and docs at `gentle-shell-desktop@5ab4a00` (source on `docs/corpus` is unchanged), `gentle-shell@ac67159` (gentle-shell `main`, package version 4.0.0), `pi@d981de1` (0.85.1) and `pi@a13d35a` (1.0.0); refreshed 2026-10-03, with desktop issues #23–#25 and open PRs #26 and #27 read on GitHub that day. `gentle-shell@1162ce9` (3.7.0) and `pi@d86654a` (0.99.1) appear only in version comparisons. Protocol findings defer to [04-rpc-contract.md](../04-rpc-contract.md). IDs from other pages are qualified (`gap G9`, `inventory C20`); unqualified M1–M6 are the maintainer's milestones, and T-numbers are tasks inside them.
 - **Method.** Static reading only. Nothing was built, run or installed. Behavior derived from reading code is labelled `Inference:` with "(not run)".
 - **Not covered.** Rendering performance, accessibility, packaged-app size, and a line-by-line comparison of pi 0.85.1 and 0.99.1 session parsing.
 
@@ -64,7 +64,7 @@ This audit covers 19 findings about `gentle-shell-desktop@5ab4a00`. The four tha
 
 **Impact**
 - The desktop depends on pi's library API and on-disk layout as well as the RPC contract, so the RPC contract alone does not describe the desktop's coupling to pi.
-- `Inference:` (not run) two overlapping calls can leave the variable set for good. Call A saves `undefined`. Call B saves A's value. A then deletes the variable, and B restores A's value. Once leaked, `detectPi` and the `link` directory resolve to the listed home instead of the user's real pi dir. Every later spawn also inherits the leaked value. The launcher overrides it for pi itself (`gentle-shell@1162ce9:lib/gentle-shell-launcher.ts:946`).
+- `Inference:` (not run) two overlapping calls can leave the variable set for good. Call A saves `undefined`. Call B saves A's value. A then deletes the variable, and B restores A's value. Once leaked, `detectPi` and the `link` directory resolve to the listed home instead of the user's real pi dir. Every later spawn also inherits the leaked value. The launcher overrides it for pi itself (`gentle-shell@ac67159:lib/gentle-shell-launcher.ts:960`), but since 4.0.0 it derives `GENTLE_SHELL_USER_PI_HOME` from the inherited `PI_CODING_AGENT_DIR` when no `GENTLE_SHELL_USER_PI_HOME` is inherited (`:197-205`, `:962`), so `/gentle:stats` would then read the listed home as the user's pi home.
 - Running several chats or homes at once would make this race routine.
 
 **Severity:** Medium. A latent defect with a plausible trigger; impact is limited while there is only one home.
@@ -78,18 +78,18 @@ This audit covers 19 findings about `gentle-shell-desktop@5ab4a00`. The four tha
 
 **Evidence**
 - The desktop depends on pi `^0.85.1`, locked to 0.85.1: `gentle-shell-desktop@5ab4a00:package.json:42`, `gentle-shell-desktop@5ab4a00:pnpm-lock.yaml:323`.
-- The RPC peer is at least 0.99.1: `gentle-shell@1162ce9:lib/gentle-shell-launcher.ts:382`, `gentle-shell@1162ce9:package.json:78`.
-- The session format version is 3 in both: `pi@d981de1:packages/coding-agent/src/core/session-manager.ts:30`, `pi@d86654a:packages/coding-agent/src/core/session-manager.ts:41`.
+- The RPC peer is at least 0.99.1, and gentle-shell 4.0.0 develops against ≥ 1.0.0: `gentle-shell@ac67159:lib/gentle-shell-launcher.ts:392`, `gentle-shell@ac67159:package.json:78`, `:95`. The skew is now 0.85.1 against ≥ 0.99.1, with 1.0.0 the development target.
+- The session format version is 3 in all three: `pi@d981de1:packages/coding-agent/src/core/session-manager.ts:30`, `pi@a13d35a:packages/coding-agent/src/core/session-manager.ts:41` (byte-identical in 0.99.1).
 - The bundled pi brings transitive install scripts: `gentle-shell-desktop@5ab4a00:pnpm-workspace.yaml:1-10`.
 
 **Impact**
 - The sidebar reads sessions written by a newer pi with an older parser.
-- `UNVERIFIED:` whether 0.99.1 session headers or entries break 0.85.1's `listAll()` was not checked. The equal format version lowers, but does not remove, the risk.
+- `UNVERIFIED:` whether 0.99.1 or 1.0.0 session headers or entries break 0.85.1's `listAll()` was not checked. The equal format version lowers, but does not remove, the risk.
 - `Inference:` the packaged app also ships a full pi library only to list sessions.
 
 **Severity:** Medium. A latent defect whose trigger is any future session format change.
 
-**Recommendation:** Remove the in-process path (see A1). If it stays, pin the desktop's pi to the same minor as gentle-shell's floor and add a fixture test that lists a session file written by pi 0.99.1.
+**Recommendation:** Remove the in-process path (see A1). If it stays, pin the desktop's pi to the same minor as gentle-shell's floor and add a fixture test that lists session files written by pi 0.99.1 and 1.0.0.
 
 ### A3. Single-session host with positional message ids
 
@@ -102,7 +102,7 @@ This audit covers 19 findings about `gentle-shell-desktop@5ab4a00`. The four tha
   - Message ids are `msg-<array length>`: `gentle-shell-desktop@5ab4a00:src/main/domain/session/PiSession.ts:334`, `gentle-shell-desktop@5ab4a00:src/main/domain/rpc/chatReducer.ts:85`, `gentle-shell-desktop@5ab4a00:src/main/domain/rpc/history.ts:20-48`.
   - Dropping an empty assistant message hands its id to the next message: `gentle-shell-desktop@5ab4a00:src/main/domain/rpc/chatReducer.ts:133-138`.
 - Sidebar status:
-  - Every listed chat is `idle`: `gentle-shell-desktop@5ab4a00:src/main/domain/session/sessionList.ts:20-23`, `:35`.
+  - Every listed chat is `idle`: `gentle-shell-desktop@5ab4a00:src/main/domain/session/sessionList.ts:20-22`, `:35`.
 
 **Impact**
 - The mockup's sidebar statuses ("working", "needs you") and toasts about other chats cannot be built ([gap G9](../04-rpc-contract.md#gaps-the-desktop-needs)).
@@ -121,20 +121,20 @@ This audit covers 19 findings about `gentle-shell-desktop@5ab4a00`. The four tha
 **Evidence**
 - On win32 the locator picks `gentle-shell.cmd` first: `gentle-shell-desktop@5ab4a00:src/main/adapters/launcherLocator.ts:48`.
 - The spawner calls `spawn` with no `shell` option: `gentle-shell-desktop@5ab4a00:src/main/adapters/nodeProcessSpawner.ts:10`.
-- gentle-shell documents the same failure for its own pi spawn ("Current Node releases refuse to spawn a batch file directly without `shell: true` (EINVAL)") and routes `.cmd`/`.bat` through `cmd.exe` with explicit quoting: `gentle-shell@1162ce9:lib/gentle-shell-launcher.ts:952-1002`.
+- gentle-shell documents the same failure for its own pi spawn ("Current Node releases refuse to spawn a batch file directly without `shell: true` (EINVAL)") and routes `.cmd`/`.bat` through `cmd.exe` with explicit quoting, unchanged in 4.0.0: `gentle-shell@ac67159:lib/gentle-shell-launcher.ts:969-1019`. Its own pi spawn passes no `windowsHide` (`gentle-shell@ac67159:bin/gentle-shell.mjs:1396`).
 
-**Impact:** `Inference:` (not run) on Windows with an npm-installed launcher, every spawn fails with `EINVAL`, so no chat can start. A tester reported `spawn EINVAL` (context brief §5). **Not reproduced.**
+**Impact:** on Windows with an npm-installed launcher, every spawn fails, so no chat can start. Desktop issue #23 (Mayloparra24, 2026-09-26, open) reports this with reproduction steps on gentle-pi 3.7.0 and "Pi version 0.87.1": `spawn EFTYPE`, "on some Node versions `spawn EINVAL`"; pointing `GENTLE_SHELL_BIN` at the package's `bin/gentle-shell.mjs` works around it. `Inference:` the reported pi version is questionable: 0.87.1 is below the launcher's `MIN_PI_VERSION = "0.99.1"` at 3.7.0 and on `main` (`gentle-shell@1162ce9:lib/gentle-shell-launcher.ts:382`; `gentle-shell@ac67159:lib/gentle-shell-launcher.ts:392`), so it is probably not the pi the launcher resolves. Issue #24 (same author, open) reports one visible console window per open chat and notes it "may belong to the grandchild `pi` process"; `UNVERIFIED:` which process owns the window. **Not reproduced by the corpus authors.**
 
 **Severity:** High. Breaks the core flow on a configured platform (`gentle-shell-desktop@5ab4a00:electron-builder.yml:31-34`).
 
-**Recommendation:** Mirror gentle-shell's `planSpawn` in `nodeProcessSpawner` or the locator. For `.cmd`/`.bat` on win32, run through `cmd.exe` with quoted tokens. Unit-test the plan with `platform` injected. Reproduce on Windows before and after the fix.
+**Recommendation:** Mirror gentle-shell's `planSpawn` in `nodeProcessSpawner` or the locator. For `.cmd`/`.bat` on win32, run through `cmd.exe` with quoted tokens. Unit-test the plan with `platform` injected. Reproduce on Windows before and after the fix. Open PR #26 (head `615dd87`, not merged as of 2026-10-03; closes #23 and #24) always sets `windowsHide: true` and sets `shell: true` on win32 when the command ends in `.cmd`/`.bat`, but passes the command and arguments unquoted, unlike `planSpawn`; the desktop's arguments include paths (`--session <path>`, and `--home <dir>` when `GENTLE_SHELL_HOME` is set: `gentle-shell-desktop@5ab4a00:src/main/domain/session/PiSession.ts:127-133`, `gentle-shell-desktop@5ab4a00:src/main/domain/home/home.ts:33-36`), and the locator returns an unquoted path (`gentle-shell-desktop@5ab4a00:src/main/adapters/launcherLocator.ts:53-54`). `Inference:` (not run) a path with spaces or `cmd.exe` metacharacters would be split or interpreted by `cmd.exe`. Details: [10-platforms.md](../10-platforms.md#spawning-batch-shims).
 
 ### A5. Helper status set and tool items do not match gentle-shell
 
 **Evidence**
-- gentle-shell task statuses are `queued`, `running`, `waiting`, `completed`, `failed`, `cancelled`, `timed_out`: `gentle-shell@1162ce9:lib/agents-protocol.ts:9-17`.
+- gentle-shell task statuses are `queued`, `running`, `waiting`, `completed`, `failed`, `cancelled`, `timed_out`: `gentle-shell@ac67159:lib/agents-protocol.ts:9-17`. The activity files (`lib/agents-protocol.ts`, `lib/agents-rpc-publisher.ts`, `docs/gentle-agents-activity.md`) are byte-identical between 3.7.0 (`1162ce9`) and `ac67159`, so this finding stands as written.
 - The desktop accepts `queued`, `running`, `waiting`, `done`, `failed`, `cancelled`, and `toTask` drops a task with any other status: `gentle-shell-desktop@5ab4a00:src/main/domain/rpc/helpersActivity.ts:21`, `:83-85`, `:139-141`.
-- gentle-shell's tool thread items have no `callId` (`gentle-shell@1162ce9:lib/agents-rpc-publisher.ts:96-105`). The desktop requires one (`gentle-shell-desktop@5ab4a00:src/main/domain/rpc/helpersActivity.ts:107-108`) and uses it as the React key (`gentle-shell-desktop@5ab4a00:src/renderer/features/helpers/components/HelperThread.tsx:24`).
+- gentle-shell's tool thread items have no `callId` (`gentle-shell@ac67159:lib/agents-rpc-publisher.ts:96-105`). The desktop requires one (`gentle-shell-desktop@5ab4a00:src/main/domain/rpc/helpersActivity.ts:107-108`) and uses it as the React key (`gentle-shell-desktop@5ab4a00:src/renderer/features/helpers/components/HelperThread.tsx:24`).
 - The fixture uses `done` and includes `callId` (`gentle-shell-desktop@5ab4a00:src/main/domain/rpc/__fixtures__/helpers-activity.jsonl:2`, `:4`). The mock bridge does too (`gentle-shell-desktop@5ab4a00:src/renderer/shared/bridge/mockBridge.ts:359`).
 
 **Impact:** `Inference:` (not run):
@@ -154,11 +154,11 @@ This refines [04-rpc-contract.md observation 6](../04-rpc-contract.md#compatibil
 - `message_start` and `message_end` are ignored unless `role === "assistant"`: `gentle-shell-desktop@5ab4a00:src/main/domain/rpc/chatReducer.ts:81-82`, `:115-116`.
 - User messages appear live only because `PiSession.prompt` appends them locally: `gentle-shell-desktop@5ab4a00:src/main/domain/session/PiSession.ts:182`.
 - History keeps user and assistant messages: `gentle-shell-desktop@5ab4a00:src/main/domain/rpc/history.ts:36-50`.
-- pi 0.99.1 adds a `system` role ([04-rpc-contract.md](../04-rpc-contract.md#differences-between-pi-0851-and-0991-events)).
+- pi 0.99.1 adds a `system` role ([04-rpc-contract.md](../04-rpc-contract.md#differences-between-pi-0851-and-0991-events)). Since gentle-shell 4.0.0, a helper result for an idle parent is stored as a custom message without a turn, then the parent is woken by a user-role message, "[System-generated Gentle Agents notification, not written by the user] …" (`gentle-shell@ac67159:extensions/gentle-agents.ts:63-65`, `:691`, `:698-706`; [inventory A7](../05-capability-inventory.md#helpers-subagents)).
 
-**Impact:** User messages that do not come from the composer appear only after a reload, so the live thread and the reloaded thread can differ. Examples are messages injected by extensions or delivered from a steer or follow-up queue. Hiding tools and thinking is intended ([ADR 0007](adr/0007-text-only-chat-view.md)); hiding these messages is a side effect.
+**Impact:** User messages that do not come from the composer appear only after a reload, so the live thread and the reloaded thread can differ. Examples are messages injected by extensions or delivered from a steer or follow-up queue. `Inference:` (not run) with gentle-shell 4.0.0 the idle-parent wake is such a message: it happens whenever a helper finishes while the chat is idle, the live view hides it, and after a reload it appears as a user bubble without the helper result. Hiding tools and thinking is intended ([ADR 0007](adr/0007-text-only-chat-view.md)); hiding these messages is a side effect.
 
-**Severity:** Low today. It rises to Medium once the desktop sends `steer` or `follow_up` (A7).
+**Severity:** Low today, unchanged by the 4.0.0 wake: its visible effect appears only after a reload, and the text labels itself as system-generated. It rises to Medium once the desktop sends `steer` or `follow_up` (A7).
 
 **Recommendation:** Build the thread from pi's message events for every role the view shows, instead of appending locally, and reconcile by message identity (A3).
 
@@ -168,7 +168,7 @@ This refines [04-rpc-contract.md observation 6](../04-rpc-contract.md#compatibil
 - `PiSession.prompt` returns `{queued:false, reason:"Gentle is still working"}` while `working`: `gentle-shell-desktop@5ab4a00:src/main/domain/session/PiSession.ts:168-180`.
 - The composer blocks sends while `working`: `gentle-shell-desktop@5ab4a00:src/renderer/features/conversation/ConversationContainer.tsx:99`.
 - `RpcCommand` has no `streamingBehavior`, `steer` or `follow_up`: `gentle-shell-desktop@5ab4a00:src/main/domain/rpc/types.ts:27-41`.
-- pi supports both, and runs extension commands immediately even during streaming: `pi@d86654a:packages/coding-agent/docs/rpc-commands.md:27-31`.
+- pi supports both, and runs extension commands immediately even during streaming: `pi@a13d35a:packages/coding-agent/docs/rpc-commands.md:27-31`.
 - `working` is cleared on `agent_end` even when a retry will follow: `gentle-shell-desktop@5ab4a00:src/main/domain/rpc/chatReducer.ts:56-58` ([observation 3](../04-rpc-contract.md#compatibility-observations)).
 
 **Impact**
@@ -190,12 +190,12 @@ This refines [04-rpc-contract.md observation 6](../04-rpc-contract.md#compatibil
 
 **Severity:** Medium. A missing safeguard on a cross-repository boundary.
 
-**Recommendation:** Run `gentle-shell --version` once per launch (`gentle-shell@1162ce9:bin/gentle-shell.mjs:1217-1219`), show the versions, and warn below a minimum. Longer term, propose a versioned capability record upstream ([gap G10](../04-rpc-contract.md#gaps-the-desktop-needs)).
+**Recommendation:** Run `gentle-shell --version` once per launch (`gentle-shell@ac67159:bin/gentle-shell.mjs:1217-1219`), show the versions, and warn below a minimum. Longer term, propose a versioned capability record upstream ([gap G10](../04-rpc-contract.md#gaps-the-desktop-needs)).
 
 ### A9. Launcher first-run provisioning shows no progress
 
 **Evidence**
-- On the first run in an isolated or `--home` home, the launcher installs the gentle-ai companion packages before starting pi: `gentle-shell@1162ce9:bin/gentle-shell.mjs:1114-1140`, `:1265-1268`.
+- On the first run in an isolated or `--home` home, the launcher installs the gentle-ai companion packages before starting pi, still at `ac67159`: `gentle-shell@ac67159:bin/gentle-shell.mjs:1114-1140`, `:1265-1268`.
 - Progress goes only to stderr: `:819`, `:1139-1140`, `:1160`.
 - Each child may take up to 15 minutes: `:1089`.
 - The desktop logs child stderr to its own console and never shows it: `gentle-shell-desktop@5ab4a00:src/main/domain/session/PiSession.ts:292-295`, `gentle-shell-desktop@5ab4a00:src/main/index.ts:42-44`.
@@ -206,7 +206,7 @@ This refines [04-rpc-contract.md observation 6](../04-rpc-contract.md#compatibil
 **Impact:** `Inference:` (not run):
 - A new user without pi sees an idle chat for minutes, with no sign of work.
 - A prompt sent meanwhile waits in the stdin pipe.
-- Switching chats during provisioning kills the launcher. It treats the signal as an interrupt and retries on the next run (`gentle-shell@1162ce9:bin/gentle-shell.mjs:1102-1113`).
+- Switching chats during provisioning kills the launcher. It treats the signal as an interrupt and retries on the next run (`gentle-shell@ac67159:bin/gentle-shell.mjs:1102-1113`).
 
 **Severity:** Medium. A degraded first experience on the default path.
 
@@ -216,9 +216,9 @@ This refines [04-rpc-contract.md observation 6](../04-rpc-contract.md#compatibil
 
 **Evidence**
 - `PiSession` supports `cwd` (`gentle-shell-desktop@5ab4a00:src/main/domain/session/PiSession.ts:15`, `:135`), but `ChatHost` never passes one (`gentle-shell-desktop@5ab4a00:src/main/domain/session/ChatHost.ts:159-166`).
-- The spawner then inherits the Electron process's working directory (`gentle-shell-desktop@5ab4a00:src/main/adapters/nodeProcessSpawner.ts:10`), and so does the launcher (`gentle-shell@1162ce9:bin/gentle-shell.mjs:1395`).
-- pi creates a new session in `process.cwd()`: `pi@d86654a:packages/coding-agent/src/main.ts:448`, `:585`, `:687`.
-- pi reopens a session in its header cwd: `pi@d86654a:packages/coding-agent/src/core/session-manager.ts:1782`.
+- The spawner then inherits the Electron process's working directory (`gentle-shell-desktop@5ab4a00:src/main/adapters/nodeProcessSpawner.ts:10`), and so does the launcher (`gentle-shell@ac67159:bin/gentle-shell.mjs:1396`).
+- pi creates a new session in `process.cwd()`: `pi@a13d35a:packages/coding-agent/src/main.ts:448`, `:591`, `:693`.
+- pi reopens a session in its header cwd: `pi@a13d35a:packages/coding-agent/src/core/session-manager.ts:1782`.
 
 **Impact:** New chats work in whatever directory the app was started from. There is no way to choose a project folder. The mockup status bar shows a cwd ([gap G7](../04-rpc-contract.md#gaps-the-desktop-needs)). `UNVERIFIED:` the working directory of a macOS app launched from Finder was not checked.
 
@@ -246,7 +246,7 @@ This refines [04-rpc-contract.md observation 6](../04-rpc-contract.md#compatibil
 
 **Evidence**
 - The codec decodes `timeout` (`gentle-shell-desktop@5ab4a00:src/main/domain/rpc/codec.ts:161`, `:172`, `:183`), but the reducer and the `Dialog` type drop it: `gentle-shell-desktop@5ab4a00:src/main/domain/rpc/chatReducer.ts:167-179`, `gentle-shell-desktop@5ab4a00:src/shared/bridge-types.ts:70-82`.
-- pi resolves a timed-out dialog on its own (`pi@d86654a:packages/coding-agent/src/modes/rpc/rpc-mode.ts:115-120`) and silently drops a late response ([Correlation and errors](../04-rpc-contract.md#correlation-and-errors)).
+- pi resolves a timed-out dialog on its own (`pi@a13d35a:packages/coding-agent/src/modes/rpc/rpc-mode.ts:115-120`) and silently drops a late response ([Correlation and errors](../04-rpc-contract.md#correlation-and-errors)).
 
 **Impact:** `Inference:` (not run) the card stays on screen after pi has moved on, and the user's answer is ignored with no feedback.
 
@@ -350,7 +350,7 @@ This refines [04-rpc-contract.md observation 6](../04-rpc-contract.md#compatibil
 
 **Evidence**
 - Apps opened from Finder lack the shell `PATH`, so the launcher is not found: `gentle-shell-desktop@5ab4a00:README.md:52-58`.
-- `dev:local-pi` uses POSIX `${VAR:-default}` syntax: `gentle-shell-desktop@5ab4a00:package.json:23`.
+- `dev:local-pi` uses POSIX `${VAR:-default}` syntax: `gentle-shell-desktop@5ab4a00:package.json:23`. Desktop issue #25 (open) reports that it fails under Windows PowerShell. Open PR #27 (head `f42c3bd`, not merged as of 2026-10-03; closes #25) replaces the script with `node scripts/dev-local-pi.mjs`, which resolves `GENTLE_SHELL_BIN` or the default path and spawns `electron-vite dev` with `shell` on win32.
 - Only macOS Apple silicon is tested: `gentle-shell-desktop@5ab4a00:README.md:7`.
 - No signing or notarization: `gentle-shell-desktop@5ab4a00:electron-builder.yml:30`, `gentle-shell-desktop@5ab4a00:README.md:64`.
 
@@ -358,13 +358,13 @@ This refines [04-rpc-contract.md observation 6](../04-rpc-contract.md#compatibil
 
 **Severity:** Low. Documented, and has workarounds.
 
-**Recommendation:** Resolve the login shell `PATH` at startup on macOS, or let the user pick the launcher path in the app and save it. Make `dev:local-pi` cross-platform.
+**Recommendation:** Resolve the login shell `PATH` at startup on macOS, or let the user pick the launcher path in the app and save it. Make `dev:local-pi` cross-platform (open PR #27 proposes this). Platform requirements of the upstream pieces: [10-platforms.md](../10-platforms.md).
 
 ### A19. Two persisted home choices
 
 **Evidence**
 - The desktop saves its own `{home}` in `userData/config.json`: `gentle-shell-desktop@5ab4a00:src/main/adapters/appConfigStore.ts:20-42`.
-- gentle-shell saves a home choice in `~/.gentle-shell/config.json` and uses it when no flag is passed: `gentle-shell@1162ce9:lib/gentle-shell-launcher.ts:208-214`, `:231-233`.
+- gentle-shell saves a home choice in `~/.gentle-shell/config.json` and uses it when no flag is passed: `gentle-shell@ac67159:lib/gentle-shell-launcher.ts:218-224`, `:241-243`.
 - The desktop always passes a flag: `gentle-shell-desktop@5ab4a00:src/main/domain/home/home.ts:33-37`.
 
 **Impact:** `Inference:` the terminal `gentle-shell` and the desktop can use different homes, so a chat started in one does not appear in the other.
@@ -383,7 +383,7 @@ These follow from the findings. They are not separate defects.
 | ODD panel (M3) | A3, A8 | Needs structured ODD state, which RPC does not provide ([gap G2](../04-rpc-contract.md#gaps-the-desktop-needs)). |
 | Helper Stop | A5 | Needs an RPC command upstream ([gap G1](../04-rpc-contract.md#gaps-the-desktop-needs)). The desktop parser must be correct first. |
 | Providers and extensions screens (M4) | A2, A8 | Either more in-process pi (which makes A1 and A2 worse) or new RPC commands ([gaps G3–G5](../04-rpc-contract.md#gaps-the-desktop-needs)). |
-| Windows and Linux releases | A4, A16, A18 | No CI and no tested platforms besides macOS. |
+| Windows and Linux releases | A4, A16, A18 | No CI and no tested platforms besides macOS. Platform detail: [10-platforms.md](../10-platforms.md). |
 
 ## Recommendations and order
 
@@ -407,7 +407,7 @@ Within each group, the order is the suggested sequence.
 
 ### 3. Platform
 
-1. **A4:** Windows `.cmd` spawn through `cmd.exe` (reproduce first).
+1. **A4:** Windows `.cmd` spawn through `cmd.exe` with quoted tokens (reproduce first; open PR #26 does not quote).
 2. **A16:** CI with test, typecheck, build and smoke; add Windows once A4 lands.
 3. **A9:** visible first-run provisioning.
 4. **A18:** macOS `PATH` resolution or a saved launcher path; cross-platform scripts.

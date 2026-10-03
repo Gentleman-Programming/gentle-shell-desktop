@@ -8,12 +8,12 @@ Gentle Desktop sits on top of four other pieces: **pi**, the agent runtime; **ge
 
 | Question | Answer | Evidence |
 |---|---|---|
-| Are gentle-pi and gentle-shell different pieces? | No. They are one repository and one npm package: `gentle-pi` is the package name, `gentle-shell` the binary and the product. | `gentle-shell@1162ce9:package.json:2-9` |
-| What does the desktop talk to? | The `gentle-shell` launcher over RPC, which runs pi ≥ 0.99.1. It also imports pi 0.85.1 in-process to list sessions. | [current.md §Data paths to pi](03-architecture/current.md#data-paths-to-pi) |
+| Are gentle-pi and gentle-shell different pieces? | No. They are one repository and one npm package: `gentle-pi` is the package name, `gentle-shell` the binary and the product. | `gentle-shell@ac67159:package.json:2-9` |
+| What does the desktop talk to? | The `gentle-shell` launcher over RPC, which runs pi ≥ 0.99.1 (gentle-shell develops against ≥ 1.0.0). It also imports pi 0.85.1 in-process to list sessions. | [current.md §Data paths to pi](03-architecture/current.md#data-paths-to-pi) |
 | Does anything negotiate versions? | No. There is no handshake; only the launcher enforces a pi floor. | [04 §Versioning](04-rpc-contract.md#versioning-and-compatibility) |
 | Where does a new RPC command go? | pi (`earendil-works/pi`), which owns the `RpcCommand` union. | [Where each change belongs](#where-each-change-belongs) |
 
-**How to read citations.** Same keys as the [glossary](01-glossary.md#how-to-read-citations): `D:` = `gentle-shell-desktop@5ab4a00:src/`, `GS:` = `gentle-shell@1162ce9:`, `GA:` = `gentle-ai@6dee8f8:` (v3.7.0), `PI:` = `pi@d86654a:packages/coding-agent/`. `Inference:` marks reasoning; `UNVERIFIED:` marks claims checked but not confirmed.
+**How to read citations.** Same keys as the [glossary](01-glossary.md#how-to-read-citations), refreshed 2026-10-03: `D:` = `gentle-shell-desktop@5ab4a00:src/`, `GS:` = `gentle-shell@ac67159:` (gentle-shell `main`, package version 4.0.0), `GA:` = `gentle-ai@ff77164:` (v4.0.0), `PI:` = `pi@a13d35a:packages/coding-agent/` (1.0.0). `gentle-shell@1162ce9` (3.7.0) and `gentle-ai@6dee8f8` (v3.7.0) appear only in version comparisons. Where platform matters, see [10-platforms.md](10-platforms.md). `Inference:` marks reasoning; `UNVERIFIED:` marks claims checked but not confirmed.
 
 ## Map of pieces
 
@@ -22,24 +22,24 @@ flowchart TB
   subgraph DESK["gentle-shell-desktop (Gentleman-Programming)"]
     D["Electron app<br/>main, preload, renderer"]
   end
-  subgraph GSR["gentle-shell repo (Gentleman-Programming), npm gentle-pi 3.7.0"]
+  subgraph GSR["gentle-shell repo (Gentleman-Programming), npm gentle-pi 4.0.0"]
     L["gentle-shell launcher<br/>bin/gentle-shell.mjs"]
     P["gentle-pi pi package<br/>extensions, themes, skills, prompt"]
-    B["package-local gentle-ai binary<br/>pinned v3.7.0"]
+    B["package-local gentle-ai binary<br/>pinned v4.0.0"]
   end
   subgraph PIR["pi repo (earendil-works)"]
     RPC["pi --mode rpc<br/>0.99.1 or newer"]
     LIB["pi-coding-agent library<br/>0.85.1, in-process"]
   end
   GA["gentle-ai repo (Gentleman-Programming)<br/>Go CLI"]
-  C["Companion pi packages<br/>gentle-engram, pi-mcp-adapter,<br/>pi-web-access, pi-btw"]
+  C["Companion pi packages<br/>gentle-engram, pi-web-access,<br/>pi-btw"]
   H[("Agent home<br/>~/.pi/agent or ~/.gentle-shell/agent")]
   D -- "spawn --mode rpc, JSON lines" --> L
   L -- "spawn, stdio inherit, loads package" --> RPC
   RPC -- "runs extensions" --> P
   P -- "review and telemetry calls" --> B
   L -- "setup: install --agent pi" --> B
-  GA -.->|"release v3.7.0"| B
+  GA -.->|"release v4.0.0"| B
   B -- "pi install" --> C
   C --> H
   RPC -- "sessions, settings, auth" --> H
@@ -50,11 +50,11 @@ flowchart TB
 | Edge | Evidence |
 |---|---|
 | Desktop spawns the launcher with `--mode rpc` | `D:main/domain/session/PiSession.ts:127-134` |
-| Launcher spawns pi with inherited stdio and loads gentle-pi with `-e <package root>` | `GS:bin/gentle-shell.mjs:1395`; [inventory L8](05-capability-inventory.md#launcher-and-homes) |
-| gentle-pi calls its package-local gentle-ai for review and telemetry | `GS:scripts/install-gentle-ai.mjs:12` ("native review operations will fail with package-local-binary-missing"); `GS:docs/readme-reference.md:1035` |
+| Launcher spawns pi with inherited stdio and loads gentle-pi with `-e <package root>` | `GS:bin/gentle-shell.mjs:1396`; [inventory L8](05-capability-inventory.md#launcher-and-homes) |
+| gentle-pi calls its package-local gentle-ai for review and telemetry | `GS:scripts/install-gentle-ai.mjs:12` ("native review operations will fail with package-local-binary-missing"); `GS:docs/readme-reference.md:1038` |
 | Setup runs gentle-ai `install --agent pi --scope global` | `GS:bin/gentle-shell.mjs:819-821` |
-| The pinned binary is gentle-ai release v3.7.0 | `GS:scripts/gentle-ai-installer.mjs:39-40`, `:48-50` |
-| gentle-ai runs `pi install <source>` for each managed package | `GA:internal/agents/pi/adapter.go:264-273` |
+| The pinned binary is gentle-ai release v4.0.0 (gentle-shell 3.7.0 pinned v3.7.0) | `GS:scripts/gentle-ai-installer.mjs:39-40`, `:48-50`; `gentle-shell@1162ce9:scripts/gentle-ai-installer.mjs:39` |
+| gentle-ai runs `pi install <source>` for each managed package | `GA:internal/agents/pi/adapter.go:285-294` |
 | Desktop imports pi 0.85.1 to list sessions | `D:main/adapters/piSessionStore.ts:30-35` |
 
 ## Pieces
@@ -62,35 +62,35 @@ flowchart TB
 | Piece | What it is | Distribution | Evidence |
 |---|---|---|---|
 | **pi** | "A minimal, extensible AI agent for the terminal." It owns the runtime, sessions, providers, packages and the RPC protocol. | npm `@earendil-works/pi-coding-agent`, bin `pi` | `PI:README.md:15`; `PI:package.json:2`, `:9-11` |
-| **gentle-shell / gentle-pi** | A launcher (homes, setup, package loading) plus a pi package: 17 extension entry points, 3 themes, 12 skills, 1 prompt template. | npm `gentle-pi`, bin `gentle-shell` | `GS:package.json:2-9`, `:59-73`; counts in [05 §At a glance](05-capability-inventory.md#at-a-glance-gentle-shell-and-gentle-ai) |
-| **gentle-ai** | A Go CLI that configures AI agents, including pi. It owns native review (RDD) and telemetry. gentle-shell installs a package-local copy at postinstall. | GitHub releases; Go module `github.com/gentleman-programming/gentle-ai/v3` | `GA:README.md:10`; `GA:go.mod:1`; `GS:package.json:46`; `GS:scripts/gentle-ai-installer.mjs:40` |
-| **Companion packages** | Pi packages gentle-ai installs into a home. See [Companion packages](#companion-packages). | npm | `GA:internal/agents/pi/adapter.go:57-63` |
+| **gentle-shell / gentle-pi** | A launcher (homes, setup, package loading) plus a pi package: 18 extension entry points, 3 themes, 12 skills, 1 prompt template (at `ac67159`; 4.0.0 added `extensions/gentle-stats.ts`). | npm `gentle-pi`, bin `gentle-shell` | `GS:package.json:2-9`, `:59-73`; counts in [05 §At a glance](05-capability-inventory.md#at-a-glance-gentle-shell-and-gentle-ai) |
+| **gentle-ai** | A Go CLI that configures AI agents, including pi. It owns native review (RDD) and telemetry. gentle-shell installs a package-local copy at postinstall. | GitHub releases; Go module `github.com/gentleman-programming/gentle-ai/v4` since v4.0.0 (`/v3` at v3.7.0) | `GA:README.md:10`; `GA:go.mod:1`; `GS:package.json:46`; `GS:scripts/gentle-ai-installer.mjs:40`, `:45-46`, `:51` |
+| **Companion packages** | Pi packages gentle-ai installs into a home. See [Companion packages](#companion-packages). | npm | `GA:internal/agents/pi/adapter.go:65-70` |
 | **Bundled dependency** | `@heyhuynhgiabuu/pi-pretty` 0.6.27, a runtime dependency of gentle-pi, loaded through `extensions/pi-pretty.ts`. `UNVERIFIED:` what it registers (the package is not installed in the reference checkout). | npm, installed with gentle-pi | `GS:package.json:74-76`; [inventory V15](05-capability-inventory.md#shell-experience) |
 | **Gentle Desktop** | An Electron app: "Desktop chat window for Gentle Shell / pi." | Source only; unsigned local builds | `gentle-shell-desktop@5ab4a00:package.json:7`; `gentle-shell-desktop@5ab4a00:README.md:7` |
 
 ### Companion packages
 
-gentle-shell does not keep its own list. Its docs say "the companion list above is not maintained in gentle-shell itself — it is the managed Pi stack of the pinned package-local gentle-ai" (`GS:docs/readme-reference.md:302`). At the pinned gentle-ai v3.7.0:
+gentle-shell does not keep its own list. Its docs say "the companion list above is not maintained in gentle-shell itself — it is the managed Pi stack of the pinned package-local gentle-ai" (`GS:docs/readme-reference.md:304`). At the pinned gentle-ai v4.0.0:
 
 | Package | What happens during setup | Evidence |
 |---|---|---|
-| `npm:gentle-pi` | Installed by gentle-ai, then **removed** by gentle-shell right after, because the launcher always loads its own copy. | `GA:internal/agents/pi/adapter.go:58`; `GS:lib/gentle-shell-launcher.ts:541-555` |
-| `npm:gentle-engram` | Installed. Persistent memory (Engram). | `GA:internal/agents/pi/adapter.go:23`, `:59`; `GA:TRADEMARKS.md:9` |
-| `npm:pi-mcp-adapter` | Installed, followed by `npm exec --yes --package gentle-engram@latest -- pi-engram init`. | `GA:internal/agents/pi/adapter.go:21`, `:60`, `:268-269`, `:276` |
-| `npm:pi-web-access` | Installed. | `GA:internal/agents/pi/adapter.go:61` |
-| `npm:pi-btw` | Installed. | `GA:internal/agents/pi/adapter.go:62` |
-| `npm:@juicesharp/rpiv-ask-user-question` | **Retired** by gentle-ai v3.7.0, and removed by gentle-shell if declared. It conflicts with gentle-pi's own `ask_user_question` tool. | `GA:internal/agents/pi/adapter.go:47-55`; `GS:lib/gentle-shell-launcher.ts:553` |
+| `npm:gentle-pi` | Installed by gentle-ai, then **removed** by gentle-shell right after, because the launcher always loads its own copy. | `GA:internal/agents/pi/adapter.go:66`; `GS:lib/gentle-shell-launcher.ts:551-565` |
+| `npm:gentle-engram` | Installed, followed by `npm exec --yes --package gentle-engram@latest -- pi-engram init`. Persistent memory (Engram). | `GA:internal/agents/pi/adapter.go:32`, `:67`, `:289-290`, `:297`; `GA:TRADEMARKS.md:9` |
+| `npm:pi-mcp-adapter` | **Retired** by gentle-ai v4.0.0: "Pi >= 0.99.0 ships built-in MCP support … Gentle AI therefore never installs the adapter and removes it wherever it finds it". At v3.7.0 it was installed, and the engram init ran after it. | `GA:internal/agents/pi/adapter.go:22-29`; `gentle-ai@6dee8f8:internal/agents/pi/adapter.go:60`, `:268-269` |
+| `npm:pi-web-access` | Installed. | `GA:internal/agents/pi/adapter.go:68` |
+| `npm:pi-btw` | Installed. | `GA:internal/agents/pi/adapter.go:69` |
+| `npm:@juicesharp/rpiv-ask-user-question` | **Retired** by gentle-ai (v3.7.0 and v4.0.0), and removed by gentle-shell if declared. It conflicts with gentle-pi's own `ask_user_question` tool. | `GA:internal/agents/pi/adapter.go:55-63`; `gentle-ai@6dee8f8:internal/agents/pi/adapter.go:47-55` (entry at `:54`); `GS:lib/gentle-shell-launcher.ts:563` |
 
-**Completeness evidence.** gentle-ai's pi adapter builds its install commands only from `managedPackageSources`: one `pi install <source>` per entry, plus the engram init after `pi-mcp-adapter` (`GA:internal/agents/pi/adapter.go:264-273`). That slice has 5 entries (`:57-63`). After gentle-ai finishes, gentle-shell removes the packages in its 2-row removal table (`GS:lib/gentle-shell-launcher.ts:552-555`) and re-applies its default theme if gentle-ai's install wrote a different theme into a home that had none (`GS:docs/readme-reference.md:348`). Besides the package installs, the code read shows these files written into the home when gentle-ai's Engram component runs:
+**Completeness evidence.** gentle-ai's pi adapter builds its install commands only from `managedPackageSources`: one `pi install <source>` per entry, plus the engram init after `npm:gentle-engram` (`GA:internal/agents/pi/adapter.go:285-294`). That slice has 4 entries at v4.0.0 (`:65-70`; 5 at v3.7.0, `gentle-ai@6dee8f8:internal/agents/pi/adapter.go:57-63`). After gentle-ai finishes, gentle-shell removes the packages in its 2-row removal table (`GS:lib/gentle-shell-launcher.ts:562-565`) and re-applies its default theme if gentle-ai's install wrote a different theme into a home that had none (`GS:docs/readme-reference.md:350`). Besides the package installs, the code read shows these files touched in the home when gentle-ai's Engram component runs:
 
-- `settings.json` (adds `npm:pi-mcp-adapter` to `packages`) and `<agentDir>/npm/package.json` (adds dependency `pi-mcp-adapter: ^2.6.0`), both written by gentle-ai's `ProvisionEngramMCP`, called from the Engram component's injector (`GA:internal/agents/pi/adapter.go:400-412`, `:440`; `GA:internal/components/engram/inject.go:306-307`);
-- `mcp.json`, written only by `pi-engram init`, per gentle-ai's own comment (`GA:internal/agents/pi/adapter.go:397-399`).
+- `settings.json` (drops `npm:pi-mcp-adapter` and the retired packages from `packages`) and `<agentDir>/npm/package.json` (drops the `pi-mcp-adapter` dependency), both rewritten only when there is something to remove, by gentle-ai's `ProvisionEngramMCP`, called from the Engram component's injector (`GA:internal/agents/pi/adapter.go:435-480`, `:485-521`; `GA:internal/components/engram/inject.go:693-694`). At v3.7.0 the same function added the adapter and `pi-mcp-adapter: ^2.6.0` instead (`gentle-ai@6dee8f8:internal/agents/pi/adapter.go:400-412`);
+- `mcp.json`, created by `ProvisionEngramMCP` only to hold servers merged from a legacy `mcp-adapter.json`; it never adds an Engram server of its own, though an `engram` entry the user kept in `mcp-adapter.json` is migrated like any other (`GA:internal/agents/pi/adapter.go:435-449`, `:523-529`, `:525-526`). At `engram@3951380`, `pi-engram init` only declares `gentle-engram` in `settings.json` and does not create or modify `mcp.json` (`engram@3951380:plugin/pi/cli.js:16-23`, `:85-97`); `UNVERIFIED:` that the npm `latest` the init fetches matches that commit.
 
-gentle-ai also writes the shared `~/.pi/gentle-ai/persona.json` and `~/.gentle-ai/state.json`, which gentle-shell snapshots and restores (`GS:docs/readme-reference.md:298`). `UNVERIFIED:` whether other gentle-ai components (for example the system prompt file `APPEND_SYSTEM.md` the pi adapter names at `GA:internal/agents/pi/adapter.go:27`, `:289-290`) write further files during `install --agent pi`; only the pi adapter and the Engram injector entry point were read.
+gentle-ai also writes the shared `~/.pi/gentle-ai/persona.json` and `~/.gentle-ai/state.json`, which gentle-shell snapshots and restores (`GS:docs/readme-reference.md:300`). `UNVERIFIED:` whether other gentle-ai components (for example the system prompt file `APPEND_SYSTEM.md` the pi adapter names at `GA:internal/agents/pi/adapter.go:33`, `:310-311`) write further files during `install --agent pi`; only the pi adapter and the Engram injector entry point were read.
 
-**Known doc drift (gentle-shell).** `GS:docs/readme-reference.md:284` still lists `npm:@juicesharp/rpiv-ask-user-question` among the packages setup installs, and a launcher comment says "gentle-ai's own managed Pi stack still installs" it (`GS:lib/gentle-shell-launcher.ts:532-533`), but gentle-ai v3.7.0 marks it retired (`GA:internal/agents/pi/adapter.go:51-55`).
+**Known doc drift (gentle-shell).** `GS:docs/readme-reference.md:286` still lists `npm:pi-mcp-adapter` and `npm:@juicesharp/rpiv-ask-user-question` among the packages setup installs, and a launcher comment says "gentle-ai's own managed Pi stack still installs" the latter (`GS:lib/gentle-shell-launcher.ts:542-543`), but gentle-ai v4.0.0 retires both (`GA:internal/agents/pi/adapter.go:22-29`, `:59-63`).
 
-`gentle-ai@b388eb3` (latest `main`) has already retired `pi-mcp-adapter` ([inventory GA1](05-capability-inventory.md#gentle-ai-outside-the-session)). gentle-shell 3.7.0 does not use that version.
+Homes provisioned by gentle-shell 3.7.0 (gentle-ai v3.7.0) received `pi-mcp-adapter`. An isolated or `--home` home re-runs setup on its next launch when the gentle-ai pin changed; a `--link` home is never provisioned automatically (`GS:docs/readme-reference.md:352`). gentle-shell's docs say "gentle-ai prunes the retired package from the home" (`GS:docs/readme-reference.md:304`), but in gentle-ai v4.0.0 only `ProvisionEngramMCP` (Engram component) and uninstall remove the adapter (`GA:internal/components/engram/inject.go:693-694`; `GA:internal/components/uninstall/service.go:800`). `UNVERIFIED:` whether setup's `install --agent pi --scope global`, with no component flags (`GS:bin/gentle-shell.mjs:821`), runs the Engram component ([inventory E8](05-capability-inventory.md#extensions-packages-skills-prompts-themes-and-mcp), [inventory GA1](05-capability-inventory.md#gentle-ai-outside-the-session)).
 
 ## Ownership
 
@@ -98,11 +98,11 @@ Names are given only where repository files state them.
 
 | Piece | Repository | Owner or maker per repository files | Evidence |
 |---|---|---|---|
-| pi | `earendil-works/pi` | Package `author`: Mario Zechner. LICENSE: "Copyright (c) 2025 Mario Zechner". | `PI:package.json:99`, `:103`; `pi@d86654a:LICENSE:3` |
-| gentle-shell / gentle-pi | `Gentleman-Programming/gentle-shell` | README: "built by Alan Buscaglia". TRADEMARKS: Alan Buscaglia owns the gentle-shell and gentle-pi marks. The LICENSE line reads "Copyright (c) 2025 Mario Zechner"; no inference is drawn from this. | `GS:package.json:25`; `GS:README.md:350`; `GS:TRADEMARKS.md:7`; `GS:LICENSE:3` |
-| gentle-ai | `Gentleman-Programming/gentle-ai` | README: "Built by Alan Buscaglia (Gentleman Programming)". Listed under "Maintainer" in CONTRIBUTORS. LICENSE: "Copyright (c) 2025 Gentleman Programming". | `GS:scripts/gentle-ai-installer.mjs:40`; `GA:README.md:259`; `GA:CONTRIBUTORS.md:5-9`; `GA:LICENSE:3` |
-| Engram (`gentle-engram`) | `UNVERIFIED:` repository not checked | TRADEMARKS: Alan Buscaglia owns the Engram mark. | `GA:TRADEMARKS.md:9` |
-| `pi-mcp-adapter`, `pi-web-access`, `pi-btw`, `@heyhuynhgiabuu/pi-pretty` | `UNVERIFIED:` third-party npm packages; none is checked out in the references | — | — |
+| pi | `earendil-works/pi` | Package `author`: Mario Zechner. LICENSE: "Copyright (c) 2025 Mario Zechner". | `PI:package.json:99`, `:103`; `pi@a13d35a:LICENSE:3` |
+| gentle-shell / gentle-pi | `Gentleman-Programming/gentle-shell` | README: "built by Alan Buscaglia". TRADEMARKS: Alan Buscaglia owns the gentle-shell and gentle-pi marks. The LICENSE line reads "Copyright (c) 2025 Mario Zechner"; no inference is drawn from this. | `GS:package.json:25`; `GS:README.md:351`; `GS:TRADEMARKS.md:7`; `GS:LICENSE:3` |
+| gentle-ai | `Gentleman-Programming/gentle-ai` | README: "Built by Alan Buscaglia (Gentleman Programming)". Listed under "Maintainer" in CONTRIBUTORS. LICENSE: "Copyright (c) 2025 Gentleman Programming". | `GS:scripts/gentle-ai-installer.mjs:40`; `GA:README.md:306`; `GA:CONTRIBUTORS.md:5-9`; `GA:LICENSE:3` |
+| Engram (`gentle-engram`) | `Gentleman-Programming/engram`; the npm package `gentle-engram` (bin `pi-engram`) lives under `plugin/pi` | Package `author`: "Gentleman Programming". LICENSE: "Copyright (c) 2026 Alan Buscaglia". TRADEMARKS: Alan Buscaglia owns the Engram mark. | `engram@3951380:plugin/pi/package.json:2`, `:7-12`, `:14-16`; `engram@3951380:LICENSE:3`; `GA:TRADEMARKS.md:9` |
+| `pi-mcp-adapter` (retired by gentle-ai v4.0.0), `pi-web-access`, `pi-btw`, `@heyhuynhgiabuu/pi-pretty` | `UNVERIFIED:` third-party npm packages; none is checked out in the references | — | — |
 | Gentle Desktop | `Gentleman-Programming/gentle-shell-desktop` | Package `author`: "Gentleman-Programming". LICENSE: "Copyright (c) 2026 Gentleman Programming". No maintainer is named in repository files; see [08-team.md](08-team.md). | `gentle-shell-desktop@5ab4a00:README.md:35`; `gentle-shell-desktop@5ab4a00:package.json:8`; `gentle-shell-desktop@5ab4a00:LICENSE:3` |
 
 ## Versions and compatibility
@@ -111,14 +111,14 @@ Names are given only where repository files state them.
 |---|---|---|---|
 | Desktop → pi library | `^0.85.1`, locked to `0.85.1` | Lockfile only | `gentle-shell-desktop@5ab4a00:package.json:42`; `gentle-shell-desktop@5ab4a00:pnpm-lock.yaml:323` |
 | Desktop → gentle-pi | "gentle-pi 3.7.0 or newer" (also needed for the Helpers tab) | No. Documented and shown in an error message only. | `gentle-shell-desktop@5ab4a00:README.md:12`, `:89-91`; `D:main/adapters/launcherLocator.ts:26-28` |
-| gentle-pi → pi | Peer `>=0.99.1`; development pin `0.99.1` | **Yes.** The launcher exits if pi is older than `MIN_PI_VERSION = "0.99.1"`. | `GS:package.json:78`, `:95`; `GS:lib/gentle-shell-launcher.ts:382` |
-| gentle-pi → gentle-ai | Pins `INSTALLER_VERSION = "3.7.0"`; tag `v3.7.0` resolves to commit `6dee8f8` | Partly. Installed at postinstall. Darwin/Linux release archives are checked against pinned SHA-256 digests; the Windows Go source build is also checked for the exact version (`GENTLE_AI_VERSION_MISMATCH`). `GENTLE_PI_SKIP_GENTLE_AI_INSTALL=1` skips the install. | `GS:package.json:46`; `GS:scripts/gentle-ai-installer.mjs:39`, `:48-50`, `:57`, `:70-73`, `:111-115`, `:392-396`; `GS:scripts/install-gentle-ai.mjs:11-12` |
-| gentle-pi setup → gentle-ai | Pin must be 3.6.0 or newer | Yes. Setup refuses otherwise. | `GS:lib/gentle-shell-launcher.ts:418`; `GS:bin/gentle-shell.mjs:811` |
-| gentle-ai v3.7.0 → companions | Sources have no version (`npm:pi-web-access`); engram init uses `gentle-engram@latest`; `ProvisionEngramMCP` writes `pi-mcp-adapter: ^2.6.0` into `<agentDir>/npm/package.json`. The constant `piMCPAdapterVersion = "2.6.0"` is declared but referenced nowhere else. | Only the `^2.6.0` range, as an npm manifest dependency | `GA:internal/agents/pi/adapter.go:25-26`, `:57-63`, `:276`, `:400-412`; `GA:internal/components/engram/inject.go:307` |
-| Node.js | `>=22.19.0` for gentle-pi; "Node.js 22.19 or newer" for the desktop | Not by gentle-pi code. Declared in gentle-pi's `engines`, which npm reports as a warning by default rather than enforcing (general npm behavior, not a repository fact). No Node version check was found in the launcher (`bin/`, `lib/`). | `GS:package.json:101-103`; `gentle-shell-desktop@5ab4a00:README.md:11` |
+| gentle-pi → pi | Peer `>=0.99.1`; development range `>=1.0.0` (3.7.0 developed against `0.99.1`) | **Yes.** The launcher exits if pi is older than `MIN_PI_VERSION = "0.99.1"`, unchanged in 4.0.0. | `GS:package.json:78`, `:95`; `GS:lib/gentle-shell-launcher.ts:392`; `gentle-shell@1162ce9:package.json:95` |
+| gentle-pi → gentle-ai | Pins `INSTALLER_VERSION = "4.0.0"`; tag `v4.0.0` resolves to commit `ff77164`; Go module path `/v4`. gentle-shell 3.7.0 pinned `3.7.0` (commit `6dee8f8`). | Partly. Installed at postinstall. Darwin/Linux release archives are checked against pinned SHA-256 digests; Windows has no signed archive and uses an exact-tag Go source build, also checked for the exact version (`GENTLE_AI_VERSION_MISMATCH`); see [10-platforms.md](10-platforms.md). `GENTLE_PI_SKIP_GENTLE_AI_INSTALL=1` skips the install. | `GS:package.json:46`; `GS:scripts/gentle-ai-installer.mjs:39`, `:45-52`, `:58`, `:68-75`, `:112-116`, `:393-397`; `GS:scripts/install-gentle-ai.mjs:11-12` |
+| gentle-pi setup → gentle-ai | Pin must be 3.6.0 or newer | Yes. Setup refuses otherwise. | `GS:lib/gentle-shell-launcher.ts:428`; `GS:bin/gentle-shell.mjs:811` |
+| gentle-ai v4.0.0 → companions | Sources have no version (`npm:pi-web-access`); engram init uses `gentle-engram@latest`. The v3.7.0 `pi-mcp-adapter: ^2.6.0` dependency and its `2.6.0` constant are gone; `ProvisionEngramMCP` now removes that dependency. | No version constraint | `GA:internal/agents/pi/adapter.go:65-70`, `:297`, `:504-521`; `GA:internal/components/engram/inject.go:694`; `gentle-ai@6dee8f8:internal/agents/pi/adapter.go:25-26`, `:400-412` |
+| Node.js | `>=22.19.0` for gentle-pi; "Node.js 22.19 or newer" for the desktop | Not by gentle-pi code. Declared in gentle-pi's `engines`, which npm reports as a warning by default rather than enforcing (general npm behavior, not a repository fact). No Node version check was found in the launcher (`bin/`, `lib/`). | `GS:package.json:101-103`; `gentle-shell-desktop@5ab4a00:README.md:11`; per-platform install paths in [10-platforms.md](10-platforms.md#how-each-piece-installs-and-runs) |
 | Handshake between desktop and runtime | None. The only versioned payload is `gentle-agents.activity/v1`. | — | [04 §Versioning](04-rpc-contract.md#versioning-and-compatibility) |
 
-The consequence that matters to the desktop: the chat list runs on pi 0.85.1 while the chat itself runs on pi ≥ 0.99.1 ([audit A2](03-architecture/audit.md#a2-pi-version-skew-between-the-two-paths)). The RPC differences between those two versions are in [04](04-rpc-contract.md#differences-between-pi-0851-and-0991-commands).
+The consequence that matters to the desktop: the chat list runs on pi 0.85.1 while the chat itself runs on pi ≥ 0.99.1, developed against ≥ 1.0.0 ([audit A2](03-architecture/audit.md#a2-pi-version-skew-between-the-two-paths)). The RPC differences between those two versions are in [04](04-rpc-contract.md#differences-between-pi-0851-and-0991-commands).
 
 ## What the desktop consumes from each piece
 
@@ -139,13 +139,13 @@ The consequence that matters to the desktop: the chat list runs on pi 0.85.1 whi
 
 | If the change… | It belongs in | Why | Evidence | Examples |
 |---|---|---|---|---|
-| Adds or changes an RPC command, event or response shape | **pi** (`earendil-works/pi`), through a Contribution Proposal issue; PRs need prior maintainer approval | pi owns the `RpcCommand` union; gentle-shell adds no command or event type | `pi@d86654a:packages/coding-agent/src/modes/rpc/rpc-types.ts:20-74`; `pi@d86654a:CONTRIBUTING.md:31-34`, `:58` | gap G3 sign-in, gap G4 default model, gap G5 packages, gap G10 version handshake |
+| Adds or changes an RPC command, event or response shape | **pi** (`earendil-works/pi`), through a Contribution Proposal issue; PRs need prior maintainer approval | pi owns the `RpcCommand` union; gentle-shell adds no command or event type | `pi@a13d35a:packages/coding-agent/src/modes/rpc/rpc-types.ts:20-74`; `pi@a13d35a:CONTRIBUTING.md:31-34`, `:58` | gap G3 sign-in, gap G4 default model, gap G5 packages, gap G10 version handshake |
 | Publishes new data from a gentle-shell feature | **gentle-shell**, as a `setWidget` `string[]` payload with a documented schema, like the activity schema | Needs no pi change | `GS:docs/gentle-agents-activity.md:13`; [04 §Gaps](04-rpc-contract.md#gaps-the-desktop-needs) | gap G2 ODD state, gap G6 profile, gap G7 status-bar fields, gap G8 helper result |
 | Lets the host act on a gentle-shell feature | **gentle-shell**, plus an inbound channel. Today the only inbound channels to an extension are `prompt` and dialog responses. `Inference:` a new command type would also need pi. | No host command reaches extensions | [04 §Gaps](04-rpc-contract.md#gaps-the-desktop-needs) | gap G1 stop a helper |
 | Makes a gentle-shell command work under RPC | **gentle-shell** | The command uses `ctx.ui.custom()` or a TUI-only gate | [inventory P1, P3, Y4, R3](05-capability-inventory.md#profiles-models-and-persona) | `/gentle:profiles`, `/gentle:models`, YOLO |
 | Changes launcher behavior (setup progress, home semantics, version output) | **gentle-shell** launcher | The launcher owns homes, setup and the pi gate | [inventory L5, L12](05-capability-inventory.md#launcher-and-homes) | Machine-readable setup progress |
-| Changes which companion packages a home gets | **gentle-ai** managed pi stack, then a gentle-pi pin bump | gentle-shell does not keep its own list | `GS:docs/readme-reference.md:302` | Retiring a plugin |
-| Renders or acts on data already on the wire, or changes desktop process, IPC or packaging | **Gentle Desktop** | No upstream dependency | [05](05-capability-inventory.md) rows with upstream "none"; [audit](03-architecture/audit.md) | `notify` toasts (inventory C20), tool cards (inventory C17), steering (inventory C4), multi-chat (audit A3), Windows spawn (audit A4) |
+| Changes which companion packages a home gets | **gentle-ai** managed pi stack, then a gentle-pi pin bump | gentle-shell does not keep its own list | `GS:docs/readme-reference.md:304` | Retiring a plugin (as v4.0.0 did with `pi-mcp-adapter`) |
+| Renders or acts on data already on the wire, or changes desktop process, IPC or packaging | **Gentle Desktop** | No upstream dependency | [05](05-capability-inventory.md) rows with upstream "none"; [audit](03-architecture/audit.md) | `notify` toasts (inventory C20), tool cards (inventory C17), steering (inventory C4), multi-chat (audit A3), Windows spawn (audit A4; [10-platforms.md](10-platforms.md#spawning-batch-shims)) |
 
 ## Community projects outside scope
 
@@ -153,5 +153,5 @@ The consequence that matters to the desktop: the chat list runs on pi 0.85.1 whi
 
 ## Open questions
 
-- `UNVERIFIED:` the repositories and owners of `gentle-engram`, `pi-mcp-adapter`, `pi-web-access`, `pi-btw` and `@heyhuynhgiabuu/pi-pretty`.
-- `UNVERIFIED:` whether `gentle-ai install --agent pi` writes files beyond the package list, persona, state, `settings.json`, `npm/package.json` and `mcp.json` (see [Companion packages](#companion-packages)).
+- `UNVERIFIED:` the repositories and owners of `pi-mcp-adapter`, `pi-web-access`, `pi-btw` and `@heyhuynhgiabuu/pi-pretty`.
+- `UNVERIFIED:` whether `gentle-ai install --agent pi` writes files beyond the package list, persona, state, `settings.json`, `npm/package.json` and `mcp.json` (see [Companion packages](#companion-packages)), and whether that command, with no component flags, runs the Engram component, the only install-time path that removes `pi-mcp-adapter` from a home provisioned at 3.7.0 (see [Companion packages](#companion-packages)).

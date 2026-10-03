@@ -4,7 +4,7 @@
 
 Gentle Desktop is an Electron app with one window and one open chat at a time. The main process spawns `gentle-shell --mode rpc` as a child process for the conversation. It also imports pi in-process to list existing chats. This page describes that architecture as it is at `gentle-shell-desktop@5ab4a00`. Findings and risks are in [audit.md](audit.md). Recorded decisions are in [adr/](adr/README.md). The wire protocol is in [04-rpc-contract.md](../04-rpc-contract.md).
 
-**How to read citations.** Paths with no repository prefix are in `gentle-shell-desktop@5ab4a00`. Other repositories use `repo@shortsha:path:line`. The pinned SHAs are `gentle-shell@1162ce9` (npm package `gentle-pi` 3.7.0), `pi@d981de1` (pi 0.85.1) and `pi@d86654a` (pi 0.99.1). Lines labelled `Inference:` are reasoning, not verified behavior. Lines labelled `UNVERIFIED:` were checked but could not be confirmed. IDs from other pages are qualified (`audit A3`, `gap G9`); unqualified M1–M6 are the maintainer's milestones, and T-numbers are tasks inside them.
+**How to read citations.** Paths with no repository prefix are in `gentle-shell-desktop@5ab4a00`. Other repositories use `repo@shortsha:path:line`. The pinned SHAs (refreshed 2026-10-03; the desktop source is unchanged) are `gentle-shell@ac67159` (gentle-shell `main`, npm package `gentle-pi` version 4.0.0), `pi@d981de1` (pi 0.85.1, the desktop's in-process copy) and `pi@a13d35a` (pi 1.0.0). `pi@d86654a` (pi 0.99.1, the launcher's floor) appears only in version comparisons. Lines labelled `Inference:` are reasoning, not verified behavior. Lines labelled `UNVERIFIED:` were checked but could not be confirmed. IDs from other pages are qualified (`audit A3`, `gap G9`); unqualified M1–M6 are the maintainer's milestones, and T-numbers are tasks inside them.
 
 ## At a glance
 
@@ -53,7 +53,7 @@ flowchart LR
 | Main | Owns child processes, the chat list, the persisted home choice and IPC. Composition root: builds every adapter and the `ChatHost`. | One `BrowserWindow`, 1280×820. Loads the Vite dev URL in dev, `out/renderer/index.html` in builds. | `src/main/index.ts:52-67`, `:74-114` |
 | Preload | Exposes the typed `GentleBridge` as `window.gentle` through `contextBridge`. | `contextIsolation: true`, `nodeIntegration: false`, `sandbox: false`. | `src/preload/index.ts:1-4`; `src/main/index.ts:81-86` |
 | Renderer | React 19 UI. Falls back to an in-memory mock bridge when `window.gentle` is absent (`pnpm dev:web`). | CSP in `index.html`. External links open in the OS browser; all new windows are denied. | `src/renderer/shared/bridge/useBridge.ts:10-12`; `src/renderer/index.html:5-8`; `src/main/index.ts:97-102` |
-| `gentle-shell` child | Launcher that resolves pi, enforces pi ≥ 0.99.1, then spawns `pi --mode rpc` with inherited stdio. | Spawned with `GENTLE_SHELL_INTERACTIVE_HOST=1`. No `cwd` is passed (see [audit](audit.md#a10-new-chats-run-in-the-apps-working-directory)). | `src/main/domain/session/PiSession.ts:67`, `:134-135`; `gentle-shell@1162ce9:bin/gentle-shell.mjs:1395` |
+| `gentle-shell` child | Launcher that resolves pi, enforces pi ≥ 0.99.1, then spawns `pi --mode rpc` with inherited stdio. | Spawned with `GENTLE_SHELL_INTERACTIVE_HOST=1`. No `cwd` is passed (see [audit](audit.md#a10-new-chats-run-in-the-apps-working-directory)). | `src/main/domain/session/PiSession.ts:67`, `:134-135`; `gentle-shell@ac67159:bin/gentle-shell.mjs:1396` |
 
 **Lifecycle.** `ChatHost` keeps at most one child alive (`src/main/domain/session/ChatHost.ts:61-66`). On quit, `before-quit` calls `chatHost.stop()` bounded to 4 s (`src/main/index.ts:28`, `:133-139`). `PiSession.stop()` closes stdin, waits up to 3 s, then kills the child (`src/main/domain/session/PiSession.ts:213-235`). On every platform except macOS, closing the window quits the app (`src/main/index.ts:124-126`).
 
@@ -206,13 +206,13 @@ There is no global store. `App` holds the selection, and the pushed `ChatState` 
 | | RPC child (chat) | In-process (chat list) |
 |---|---|---|
 | **What** | `gentle-shell --mode rpc` → `pi --mode rpc` | `import("@earendil-works/pi-coding-agent")` → `SessionManager.listAll()` |
-| **pi version** | ≥ 0.99.1, enforced by the launcher (`gentle-shell@1162ce9:lib/gentle-shell-launcher.ts:382`; peer range `gentle-shell@1162ce9:package.json:78`) | 0.85.1 (`package.json:42`; `pnpm-lock.yaml:323`) |
+| **pi version** | ≥ 0.99.1, enforced by the launcher (`gentle-shell@ac67159:lib/gentle-shell-launcher.ts:392`; peer range `gentle-shell@ac67159:package.json:78`); gentle-shell develops against ≥ 1.0.0 (`:95`) | 0.85.1 (`package.json:42`; `pnpm-lock.yaml:323`) |
 | **Runtime** | A `PATH` install runs as found. A `GENTLE_SHELL_BIN` JS entry runs under Electron as Node (`process.execPath` with `ELECTRON_RUN_AS_NODE=1`); any other `GENTLE_SHELL_BIN` is executed directly (`src/main/adapters/launcherLocator.ts:19-23`, `:34-41`) | Electron main process |
-| **Home selection** | Launcher flags `--link`, `--isolated` or `--home <dir>`; the launcher sets `PI_CODING_AGENT_DIR` for pi (`src/main/domain/home/home.ts:33-37`; `gentle-shell@1162ce9:lib/gentle-shell-launcher.ts:946`) | Temporarily sets the process-global `process.env.PI_CODING_AGENT_DIR`, then restores it (`src/main/adapters/piSessionStore.ts:32-39`) |
+| **Home selection** | Launcher flags `--link`, `--isolated` or `--home <dir>`; the launcher sets `PI_CODING_AGENT_DIR` for pi, and since 4.0.0 also `GENTLE_SHELL_USER_PI_HOME` (an inherited value, else `PI_CODING_AGENT_DIR`, else `~/.pi/agent`), read by `/gentle:stats` (`src/main/domain/home/home.ts:33-37`; `gentle-shell@ac67159:lib/gentle-shell-launcher.ts:197-205`, `:960-962`) | Temporarily sets the process-global `process.env.PI_CODING_AGENT_DIR`, then restores it (`src/main/adapters/piSessionStore.ts:32-39`) |
 | **Used for** | Prompt, abort, dialog answers, history (`get_messages`), helper activity | Sidebar list; mapping a chat id to its session file before `--session` (`src/main/domain/session/ChatHost.ts:95-108`) |
 | **Contract** | [04-rpc-contract.md](../04-rpc-contract.md) | None. Depends on pi's library API and session file layout. |
 
-The session file format constant is `CURRENT_SESSION_VERSION = 3` in both pi versions (`pi@d981de1:packages/coding-agent/src/core/session-manager.ts:30`, `pi@d86654a:packages/coding-agent/src/core/session-manager.ts:41`). `UNVERIFIED:` whether `SessionInfo` parsing differs in ways that matter was not checked line by line. Risks are in [audit A1 and A2](audit.md#a1-two-data-paths-to-pi-and-a-global-pi_coding_agent_dir-mutation).
+The session file format constant is `CURRENT_SESSION_VERSION = 3` in pi 0.85.1, 0.99.1 and 1.0.0 (`pi@d981de1:packages/coding-agent/src/core/session-manager.ts:30`, `pi@a13d35a:packages/coding-agent/src/core/session-manager.ts:41`; the file is byte-identical in 0.99.1 and 1.0.0). `UNVERIFIED:` whether `SessionInfo` parsing differs in ways that matter was not checked line by line. Risks are in [audit A1 and A2](audit.md#a1-two-data-paths-to-pi-and-a-global-pi_coding_agent_dir-mutation).
 
 ## Home modes
 
@@ -222,7 +222,7 @@ The session file format constant is `CURRENT_SESSION_VERSION = 3` in both pi ver
 | `link` | User picked "Use my pi setup" | `--link` | `PI_CODING_AGENT_DIR`, else `~/.pi/agent` | `src/main/domain/home/home.ts:36`, `:45-47`, `:64` |
 | `isolated` | User picked "Keep it separate", or nothing saved yet | `--isolated` | `~/.gentle-shell/agent` | `src/main/domain/home/home.ts:17-19`, `:36`, `:66` |
 
-The first-run screen appears only when no choice is saved and a pi agent dir exists (`src/main/adapters/setupService.ts:21-25`). The choice is saved as `{home}` in `userData/config.json` (`src/main/index.ts:52`; `src/main/adapters/appConfigStore.ts:34-39`). Home flags and the listing directory are re-resolved on every spawn and every list call, so a choice applies without a restart (`src/main/ports/index.ts:77-84`; `src/main/adapters/piSessionStore.ts:44-58`). The launcher resolves the same directories: `linkDir` is `PI_CODING_AGENT_DIR || ~/.pi/agent`, `isolatedDir` is `GENTLE_SHELL_HOME || ~/.gentle-shell/agent` (`gentle-shell@1162ce9:lib/gentle-shell-launcher.ts:193-199`).
+The first-run screen appears only when no choice is saved and a pi agent dir exists (`src/main/adapters/setupService.ts:21-25`). The choice is saved as `{home}` in `userData/config.json` (`src/main/index.ts:52`; `src/main/adapters/appConfigStore.ts:34-39`). Home flags and the listing directory are re-resolved on every spawn and every list call, so a choice applies without a restart (`src/main/ports/index.ts:77-84`; `src/main/adapters/piSessionStore.ts:44-58`). The launcher resolves the same directories: `linkDir` is `PI_CODING_AGENT_DIR || ~/.pi/agent`, `isolatedDir` is `GENTLE_SHELL_HOME || ~/.gentle-shell/agent` (`gentle-shell@ac67159:lib/gentle-shell-launcher.ts:193-195`, `:207-209`).
 
 ## Build, packaging and testing
 
@@ -232,7 +232,7 @@ The first-run screen appears only when no choice is saved and a pi agent dir exi
 |---|---|---|
 | `dev` | `electron-vite dev` | `package.json:11` |
 | `dev:web` | Renderer alone on Vite, port 5173, mock bridge | `package.json:12`; `vite.web.config.ts:5-22` |
-| `dev:local-pi` | `dev` with `GENTLE_SHELL_BIN` defaulting to a local gentle-pi worktree (POSIX shell syntax) | `package.json:23` |
+| `dev:local-pi` | `dev` with `GENTLE_SHELL_BIN` defaulting to a local gentle-pi worktree (POSIX shell syntax). Open PR #27 (not merged as of 2026-10-03) replaces it with `node scripts/dev-local-pi.mjs` ([audit A18](audit.md#a18-launcher-discovery-and-platform-coverage)) | `package.json:23` |
 | `build` / `preview` | `electron-vite build` / `preview` | `package.json:13-14` |
 | `test` / `test:watch` | `vitest run` / `vitest` | `package.json:15-16` |
 | `typecheck` | `tsc --build --force` | `package.json:17` |
@@ -244,7 +244,7 @@ The first-run screen appears only when no choice is saved and a pi agent dir exi
 - **Build.** electron-vite builds three bundles. Main and preload externalize dependencies, so `@earendil-works/pi-coding-agent` stays a real `node_modules` import (`electron.vite.config.ts:5-40`; `electron-builder.yml:11-17`).
 - **Packaging.** electron-builder, `appId: dev.gentleman.gentle-shell`, `productName: gentle shell`, output `release/`, `asar: true`. Ships `out/**` and `package.json`. Targets: mac `dmg` + `zip` with `identity: null` (unsigned), win `nsis`, linux `AppImage` (`electron-builder.yml:7-38`).
 - **Install scripts.** `pnpm-workspace.yaml` has one `allowBuilds` map: `@google/genai`, `esbuild` and `protobufjs` are `true`, `electron-winstaller` is `false` (`pnpm-workspace.yaml:1-10`). Its comment names only `@google/genai` and `protobufjs`, as transitive dependencies of `@earendil-works/pi-coding-agent` (`pnpm-workspace.yaml:2-6`). `esbuild` and `electron-winstaller` carry no comment. In the lockfile, `esbuild` is reached through pi's `@earendil-works/chord@0.85.1` (`pnpm-lock.yaml:3196-3198`, `:3239`) and also through `vite` and `electron-vite` (`pnpm-lock.yaml:4343`, `:5433`).
-- **Platforms.** Tested on macOS Apple silicon only. Windows and Linux builds are configured but untested. No signing, notarization or auto-update (`README.md:7`, `:64`).
+- **Platforms.** Tested on macOS Apple silicon only. Windows and Linux builds are configured but untested. No signing, notarization or auto-update (`README.md:7`, `:64`). Per-platform support of the upstream pieces and what the desktop must solve: [10-platforms.md](../10-platforms.md).
 
 ### Testing
 
