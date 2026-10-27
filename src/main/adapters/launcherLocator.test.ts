@@ -1,4 +1,4 @@
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -55,6 +55,33 @@ describe("createLauncherLocator", () => {
 
     const locator = createLauncherLocator({ PATH: tmpDir });
     expect(locator.locate().env).toBeUndefined();
+  });
+
+  it("on Windows, runs the npm gentle-shell.cmd shim's .mjs entry with process.execPath instead of the .cmd", () => {
+    tmpDir = mkdtempSync(path.join(tmpdir(), "gentle shell locator "));
+    const cmdPath = path.join(tmpDir, "gentle-shell.cmd");
+    writeFileSync(cmdPath, "@ECHO off\n");
+    chmodSync(cmdPath, 0o755);
+    const mjsPath = path.join(tmpDir, "node_modules", "gentle-pi", "bin", "gentle-shell.mjs");
+    mkdirSync(path.dirname(mjsPath), { recursive: true });
+    writeFileSync(mjsPath, "#!/usr/bin/env node\n");
+
+    const locator = createLauncherLocator({ PATH: tmpDir }, "win32");
+    expect(locator.locate()).toEqual({
+      command: process.execPath,
+      args: [mjsPath],
+      env: { ELECTRON_RUN_AS_NODE: "1" },
+    });
+  });
+
+  it("on Windows, keeps a gentle-shell.cmd on PATH when no npm .mjs entry sits next to it", () => {
+    tmpDir = mkdtempSync(path.join(tmpdir(), "gentle-shell-locator-"));
+    const cmdPath = path.join(tmpDir, "gentle-shell.cmd");
+    writeFileSync(cmdPath, "@ECHO off\n");
+    chmodSync(cmdPath, 0o755);
+
+    const locator = createLauncherLocator({ PATH: tmpDir }, "win32");
+    expect(locator.locate()).toEqual({ command: cmdPath, args: [] });
   });
 
   it("skips a PATH entry that has the name but is not executable", () => {

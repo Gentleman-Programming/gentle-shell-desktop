@@ -9,18 +9,23 @@ const JS_ENTRY_EXTENSIONS = [".mjs", ".js", ".cjs"];
  * 1. `GENTLE_SHELL_BIN` — a path to a JS entry point (run with
  *    `process.execPath`, e.g. the maintainer's local
  *    `bin/gentle-shell.mjs` checkout) or a directly executable binary.
- * 2. `gentle-shell` found on PATH.
+ * 2. `gentle-shell` found on PATH. On Windows, npm's `gentle-shell.cmd`
+ *    shim cannot be spawned without a shell, so its sibling
+ *    `node_modules/gentle-pi/bin/gentle-shell.mjs` entry is run instead.
  * 3. Otherwise, throw with a message naming both options (gentle-shell is
  *    not on npm yet; see the README Development section).
  */
-export function createLauncherLocator(env: NodeJS.ProcessEnv = process.env): LauncherLocator {
+export function createLauncherLocator(
+  env: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+): LauncherLocator {
   return {
     locate(): ResolvedLauncher {
       const binPath = env.GENTLE_SHELL_BIN;
       if (binPath) return resolveBinPath(binPath);
 
-      const onPath = findOnPath("gentle-shell", env);
-      if (onPath) return { command: onPath, args: [] };
+      const onPath = findOnPath("gentle-shell", env, platform);
+      if (onPath) return resolveOnPath(onPath, platform);
 
       throw new Error(
         "gentle-shell launcher not found. Install it with `npm install -g gentle-pi` " +
@@ -41,11 +46,21 @@ function resolveBinPath(binPath: string): ResolvedLauncher {
   return { command: process.execPath, args: [binPath], env: { ELECTRON_RUN_AS_NODE: "1" } };
 }
 
-function findOnPath(binName: string, env: NodeJS.ProcessEnv): string | undefined {
+// Node refuses to spawn a .cmd without `shell: true` (EINVAL/EFTYPE), and
+// `shell: true` concatenates arguments unquoted, breaking paths with spaces.
+function resolveOnPath(onPath: string, platform: NodeJS.Platform): ResolvedLauncher {
+  if (platform === "win32" && path.extname(onPath).toLowerCase() === ".cmd") {
+    const npmEntry = path.join(path.dirname(onPath), "node_modules", "gentle-pi", "bin", "gentle-shell.mjs");
+    if (existsSync(npmEntry)) return resolveBinPath(npmEntry);
+  }
+  return { command: onPath, args: [] };
+}
+
+function findOnPath(binName: string, env: NodeJS.ProcessEnv, platform: NodeJS.Platform): string | undefined {
   const pathVar = env.PATH ?? env.Path;
   if (!pathVar) return undefined;
 
-  const candidateNames = process.platform === "win32" ? [`${binName}.cmd`, `${binName}.exe`, binName] : [binName];
+  const candidateNames = platform === "win32" ? [`${binName}.cmd`, `${binName}.exe`, binName] : [binName];
 
   for (const dir of pathVar.split(path.delimiter)) {
     if (!dir) continue;
