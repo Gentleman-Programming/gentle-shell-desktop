@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import { mockBridge } from "@renderer/shared/bridge/mockBridge";
 import { App } from "./App";
 
 // `?firstRun=0` forces mockBridge.setupStatus() to needsChoice: false (see
@@ -14,6 +15,7 @@ describe("App", () => {
 
   afterEach(() => {
     window.history.pushState({}, "", "/");
+    vi.restoreAllMocks();
   });
 
   it("renders the sidebar heading and the composer placeholder", async () => {
@@ -29,6 +31,16 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findAllByRole("heading", { name: "New chat" })).toHaveLength(1);
+  });
+
+  it('"New chat" starts a fresh chat even while the default new chat is open', async () => {
+    const newChat = vi.spyOn(mockBridge, "newChat");
+    render(<App />);
+    await waitFor(() => expect(newChat).toHaveBeenCalledTimes(1));
+
+    (await screen.findByRole("button", { name: "New chat" })).click();
+
+    await waitFor(() => expect(newChat).toHaveBeenCalledTimes(2));
   });
 
   it("selecting a sidebar chat updates the conversation header title", async () => {

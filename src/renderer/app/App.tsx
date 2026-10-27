@@ -55,8 +55,11 @@ export function App() {
     setActiveChat({ kind: "existing", chat });
   };
 
+  // A fresh object every click: reusing NEW_CHAT would be a same-state
+  // update while the default new chat is open, so React would skip the
+  // render and ConversationContainer would never start another chat.
   const handleNewChat = (): void => {
-    setActiveChat(NEW_CHAT);
+    setActiveChat({ kind: "new" });
   };
 
   if (screen === SCREEN.LOADING) return <div className="gc-app-loading" />;
